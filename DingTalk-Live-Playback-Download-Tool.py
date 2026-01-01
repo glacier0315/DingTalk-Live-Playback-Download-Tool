@@ -150,7 +150,35 @@ def get_browser_cookie(url, browser_type='edge'):
         browser.get(url)
         input("请在浏览器中登录钉钉账户后，按Enter键继续...")
 
-        headers = browser.execute_script("return Object.fromEntries(new Headers(fetch(arguments[0], { method: 'GET' })).entries())", url)
+        # 使用浏览器脚本获取完整的请求头信息
+        try:
+            # 获取User-Agent、Referer等关键请求头
+            user_agent = browser.execute_script("return navigator.userAgent")
+            referer = browser.execute_script("return document.referrer")
+            
+            # 构建headers字典
+            headers = {
+                'User-Agent': user_agent,
+                'Referer': referer if referer else 'https://n.dingtalk.com/',
+                'Accept': 'application/vnd.apple.mpegurl, text/plain, */*',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Connection': 'keep-alive',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'same-origin',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1'
+            }
+        except Exception as e:
+            print(f"获取请求头信息时发生错误: {e}")
+            # 如果获取失败，提供默认的headers
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://n.dingtalk.com/',
+                'Accept': 'application/vnd.apple.mpegurl, text/plain, */*'
+            }
+            print("使用默认请求头")
         try:
         # 尝试通过XPath获取直播视频名称
             live_name = browser.find_element(By.XPATH, '//*[@id="live-room"]/div[1]/div[1]/h3').text
@@ -240,9 +268,9 @@ def repeat_process_links(new_links_dict, browser, browser_type, save_mode):
                 save_name = live_name
 
                 if save_mode == '1':
-                    saved_path = auto_download_m3u8_with_options(m3u8_file, save_name, prefix)  # 默认下载到 Downloads
+                    saved_path = auto_download_m3u8_with_options(m3u8_file, save_name, prefix, cookies_data, m3u8_headers)  # 默认下载到 Downloads
                 elif save_mode == '2':
-                    saved_path = download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path)  # 手动选择路径
+                    saved_path = download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path, cookies_data, m3u8_headers)  # 手动选择路径
 
         print('=' * 100)
 
@@ -386,7 +414,7 @@ def extract_prefix(url):
     match = pattern.search(url)
     return match.group(1) if match else url
 
-def download_m3u8_with_options(m3u8_file, save_name, prefix):
+def download_m3u8_with_options(m3u8_file, save_name, prefix, cookies_data=None, headers=None):
     root = tk.Tk()
     root.withdraw()
     save_dir = filedialog.askdirectory(title="选择保存视频的目录")
@@ -395,7 +423,6 @@ def download_m3u8_with_options(m3u8_file, save_name, prefix):
         print("用户取消了选择。视频下载已中止。")
         return
     
-
     command = [
         get_executable_name(),
         m3u8_file,
@@ -404,12 +431,68 @@ def download_m3u8_with_options(m3u8_file, save_name, prefix):
         "--save-dir", save_dir,
         "--base-url", prefix,
     ]
+    
+    # 添加 HTTP 请求头以避免 403 错误
+    headers_added = []
+    
+    if cookies_data:
+        # 构建 Cookie 字符串
+        cookie_string = "; ".join([f"{name}={value}" for name, value in cookies_data.items()])
+        command.extend(["-H", f"Cookie: {cookie_string}"])
+        headers_added.append("Cookie")
+        print(f"已添加 Cookie 请求头")
+    
+    if headers:
+        # 添加 User-Agent
+        if 'User-Agent' in headers:
+            command.extend(["-H", f"User-Agent: {headers['User-Agent']}"])
+            headers_added.append("User-Agent")
+            print(f"已添加 User-Agent 请求头")
+        else:
+            print("警告: headers 中没有 User-Agent")
+        
+        # 添加 Referer
+        if 'Referer' in headers:
+            command.extend(["-H", f"Referer: {headers['Referer']}"])
+            headers_added.append("Referer")
+            print(f"已添加 Referer 请求头")
+        else:
+            # 如果没有 Referer，添加默认的钉钉直播 Referer
+            command.extend(["-H", "Referer: https://n.dingtalk.com/"])
+            headers_added.append("Referer (默认)")
+            print(f"已添加默认 Referer 请求头")
+        
+        # 添加其他重要的请求头
+        if 'Accept' in headers:
+            command.extend(["-H", f"Accept: {headers['Accept']}"])
+            headers_added.append("Accept")
+            print(f"已添加 Accept 请求头")
+        
+        if 'Accept-Language' in headers:
+            command.extend(["-H", f"Accept-Language: {headers['Accept-Language']}"])
+            headers_added.append("Accept-Language")
+            print(f"已添加 Accept-Language 请求头")
+        
+        if 'Accept-Encoding' in headers:
+            command.extend(["-H", f"Accept-Encoding: {headers['Accept-Encoding']}"])
+            headers_added.append("Accept-Encoding")
+            print(f"已添加 Accept-Encoding 请求头")
+    
+    else:
+        # 如果没有headers，添加一些基本的默认请求头
+        command.extend(["-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"])
+        command.extend(["-H", "Referer: https://n.dingtalk.com/"])
+        command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
+        headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
+        print("已添加默认请求头")
+    
+    print(f"总共添加了 {len(headers_added)} 个请求头: {', '.join(headers_added)}")
 
     subprocess.run(command)
     print(f"视频下载成功完成。文件保存路径: {save_dir}")
 
 # 用于批量下载时，复用保存路径
-def download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path=None):
+def download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path=None, cookies_data=None, headers=None):
     # 如果没有提供已保存的路径，则弹出文件选择框
     if saved_path is None:
         root = tk.Tk()
@@ -429,6 +512,62 @@ def download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path=None
         "--save-dir", saved_path,
         "--base-url", prefix,
     ]
+    
+    # 添加 HTTP 请求头以避免 403 错误
+    headers_added = []
+    
+    if cookies_data:
+        # 构建 Cookie 字符串
+        cookie_string = "; ".join([f"{name}={value}" for name, value in cookies_data.items()])
+        command.extend(["-H", f"Cookie: {cookie_string}"])
+        headers_added.append("Cookie")
+        print(f"已添加 Cookie 请求头")
+    
+    if headers:
+        # 添加 User-Agent
+        if 'User-Agent' in headers:
+            command.extend(["-H", f"User-Agent: {headers['User-Agent']}"])
+            headers_added.append("User-Agent")
+            print(f"已添加 User-Agent 请求头")
+        else:
+            print("警告: headers 中没有 User-Agent")
+        
+        # 添加 Referer
+        if 'Referer' in headers:
+            command.extend(["-H", f"Referer: {headers['Referer']}"])
+            headers_added.append("Referer")
+            print(f"已添加 Referer 请求头")
+        else:
+            # 如果没有 Referer，添加默认的钉钉直播 Referer
+            command.extend(["-H", "Referer: https://n.dingtalk.com/"])
+            headers_added.append("Referer (默认)")
+            print(f"已添加默认 Referer 请求头")
+        
+        # 添加其他重要的请求头
+        if 'Accept' in headers:
+            command.extend(["-H", f"Accept: {headers['Accept']}"])
+            headers_added.append("Accept")
+            print(f"已添加 Accept 请求头")
+        
+        if 'Accept-Language' in headers:
+            command.extend(["-H", f"Accept-Language: {headers['Accept-Language']}"])
+            headers_added.append("Accept-Language")
+            print(f"已添加 Accept-Language 请求头")
+        
+        if 'Accept-Encoding' in headers:
+            command.extend(["-H", f"Accept-Encoding: {headers['Accept-Encoding']}"])
+            headers_added.append("Accept-Encoding")
+            print(f"已添加 Accept-Encoding 请求头")
+    
+    else:
+        # 如果没有headers，添加一些基本的默认请求头
+        command.extend(["-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"])
+        command.extend(["-H", "Referer: https://n.dingtalk.com/"])
+        command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
+        headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
+        print("已添加默认请求头")
+    
+    print(f"总共添加了 {len(headers_added)} 个请求头: {', '.join(headers_added)}")
 
     subprocess.run(command)
     print(f"视频下载成功完成。文件保存路径: {saved_path}")
@@ -436,7 +575,7 @@ def download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path=None
 
 
 
-def auto_download_m3u8_with_options(m3u8_file, save_name, prefix):
+def auto_download_m3u8_with_options(m3u8_file, save_name, prefix, cookies_data=None, headers=None):
     # 获取当前工作目录
     base_dir = os.getcwd()
     
@@ -455,6 +594,62 @@ def auto_download_m3u8_with_options(m3u8_file, save_name, prefix):
         "--save-dir", downloads_dir,  # 设置保存目录为 Downloads 文件夹
         "--base-url", prefix,
     ]
+    
+    # 添加 HTTP 请求头以避免 403 错误
+    headers_added = []
+    
+    if cookies_data:
+        # 构建 Cookie 字符串
+        cookie_string = "; ".join([f"{name}={value}" for name, value in cookies_data.items()])
+        command.extend(["-H", f"Cookie: {cookie_string}"])
+        headers_added.append("Cookie")
+        print(f"已添加 Cookie 请求头")
+    
+    if headers:
+        # 添加 User-Agent
+        if 'User-Agent' in headers:
+            command.extend(["-H", f"User-Agent: {headers['User-Agent']}"])
+            headers_added.append("User-Agent")
+            print(f"已添加 User-Agent 请求头")
+        else:
+            print("警告: headers 中没有 User-Agent")
+        
+        # 添加 Referer
+        if 'Referer' in headers:
+            command.extend(["-H", f"Referer: {headers['Referer']}"])
+            headers_added.append("Referer")
+            print(f"已添加 Referer 请求头")
+        else:
+            # 如果没有 Referer，添加默认的钉钉直播 Referer
+            command.extend(["-H", "Referer: https://n.dingtalk.com/"])
+            headers_added.append("Referer (默认)")
+            print(f"已添加默认 Referer 请求头")
+        
+        # 添加其他重要的请求头
+        if 'Accept' in headers:
+            command.extend(["-H", f"Accept: {headers['Accept']}"])
+            headers_added.append("Accept")
+            print(f"已添加 Accept 请求头")
+        
+        if 'Accept-Language' in headers:
+            command.extend(["-H", f"Accept-Language: {headers['Accept-Language']}"])
+            headers_added.append("Accept-Language")
+            print(f"已添加 Accept-Language 请求头")
+        
+        if 'Accept-Encoding' in headers:
+            command.extend(["-H", f"Accept-Encoding: {headers['Accept-Encoding']}"])
+            headers_added.append("Accept-Encoding")
+            print(f"已添加 Accept-Encoding 请求头")
+    
+    else:
+        # 如果没有headers，添加一些基本的默认请求头
+        command.extend(["-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"])
+        command.extend(["-H", "Referer: https://n.dingtalk.com/"])
+        command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
+        headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
+        print("已添加默认请求头")
+    
+    print(f"总共添加了 {len(headers_added)} 个请求头: {', '.join(headers_added)}")
     
     # 执行命令
     subprocess.run(command)
@@ -484,9 +679,9 @@ def single_mode():
                     save_name = live_name
 
                     if save_mode == '1':
-                        auto_download_m3u8_with_options(m3u8_file, save_name, prefix)
+                        auto_download_m3u8_with_options(m3u8_file, save_name, prefix, cookies_data, m3u8_headers)
                     elif save_mode == '2':
-                        download_m3u8_with_options(m3u8_file, save_name, prefix)
+                        download_m3u8_with_options(m3u8_file, save_name, prefix, cookies_data, m3u8_headers)
             else:
                 print("未找到包含 'm3u8' 字符的请求链接。")
 
@@ -537,9 +732,9 @@ def batch_mode():
                 save_name = live_name
 
                 if save_mode == '1':
-                    saved_path = auto_download_m3u8_with_options(m3u8_file, save_name, prefix)  # 默认下载到 Downloads
+                    saved_path = auto_download_m3u8_with_options(m3u8_file, save_name, prefix, cookies_data, m3u8_headers)  # 默认下载到 Downloads
                 elif save_mode == '2':
-                    saved_path = download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path)  # 手动选择路径
+                    saved_path = download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path, cookies_data, m3u8_headers)  # 手动选择路径
 
         print('=' * 100)
         for idx, dingtalk_url in list(links_dict.items())[1:]:
@@ -554,9 +749,9 @@ def batch_mode():
                     save_name = live_name
 
                     if save_mode == '1':
-                        saved_path = auto_download_m3u8_with_options(m3u8_file, save_name, prefix)  # 默认下载到 Downloads
+                        saved_path = auto_download_m3u8_with_options(m3u8_file, save_name, prefix, cookies_data, m3u8_headers)  # 默认下载到 Downloads
                     elif save_mode == '2':
-                        saved_path = download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path)  # 手动选择路径
+                        saved_path = download_m3u8_with_reused_path(m3u8_file, save_name, prefix, saved_path, cookies_data, m3u8_headers)  # 手动选择路径
             print('=' * 100)
 
         # 继续下载
