@@ -70,16 +70,65 @@ def fetch_m3u8_links(browser, browser_type, dingtalk_url):
     return None
 
 
-def download_m3u8_file(url, filename, headers):
-    m3u8_content = browser.browser.execute_script(
-        "return fetch(arguments[0], { method: 'GET', headers: arguments[1] }).then(response => response.text())", 
-        url
-    )
-
-    with open(filename, 'w', encoding='utf-8') as f:
-        f.write(m3u8_content)
-
-    return filename
+def download_m3u8_file(url: str, filename: str, headers: dict) -> str:
+    """
+    下载 M3U8 文件内容并保存到本地
+    
+    Args:
+        url: M3U8 文件 URL
+        filename: 本地保存文件名
+        headers: 请求头字典
+    
+    Returns:
+        保存的文件名
+    
+    Raises:
+        ValueError: 如果参数无效
+        PermissionError: 如果文件写入权限不足
+        RuntimeError: 如果下载或保存失败
+    """
+    import os
+    
+    # 参数验证
+    if not url:
+        raise ValueError("URL 不能为空")
+    
+    if not filename:
+        raise ValueError("文件名不能为空")
+    
+    if not headers:
+        raise ValueError("请求头不能为空")
+    
+    # 检查文件目录是否存在
+    file_dir = os.path.dirname(filename)
+    if file_dir and not os.path.exists(file_dir):
+        try:
+            os.makedirs(file_dir, exist_ok=True)
+        except Exception as e:
+            raise RuntimeError(f"创建目录失败: {file_dir}") from e
+    
+    # 检查文件写入权限
+    if file_dir and not os.access(file_dir, os.W_OK):
+        raise PermissionError(f"目录不可写: {file_dir}")
+    
+    try:
+        m3u8_content = browser.browser.execute_script(
+            "return fetch(arguments[0], { method: 'GET', headers: arguments[1] }).then(response => response.text())", 
+            url
+        )
+        
+        if not m3u8_content:
+            raise RuntimeError("下载的 M3U8 内容为空")
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(m3u8_content)
+        
+        return filename
+    
+    except Exception as e:
+        if isinstance(e, (ValueError, PermissionError, RuntimeError)):
+            raise
+        raise RuntimeError(f"下载 M3U8 文件失败: {e}") from e
 
 
 def refresh_page_by_click(browser):

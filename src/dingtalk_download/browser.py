@@ -1,12 +1,53 @@
 """浏览器配置和操作模块"""
 import sys
+from typing import Optional, Dict, Any
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-browser = None
+class BrowserManager:
+    """浏览器管理器，负责浏览器实例的生命周期管理"""
+    
+    def __init__(self):
+        self._browser: Optional[webdriver.Remote] = None
+    
+    def create_browser(self, browser_type: str) -> webdriver.Remote:
+        """创建浏览器实例"""
+        try:
+            options_config = get_browser_options(browser_type)
+            
+            if options_config is None:
+                raise ValueError(f"无法获取浏览器配置: {browser_type}")
+            
+            if browser_type == 'edge':
+                self._browser = webdriver.Edge(options=options_config['options'])
+            elif browser_type == 'chrome':
+                self._browser = webdriver.Chrome(options=options_config['options'])
+            elif browser_type == 'firefox':
+                self._browser = webdriver.Firefox(options=options_config['options'])
+            else:
+                raise ValueError(f"不支持的浏览器类型: {browser_type}")
+            
+            return self._browser
+        except Exception as e:
+            raise RuntimeError(f"创建浏览器失败: {e}") from e
+    
+    def get_browser(self) -> Optional[webdriver.Remote]:
+        """获取当前浏览器实例"""
+        return self._browser
+    
+    def close_browser(self):
+        """关闭浏览器实例"""
+        if self._browser:
+            self._browser.quit()
+            self._browser = None
+
+
+# 全局浏览器管理器实例（向后兼容）
+browser_manager = BrowserManager()
+browser = None  # 保留全局变量以保持向后兼容性
 
 
 def get_browser_options(browser_type):
@@ -48,25 +89,18 @@ def get_browser_options(browser_type):
         raise ValueError(f"不支持的浏览器类型: {browser_type}")
 
 
-def create_browser(browser_type):
+def create_browser(browser_type: str):
+    """创建浏览器实例（向后兼容函数）"""
     global browser
-    options_config = get_browser_options(browser_type)
-    
-    if browser_type == 'edge':
-        browser = webdriver.Edge(options=options_config['options'])
-    elif browser_type == 'chrome':
-        browser = webdriver.Chrome(options=options_config['options'])
-    elif browser_type == 'firefox':
-        browser = webdriver.Firefox(options=options_config['options'])
-    
+    browser = browser_manager.create_browser(browser_type)
     return browser
 
 
 def close_browser():
+    """关闭浏览器实例（向后兼容函数）"""
     global browser
-    if browser:
-        browser.quit()
-        browser = None
+    browser_manager.close_browser()
+    browser = None
 
 
 def get_browser_cookie(url, browser_type='edge'):

@@ -52,5 +52,28 @@ def extract_live_uuid(dingtalk_url):
     return query_params.get('liveUuid', [None])[0]
 
 
-def clean_file_path(input_path):
-    return input_path.strip().replace('"', '').replace("'", "")
+def clean_file_path(input_path: str) -> str:
+    """
+    清理文件路径，移除周围的空白和引号
+    
+    Args:
+        input_path: 输入的文件路径
+    
+    Returns:
+        清理后的文件路径
+    
+    Raises:
+        ValueError: 如果输入路径为空或无效
+    """
+    if not input_path:
+        raise ValueError("文件路径不能为空")
+    
+    if not isinstance(input_path, str):
+        raise ValueError(f"文件路径必须是字符串类型，实际类型: {type(input_path)}")
+    
+    cleaned = input_path.strip().replace('"', '').replace("'", "")
+    
+    if not cleaned:
+        raise ValueError("清理后的文件路径为空")
+    
+    return cleaned
