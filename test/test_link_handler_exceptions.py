@@ -28,22 +28,22 @@ class TestCleanFilePathExceptions:
         assert "清理后的文件路径为空" in str(exc_info.value)
     
     def test_non_string_type_raises_value_error(self):
-        """测试非字符串类型抛出 ValueError"""
-        with pytest.raises(ValueError) as exc_info:
+        """测试非字符串类型抛出 TypeError"""
+        with pytest.raises(TypeError) as exc_info:
             link_handler.clean_file_path(123)
         
         assert "文件路径必须是字符串类型" in str(exc_info.value)
     
     def test_list_type_raises_value_error(self):
-        """测试列表类型抛出 ValueError"""
-        with pytest.raises(ValueError) as exc_info:
+        """测试列表类型抛出 TypeError"""
+        with pytest.raises(TypeError) as exc_info:
             link_handler.clean_file_path(["path"])
         
         assert "文件路径必须是字符串类型" in str(exc_info.value)
     
     def test_dict_type_raises_value_error(self):
-        """测试字典类型抛出 ValueError"""
-        with pytest.raises(ValueError) as exc_info:
+        """测试字典类型抛出 TypeError"""
+        with pytest.raises(TypeError) as exc_info:
             link_handler.clean_file_path({"path": "value"})
         
         assert "文件路径必须是字符串类型" in str(exc_info.value)

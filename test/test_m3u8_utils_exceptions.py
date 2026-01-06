@@ -176,5 +176,5 @@ class TestDownloadM3u8FileExceptions:
                         {"User-Agent": "test"}
                     )
                 
-                assert "下载 M3U8 文件失败" in str(exc_info.value)
+                assert "获取 M3U8 内容失败" in str(exc_info.value)
                 assert "浏览器执行失败" in str(exc_info.value)

@@ -12,10 +12,9 @@ from dingtalk_download import browser
 
 def test_create_browser_with_unsupported_type():
     """测试创建不支持的浏览器类型"""
-    with pytest.raises(RuntimeError) as exc_info:
+    with pytest.raises(ValueError) as exc_info:
         browser.create_browser('unsupported')
     
-    assert "创建浏览器失败" in str(exc_info.value)
     assert "不支持的浏览器类型" in str(exc_info.value)
 
 
@@ -24,10 +23,9 @@ def test_create_browser_with_none_config():
     with patch('dingtalk_download.browser.get_browser_options') as mock_get_options:
         mock_get_options.return_value = None
         
-        with pytest.raises(RuntimeError) as exc_info:
+        with pytest.raises(ValueError) as exc_info:
             browser.create_browser('edge')
         
-        assert "创建浏览器失败" in str(exc_info.value)
         assert "无法获取浏览器配置" in str(exc_info.value)
 
 

@@ -21,9 +21,9 @@ class TestValidateInputExceptions:
         
         assert "提示信息不能为空" in str(exc_info.value)
     
-    def test_non_string_prompt_raises_value_error(self):
-        """测试非字符串提示信息抛出 ValueError"""
-        with pytest.raises(ValueError) as exc_info:
+    def test_non_string_prompt_raises_type_error(self):
+        """测试非字符串提示信息抛出 TypeError"""
+        with pytest.raises(TypeError) as exc_info:
             utils.validate_input(123, ['1', '2'])
         
         assert "提示信息必须是字符串类型" in str(exc_info.value)
@@ -35,16 +35,16 @@ class TestValidateInputExceptions:
         
         assert "有效选项列表不能为空" in str(exc_info.value)
     
-    def test_none_valid_options_raises_value_error(self):
-        """测试 None 有效选项列表抛出 ValueError"""
-        with pytest.raises(ValueError) as exc_info:
+    def test_none_valid_options_raises_type_error(self):
+        """测试 None 有效选项列表抛出 TypeError"""
+        with pytest.raises(TypeError) as exc_info:
             utils.validate_input("请选择:", None)
         
         assert "有效选项必须是列表类型" in str(exc_info.value)
     
-    def test_non_list_valid_options_raises_value_error(self):
-        """测试非列表有效选项抛出 ValueError"""
-        with pytest.raises(ValueError) as exc_info:
+    def test_non_list_valid_options_raises_type_error(self):
+        """测试非列表有效选项抛出 TypeError"""
+        with pytest.raises(TypeError) as exc_info:
             utils.validate_input("请选择:", "1,2")
         
         assert "有效选项必须是列表类型" in str(exc_info.value)
