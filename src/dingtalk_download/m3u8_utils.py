@@ -28,9 +28,11 @@ Example:
     ['https://n.dingtalk.com/live_hp/abc123/video.m3u8']
 """
 
+import json
 import logging
 import os
 import re
+import time
 from typing import Dict, List, Optional
 from urllib.parse import parse_qs, urlparse
 
@@ -187,6 +189,46 @@ def _validate_browser_type(browser_type: str) -> None:
         raise ValueError(error_msg)
 
 
+def _try_play_video(browser_instance: browser.webdriver.Remote) -> bool:
+    """尝试点击播放按钮以触发视频加载。
+
+    Args:
+        browser_instance: 浏览器实例。
+
+    Returns:
+        如果成功触发视频播放则返回 True，否则返回 False。
+    """
+    try:
+        from selenium.webdriver.common.by import By
+        
+        logger.info("尝试触发视频播放...")
+        
+        try:
+            video_element = browser_instance.find_element(By.TAG_NAME, "video")
+            browser_instance.execute_script("arguments[0].play();", video_element)
+            logger.info("成功触发视频播放")
+            print("🎬 已尝试触发视频播放")
+            return True
+        except Exception as e:
+            logger.warning(f"通过 video 标签触发播放失败: {e}")
+        
+        try:
+            play_button = browser_instance.find_element(By.CSS_SELECTOR, "[class*='play'], [class*='Play']")
+            play_button.click()
+            logger.info("成功点击播放按钮")
+            print("🎬 已尝试点击播放按钮")
+            return True
+        except Exception as e:
+            logger.warning(f"点击播放按钮失败: {e}")
+        
+        logger.info("未能触发视频播放，可能视频已在播放或需要手动操作")
+        return False
+    
+    except Exception as e:
+        logger.warning(f"尝试触发视频播放时发生错误: {e}")
+        return False
+
+
 def _get_browser_logs(
     browser_instance: browser.webdriver.Remote,
     browser_type: str
@@ -224,6 +266,42 @@ def _get_browser_logs(
         raise RuntimeError(error_msg) from e
 
 
+def _save_logs_for_debugging(
+    logs: List,
+    browser_type: str,
+    attempt: int,
+    live_uuid: Optional[str] = None
+) -> None:
+    """保存日志到文件用于调试。
+
+    Args:
+        logs: 日志列表。
+        browser_type: 浏览器类型。
+        attempt: 尝试次数。
+        live_uuid: 直播 UUID（可选）。
+    """
+    try:
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        filename = f"Logs/browser_logs_{browser_type}_attempt{attempt}_{timestamp}.json"
+        
+        os.makedirs("Logs", exist_ok=True)
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump({
+                'timestamp': timestamp,
+                'browser_type': browser_type,
+                'attempt': attempt,
+                'live_uuid': live_uuid,
+                'log_count': len(logs),
+                'logs': logs[:100] if len(logs) > 100 else logs
+            }, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"日志已保存到: {filename}")
+        print(f"💾 日志已保存到: {filename}")
+    except Exception as e:
+        logger.error(f"保存日志失败: {e}")
+
+
 def _parse_firefox_log(log_message: str) -> Optional[str]:
     """解析 Firefox 浏览器的日志消息，提取 M3U8 链接。
 
@@ -258,20 +336,36 @@ def _parse_chrome_edge_log(log_message: str, live_uuid: str) -> Optional[str]:
         return None
 
     try:
-        start_idx = log_message.find("url:\"") + len("url:\"")
-        end_idx = log_message.find("\"", start_idx)
+        log_data = json.loads(log_message)
+        
+        if 'message' not in log_data:
+            return None
+        
+        message = log_data['message']
+        if 'params' not in message:
+            return None
+        
+        params = message['params']
+        
+        m3u8_url = None
+        
+        if 'request' in params and 'url' in params['request']:
+            m3u8_url = params['request']['url']
+        elif 'response' in params and 'url' in params['response']:
+            m3u8_url = params['response']['url']
 
-        if start_idx > len("url:\"") - 1 and end_idx > start_idx:
-            m3u8_url = log_message[start_idx:end_idx]
-
-            if live_uuid in m3u8_url:
-                logger.debug(f"从 Chrome/Edge 日志中提取到 M3U8 链接: {m3u8_url}")
-                return m3u8_url
+        if m3u8_url and live_uuid in m3u8_url:
+            logger.info(f"从 Chrome/Edge 日志中提取到 M3U8 链接: {m3u8_url}")
+            return m3u8_url
+        elif m3u8_url:
+            logger.debug(f"找到的 M3U8 链接不包含 liveUuid: {live_uuid}")
+            return None
+        else:
+            return None
 
     except Exception as e:
         logger.warning(f"解析 Chrome/Edge 日志时发生错误: {e}")
-
-    return None
+        return None
 
 
 def _process_log_entry(
@@ -292,12 +386,15 @@ def _process_log_entry(
     try:
         if browser_type == 'firefox':
             log_message = str(log)
+            logger.debug(f"处理 Firefox 日志条目，长度: {len(log_message)}")
             return _parse_firefox_log(log_message)
         else:
             if isinstance(log, dict) and 'message' in log:
                 log_message = log['message']
+                logger.debug(f"处理 Chrome/Edge 日志条目，message 长度: {len(log_message)}")
             else:
                 log_message = str(log)
+                logger.debug(f"处理 Chrome/Edge 日志条目（非字典），长度: {len(log_message)}")
 
             return _parse_chrome_edge_log(log_message, live_uuid)
 
@@ -345,36 +442,81 @@ def fetch_m3u8_links(
     if not live_uuid:
         error_msg = "未能从 URL 提取 liveUuid"
         logger.error(error_msg)
+        print(f"❌ {error_msg}")
         return None
 
     logger.debug(f"提取到 liveUuid: {live_uuid}")
+    print(f"✓ 成功提取 liveUuid: {live_uuid}")
 
     _validate_browser_type(browser_type)
 
     for attempt in range(MAX_RETRY_ATTEMPTS):
         try:
             logger.info(f"第 {attempt + 1} 次尝试获取 M3U8 链接")
+            print(f"\n🔄 第 {attempt + 1} 次尝试获取 M3U8 链接...")
+
+            if attempt == 0:
+                logger.info("等待视频元素加载...")
+                print("⏳ 等待视频元素加载...")
+                
+                try:
+                    from selenium.webdriver.support.ui import WebDriverWait
+                    WebDriverWait(browser_instance, 20).until(
+                        lambda driver: driver.execute_script(
+                            "return isNaN(document.querySelector('video')?.duration)"
+                        ) == False
+                    )
+                    logger.info("视频元素已加载")
+                    print("✓ 视频元素已加载")
+                except Exception as e:
+                    logger.warning(f"等待视频加载超时: {e}")
+                    print(f"⚠️  等待视频加载超时: {e}")
+                    input("请在页面加载后，按Enter键继续...")
+                
+                _try_play_video(browser_instance)
+                print("⏳ 等待 5 秒让视频开始加载...")
+                time.sleep(5)
 
             logs = _get_browser_logs(browser_instance, browser_type)
+            logger.info(f"获取到 {len(logs)} 条日志")
+            print(f"📊 获取到 {len(logs)} 条日志")
 
-            for log in logs:
+            _save_logs_for_debugging(logs, browser_type, attempt + 1, live_uuid)
+
+            m3u8_count = 0
+            for idx, log in enumerate(logs):
                 m3u8_url = _process_log_entry(log, browser_type, live_uuid)
 
                 if m3u8_url:
                     logger.info(f"成功获取到 M3U8 链接: {m3u8_url}")
+                    print(f"✅ 成功获取到 M3U8 链接: {m3u8_url}")
                     m3u8_links.append(m3u8_url)
                     return m3u8_links
+                
+                if idx < 10:
+                    logger.debug(f"已处理 {idx + 1} 条日志，暂未找到 M3U8 链接")
 
             logger.warning(f"第 {attempt + 1} 次尝试未获取到 M3U8 链接，准备重试")
-            refresh_page_by_click(browser_instance)
+            print(f"⚠️  第 {attempt + 1} 次尝试未获取到 M3U8 链接")
+            
+            if attempt < MAX_RETRY_ATTEMPTS - 1:
+                print("🔄 准备刷新页面重试...")
+                refresh_page_by_click(browser_instance)
 
         except Exception as e:
             error_msg = f"获取 M3U8 链接时发生错误: {e}"
             logger.error(error_msg, exc_info=True)
+            print(f"❌ {error_msg}")
             raise RuntimeError(error_msg) from e
 
     error_msg = f"经过 {MAX_RETRY_ATTEMPTS} 次尝试仍未获取到 M3U8 链接"
     logger.error(error_msg)
+    print(f"\n❌ {error_msg}")
+    print(f"💡 调试提示：请确保：")
+    print(f"   1. 钉钉直播页面已完全加载")
+    print(f"   2. 浏览器已登录钉钉账户")
+    print(f"   3. 直播回放链接有效且可访问")
+    print(f"   4. 网络连接正常")
     return None
 
 
