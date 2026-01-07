@@ -1,3 +1,13 @@
-Logs/2026-01-01_16-37-13-891.log
-Logs/2026-01-01_16-38-02-830.log
-__pycache__/DingTalk-Live-Playback-Download-Tool.cpython-313.pyc
+# ide
+.trae/
+.idea/
+
+# python
+__pycache__/
+.pytest_cache/
+
+# project
+Downloads/
+Logs/
+tmp/
+*.m3u8
