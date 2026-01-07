@@ -94,7 +94,7 @@ def repeat_process_links(
 
             if m3u8_links:
                 for link in m3u8_links:
-                    m3u8_file = download_m3u8_file(link, DEFAULT_M3U8_FILENAME, m3u8_headers)
+                    m3u8_file = download_m3u8_file(link, DEFAULT_M3U8_FILENAME, m3u8_headers, cookies_data)
                     prefix = extract_prefix(link)
                     save_name = live_name
 
@@ -203,7 +203,7 @@ def _download_single_video(
 
     if m3u8_links:
         for link in m3u8_links:
-            m3u8_file = download_m3u8_file(link, DEFAULT_M3U8_FILENAME, m3u8_headers)
+            m3u8_file = download_m3u8_file(link, DEFAULT_M3U8_FILENAME, m3u8_headers, cookies_data)
             prefix = extract_prefix(link)
             save_name = live_name
 
@@ -324,7 +324,7 @@ def _download_batch_video(
 
     if m3u8_links:
         for link in m3u8_links:
-            m3u8_file = download_m3u8_file(link, DEFAULT_M3U8_FILENAME, m3u8_headers)
+            m3u8_file = download_m3u8_file(link, DEFAULT_M3U8_FILENAME, m3u8_headers, cookies_data)
             prefix = extract_prefix(link)
             save_name = live_name
 

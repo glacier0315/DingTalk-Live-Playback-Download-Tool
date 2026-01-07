@@ -3,3 +3,4 @@ pandas
 openpyxl
 xlrd
 tkintertable
+requests>=2.28.0

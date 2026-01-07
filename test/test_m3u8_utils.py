@@ -156,32 +156,66 @@ class TestParseChromeEdgeLog:
     def test_parse_chrome_edge_log_valid(self):
         """测试解析有效的Chrome/Edge日志"""
         from dingtalk_download.m3u8_utils import _parse_chrome_edge_log
+        import json
 
-        log_message = 'Network request: url:"https://example.com/live_hp/abc123/video.m3u8"'
+        log_message = json.dumps({
+            "message": {
+                "params": {
+                    "request": {
+                        "url": "https://example.com/live_hp/abc123/video.m3u8"
+                    }
+                }
+            }
+        })
         result = _parse_chrome_edge_log(log_message, 'abc123')
         assert result == "https://example.com/live_hp/abc123/video.m3u8"
 
     def test_parse_chrome_edge_log_no_m3u8(self):
         """测试没有M3U8链接的日志"""
         from dingtalk_download.m3u8_utils import _parse_chrome_edge_log
+        import json
 
-        log_message = 'Network request: url:"https://example.com/video.mp4"'
+        log_message = json.dumps({
+            "message": {
+                "params": {
+                    "request": {
+                        "url": "https://example.com/video.mp4"
+                    }
+                }
+            }
+        })
         result = _parse_chrome_edge_log(log_message, 'abc123')
         assert result is None
 
     def test_parse_chrome_edge_log_no_url(self):
         """测试没有url字段的日志"""
         from dingtalk_download.m3u8_utils import _parse_chrome_edge_log
+        import json
 
-        log_message = 'Network request: data:"test"'
+        log_message = json.dumps({
+            "message": {
+                "params": {
+                    "data": "test"
+                }
+            }
+        })
         result = _parse_chrome_edge_log(log_message, 'abc123')
         assert result is None
 
     def test_parse_chrome_edge_log_no_uuid(self):
         """测试UUID不匹配"""
         from dingtalk_download.m3u8_utils import _parse_chrome_edge_log
+        import json
 
-        log_message = 'Network request: url:"https://example.com/live_hp/def456/video.m3u8"'
+        log_message = json.dumps({
+            "message": {
+                "params": {
+                    "request": {
+                        "url": "https://example.com/live_hp/def456/video.m3u8"
+                    }
+                }
+            }
+        })
         result = _parse_chrome_edge_log(log_message, 'abc123')
         assert result is None
 
@@ -391,11 +425,12 @@ class TestGetBrowserLogs:
 class TestFetchM3u8Links:
     """测试fetch_m3u8_links函数"""
 
+    @patch('builtins.input', return_value='n')
     @patch('dingtalk_download.m3u8_utils._process_log_entry')
     @patch('dingtalk_download.m3u8_utils._get_browser_logs')
     @patch('dingtalk_download.m3u8_utils.extract_live_uuid')
     @patch('dingtalk_download.m3u8_utils._validate_browser_type')
-    def test_fetch_m3u8_links_success(self, mock_validate, mock_extract, mock_get_logs, mock_process):
+    def test_fetch_m3u8_links_success(self, mock_validate, mock_extract, mock_get_logs, mock_process, mock_input):
         """测试成功获取M3U8链接"""
         from dingtalk_download.m3u8_utils import fetch_m3u8_links
 
@@ -420,12 +455,13 @@ class TestFetchM3u8Links:
 
         assert result is None
 
+    @patch('builtins.input', return_value='n')
     @patch('dingtalk_download.m3u8_utils.refresh_page_by_click')
     @patch('dingtalk_download.m3u8_utils._process_log_entry')
     @patch('dingtalk_download.m3u8_utils._get_browser_logs')
     @patch('dingtalk_download.m3u8_utils.extract_live_uuid')
     @patch('dingtalk_download.m3u8_utils._validate_browser_type')
-    def test_fetch_m3u8_links_retry(self, mock_validate, mock_extract, mock_get_logs, mock_process, mock_refresh):
+    def test_fetch_m3u8_links_retry(self, mock_validate, mock_extract, mock_get_logs, mock_process, mock_refresh, mock_input):
         """测试重试机制"""
         from dingtalk_download.m3u8_utils import fetch_m3u8_links
 
@@ -440,46 +476,51 @@ class TestFetchM3u8Links:
         assert mock_refresh.call_count == 1
 
 
-class TestFetchM3u8ContentViaBrowser:
-    """测试_fetch_m3u8_content_via_browser函数"""
+class TestFetchM3u8ContentViaRequests:
+    """测试_fetch_m3u8_content_via_requests函数"""
 
-    @patch('dingtalk_download.m3u8_utils.browser')
-    def test_fetch_m3u8_content_success(self, mock_browser):
+    @patch('dingtalk_download.m3u8_utils.requests.get')
+    def test_fetch_m3u8_content_success(self, mock_get):
         """测试成功获取M3U8内容"""
-        from dingtalk_download.m3u8_utils import _fetch_m3u8_content_via_browser
+        from dingtalk_download.m3u8_utils import _fetch_m3u8_content_via_requests
 
-        mock_browser.browser.execute_script.return_value = '#EXTM3U\n#EXT-X-VERSION:3'
+        mock_response = Mock()
+        mock_response.text = '#EXTM3U\n#EXT-X-VERSION:3'
+        mock_get.return_value = mock_response
 
-        result = _fetch_m3u8_content_via_browser('https://example.com/video.m3u8', {'Cookie': 'test'})
+        result = _fetch_m3u8_content_via_requests('https://example.com/video.m3u8', {'Cookie': 'test'})
 
         assert result == '#EXTM3U\n#EXT-X-VERSION:3'
 
-    @patch('dingtalk_download.m3u8_utils.browser')
-    def test_fetch_m3u8_content_empty(self, mock_browser):
+    @patch('dingtalk_download.m3u8_utils.requests.get')
+    def test_fetch_m3u8_content_empty(self, mock_get):
         """测试获取空内容"""
-        from dingtalk_download.m3u8_utils import _fetch_m3u8_content_via_browser
+        from dingtalk_download.m3u8_utils import _fetch_m3u8_content_via_requests
 
-        mock_browser.browser.execute_script.return_value = ''
+        mock_response = Mock()
+        mock_response.text = ''
+        mock_get.return_value = mock_response
 
         with pytest.raises(RuntimeError, match="下载的 M3U8 内容为空"):
-            _fetch_m3u8_content_via_browser('https://example.com/video.m3u8', {'Cookie': 'test'})
+            _fetch_m3u8_content_via_requests('https://example.com/video.m3u8', {'Cookie': 'test'})
 
-    @patch('dingtalk_download.m3u8_utils.browser')
-    def test_fetch_m3u8_content_error(self, mock_browser):
+    @patch('dingtalk_download.m3u8_utils.requests.get')
+    def test_fetch_m3u8_content_error(self, mock_get):
         """测试获取内容失败"""
-        from dingtalk_download.m3u8_utils import _fetch_m3u8_content_via_browser
+        from dingtalk_download.m3u8_utils import _fetch_m3u8_content_via_requests
+        import requests
 
-        mock_browser.browser.execute_script.side_effect = Exception("Fetch error")
+        mock_get.side_effect = requests.exceptions.RequestException("Fetch error")
 
         with pytest.raises(RuntimeError, match="获取 M3U8 内容失败"):
-            _fetch_m3u8_content_via_browser('https://example.com/video.m3u8', {'Cookie': 'test'})
+            _fetch_m3u8_content_via_requests('https://example.com/video.m3u8', {'Cookie': 'test'})
 
 
 class TestDownloadM3u8File:
     """测试download_m3u8_file函数"""
 
     @patch('dingtalk_download.m3u8_utils._save_m3u8_content_to_file')
-    @patch('dingtalk_download.m3u8_utils._fetch_m3u8_content_via_browser')
+    @patch('dingtalk_download.m3u8_utils._fetch_m3u8_content_via_requests')
     @patch('dingtalk_download.m3u8_utils._ensure_directory_exists')
     @patch('dingtalk_download.m3u8_utils._validate_m3u8_download_parameters')
     def test_download_m3u8_file_success(self, mock_validate, mock_ensure, mock_fetch, mock_save):

@@ -83,8 +83,10 @@ class TestDownloadM3u8FileExceptions:
     
     def test_empty_content_raises_runtime_error(self):
         """测试空内容抛出 RuntimeError"""
-        with patch('dingtalk_download.m3u8_utils.browser') as mock_browser:
-            mock_browser.browser.execute_script.return_value = ""
+        with patch('dingtalk_download.m3u8_utils.requests.get') as mock_get:
+            mock_response = MagicMock()
+            mock_response.text = ""
+            mock_get.return_value = mock_response
             
             with tempfile.TemporaryDirectory() as tmpdir:
                 filepath = os.path.join(tmpdir, "test.m3u8")
@@ -100,8 +102,10 @@ class TestDownloadM3u8FileExceptions:
     
     def test_none_content_raises_runtime_error(self):
         """测试 None 内容抛出 RuntimeError"""
-        with patch('dingtalk_download.m3u8_utils.browser') as mock_browser:
-            mock_browser.browser.execute_script.return_value = None
+        with patch('dingtalk_download.m3u8_utils.requests.get') as mock_get:
+            mock_response = MagicMock()
+            mock_response.text = None
+            mock_get.return_value = mock_response
             
             with tempfile.TemporaryDirectory() as tmpdir:
                 filepath = os.path.join(tmpdir, "test.m3u8")
@@ -119,8 +123,10 @@ class TestDownloadM3u8FileExceptions:
         """测试有效参数成功下载"""
         test_content = "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:10\n"
         
-        with patch('dingtalk_download.m3u8_utils.browser') as mock_browser:
-            mock_browser.browser.execute_script.return_value = test_content
+        with patch('dingtalk_download.m3u8_utils.requests.get') as mock_get:
+            mock_response = MagicMock()
+            mock_response.text = test_content
+            mock_get.return_value = mock_response
             
             with tempfile.TemporaryDirectory() as tmpdir:
                 filepath = os.path.join(tmpdir, "test.m3u8")
@@ -142,8 +148,10 @@ class TestDownloadM3u8FileExceptions:
         """测试自动创建不存在的目录"""
         test_content = "#EXTM3U\n#EXT-X-VERSION:3\n"
         
-        with patch('dingtalk_download.m3u8_utils.browser') as mock_browser:
-            mock_browser.browser.execute_script.return_value = test_content
+        with patch('dingtalk_download.m3u8_utils.requests.get') as mock_get:
+            mock_response = MagicMock()
+            mock_response.text = test_content
+            mock_get.return_value = mock_response
             
             with tempfile.TemporaryDirectory() as tmpdir:
                 new_dir = os.path.join(tmpdir, "new", "nested", "dir")
@@ -162,9 +170,11 @@ class TestDownloadM3u8FileExceptions:
                 assert os.path.exists(filepath)
     
     def test_execute_script_exception_raises_runtime_error(self):
-        """测试 execute_script 异常抛出 RuntimeError"""
-        with patch('dingtalk_download.m3u8_utils.browser') as mock_browser:
-            mock_browser.browser.execute_script.side_effect = Exception("浏览器执行失败")
+        """测试 requests 异常抛出 RuntimeError"""
+        import requests
+        
+        with patch('dingtalk_download.m3u8_utils.requests.get') as mock_get:
+            mock_get.side_effect = requests.exceptions.RequestException("网络请求失败")
             
             with tempfile.TemporaryDirectory() as tmpdir:
                 filepath = os.path.join(tmpdir, "test.m3u8")
@@ -177,4 +187,4 @@ class TestDownloadM3u8FileExceptions:
                     )
                 
                 assert "获取 M3U8 内容失败" in str(exc_info.value)
-                assert "浏览器执行失败" in str(exc_info.value)
+                assert "网络请求失败" in str(exc_info.value)

@@ -36,6 +36,8 @@ import time
 from typing import Dict, List, Optional
 from urllib.parse import parse_qs, urlparse
 
+import requests
+
 from . import browser
 
 logger = logging.getLogger(__name__)
@@ -597,15 +599,17 @@ def _ensure_directory_exists(filename: str) -> None:
         raise PermissionError(error_msg)
 
 
-def _fetch_m3u8_content_via_browser(
+def _fetch_m3u8_content_via_requests(
     url: str,
-    headers: Dict[str, str]
+    headers: Dict[str, str],
+    cookies: Optional[Dict[str, str]] = None
 ) -> str:
-    """通过浏览器执行 JavaScript 获取 M3U8 文件内容。
+    """使用 requests 库获取 M3U8 文件内容。
 
     Args:
         url: M3U8 文件 URL。
         headers: 请求头字典。
+        cookies: Cookie 字典（可选）。
 
     Returns:
         M3U8 文件内容。
@@ -613,15 +617,19 @@ def _fetch_m3u8_content_via_browser(
     Raises:
         RuntimeError: 如果获取内容失败或内容为空。
     """
-    logger.debug(f"通过浏览器获取 M3U8 内容，URL: {url}")
+    logger.debug(f"通过 requests 获取 M3U8 内容，URL: {url}")
 
     try:
-        m3u8_content = browser.browser.execute_script(
-            "return fetch(arguments[0], { method: 'GET', headers: arguments[1] }).then(response => response.text())",
+        response = requests.get(
             url,
-            headers
+            headers=headers,
+            cookies=cookies,
+            timeout=30
         )
-
+        response.raise_for_status()
+        
+        m3u8_content = response.text
+        
         if not m3u8_content:
             error_msg = "下载的 M3U8 内容为空"
             logger.error(error_msg)
@@ -630,7 +638,7 @@ def _fetch_m3u8_content_via_browser(
         logger.debug(f"成功获取 M3U8 内容，长度: {len(m3u8_content)} 字符")
         return m3u8_content
 
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         error_msg = f"获取 M3U8 内容失败: {e}"
         logger.error(error_msg, exc_info=True)
         raise RuntimeError(error_msg) from e
@@ -661,17 +669,19 @@ def _save_m3u8_content_to_file(filename: str, content: str) -> None:
 def download_m3u8_file(
     url: str,
     filename: str,
-    headers: Dict[str, str]
+    headers: Dict[str, str],
+    cookies: Optional[Dict[str, str]] = None
 ) -> str:
     """下载 M3U8 文件内容并保存到本地。
 
-    该函数通过浏览器执行 JavaScript 代码来获取 M3U8 文件内容，
+    该函数通过 requests 库获取 M3U8 文件内容，
     然后将内容保存到指定的本地文件中。
 
     Args:
         url: M3U8 文件 URL。
         filename: 本地保存文件名（包含完整路径）。
         headers: 请求头字典，包含必要的认证信息。
+        cookies: Cookie 字典（可选），包含必要的认证信息。
 
     Returns:
         保存的文件路径。
@@ -684,8 +694,9 @@ def download_m3u8_file(
     Examples:
         >>> url = "https://n.dingtalk.com/live_hp/abc123/video.m3u8"
         >>> filename = "d:\\\\videos\\\\video.m3u8"
-        >>> headers = {"Cookie": "session=abc123", "User-Agent": "Mozilla/5.0"}
-        >>> result = download_m3u8_file(url, filename, headers)
+        >>> headers = {"User-Agent": "Mozilla/5.0"}
+        >>> cookies = {"session": "abc123"}
+        >>> result = download_m3u8_file(url, filename, headers, cookies)
         >>> print(result)
         'd:\\\\videos\\\\video.m3u8'
     """
@@ -694,7 +705,7 @@ def download_m3u8_file(
     try:
         _validate_m3u8_download_parameters(url, filename, headers)
         _ensure_directory_exists(filename)
-        m3u8_content = _fetch_m3u8_content_via_browser(url, headers)
+        m3u8_content = _fetch_m3u8_content_via_requests(url, headers, cookies)
         _save_m3u8_content_to_file(filename, m3u8_content)
 
         logger.info(f"M3U8 文件下载并保存成功: {filename}")
