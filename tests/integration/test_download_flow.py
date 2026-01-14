@@ -21,9 +21,9 @@ from dingtalk_downloader.core.downloader import Downloader
 from dingtalk_downloader.config.constants import BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT
 
 
-@patch("src.dingtalk_downloader.core.downloader.CookieHandler")
-@patch("src.dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("src.dingtalk_downloader.core.downloader.NM3u8DLRE")
+@patch("dingtalk_downloader.core.downloader.CookieHandler")
+@patch("dingtalk_downloader.core.downloader.M3u8Parser")
+@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
 def test_single_download_flow(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
     """测试单个视频下载流程"""
     mock_cookie_handler.return_value.get_cookie.return_value = (
@@ -39,7 +39,7 @@ def test_single_download_flow(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_ha
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    with patch("builtins.input", side_effect=["https://n.dingtalk.com/test", "q"]):
+    with patch("builtins.input", side_effect=["q"]):
         downloader.download_single_video("https://n.dingtalk.com/test")
 
     mock_cookie_handler.return_value.get_cookie.assert_called_once()
@@ -47,18 +47,13 @@ def test_single_download_flow(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_ha
     mock_n_m3u8dl_re.return_value.download.assert_called_once()
 
 
-@patch("src.dingtalk_downloader.core.downloader.CookieHandler")
-@patch("src.dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("src.dingtalk_downloader.core.downloader.NM3u8DLRE")
-@patch("src.dingtalk_downloader.core.downloader.FileReader")
+@patch("dingtalk_downloader.core.downloader.CookieHandler")
+@patch("dingtalk_downloader.core.downloader.M3u8Parser")
+@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
 def test_batch_download_flow(
-    mock_file_reader, mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
+    mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
 ):
     """测试批量下载流程"""
-    mock_file_reader.return_value.read_links.return_value = {
-        0: "https://n.dingtalk.com/test1",
-        1: "https://n.dingtalk.com/test2",
-    }
     mock_cookie_handler.return_value.get_cookie.return_value = (
         Mock(),
         {"test": "value"},
@@ -77,12 +72,11 @@ def test_batch_download_flow(
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    with patch("builtins.input", side_effect=["test.csv", "q"]):
+    with patch("builtins.input", side_effect=["q"]):
         downloader.download_batch_videos(
             {0: "https://n.dingtalk.com/test1", 1: "https://n.dingtalk.com/test2"}
         )
 
-    mock_file_reader.assert_called_once()
     mock_cookie_handler.return_value.get_cookie.assert_called_once()
     mock_cookie_handler.return_value.repeat_get_cookie.assert_called_once()
     mock_n_m3u8dl_re.return_value.download.assert_called()
