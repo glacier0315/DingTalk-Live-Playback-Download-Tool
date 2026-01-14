@@ -1,13 +1,28 @@
-# ide
+# IDE配置文件（适配Trae IDE）
 .trae/
+.vscode/
 .idea/
 
-# python
+# Python缓存文件
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
 .pytest_cache/
+.pyre/
+
+# 环境文件
+venv/
+env/
+.env
+.env.local
+
+# 日志与临时文件
+*.log
+Logs/
+tmp/
+temp/
 
 # project
 Downloads/
-Logs/
-tmp/
 *.m3u8
