@@ -26,3 +26,21 @@ temp/
 # project
 Downloads/
 *.m3u8
+
+# 测试覆盖率报告（新增）
+.coverage
+coverage.xml
+htmlcov/
+
+# Python 构建和分发（新增）
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 其他临时文件（新增）
+.tox/
+.cache/
+*.swp
+*.swo
+*~
