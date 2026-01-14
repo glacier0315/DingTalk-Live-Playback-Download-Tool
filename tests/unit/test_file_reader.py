@@ -15,7 +15,7 @@ import os
 import pytest
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from dingtalk_downloader.utils.file_reader import FileReader
 
@@ -23,10 +23,10 @@ from dingtalk_downloader.utils.file_reader import FileReader
 @pytest.fixture
 def sample_csv_file():
     """创建测试用的 CSV 文件"""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
-        f.write('link\n')
-        f.write('https://n.dingtalk.com/test1\n')
-        f.write('https://n.dingtalk.com/test2\n')
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, encoding="utf-8") as f:
+        f.write("link\n")
+        f.write("https://n.dingtalk.com/test1\n")
+        f.write("https://n.dingtalk.com/test2\n")
         yield f.name
     os.unlink(f.name)
 
@@ -35,8 +35,11 @@ def sample_csv_file():
 def sample_excel_file():
     """创建测试用的 Excel 文件"""
     import pandas as pd
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.xlsx', delete=False) as f:
-        df = pd.DataFrame({'link': ['https://n.dingtalk.com/test1', 'https://n.dingtalk.com/test2']})
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".xlsx", delete=False) as f:
+        df = pd.DataFrame(
+            {"link": ["https://n.dingtalk.com/test1", "https://n.dingtalk.com/test2"]}
+        )
         df.to_excel(f.name, index=False)
         yield f.name
     os.unlink(f.name)
@@ -47,8 +50,8 @@ def test_file_reader_csv(sample_csv_file):
     reader = FileReader(sample_csv_file)
     links = reader.read_links()
     assert len(links) == 2
-    assert 'https://n.dingtalk.com/test1' in links.values()
-    assert 'https://n.dingtalk.com/test2' in links.values()
+    assert "https://n.dingtalk.com/test1" in links.values()
+    assert "https://n.dingtalk.com/test2" in links.values()
 
 
 def test_file_reader_excel(sample_excel_file):
@@ -56,18 +59,18 @@ def test_file_reader_excel(sample_excel_file):
     reader = FileReader(sample_excel_file)
     links = reader.read_links()
     assert len(links) == 2
-    assert 'https://n.dingtalk.com/test1' in links.values()
-    assert 'https://n.dingtalk.com/test2' in links.values()
+    assert "https://n.dingtalk.com/test1" in links.values()
+    assert "https://n.dingtalk.com/test2" in links.values()
 
 
 def test_file_reader_invalid_format():
     """测试读取不支持的文件格式"""
     with pytest.raises(ValueError):
-        FileReader('test.txt')
+        FileReader("test.txt")
 
 
 def test_file_reader_clean_file_path():
     """测试清理文件路径"""
     path = '"test/path/file.txt"'
     result = FileReader.clean_file_path(path)
-    assert result == 'test/path/file.txt'
+    assert result == "test/path/file.txt"

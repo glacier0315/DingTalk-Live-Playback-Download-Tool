@@ -44,10 +44,10 @@ class ChromeDriver:
             Chrome 浏览器实例
         """
         chrome_options = ChromeOptions()
-        chrome_options.add_argument('--disable-usb-device-event-log')
-        chrome_options.add_argument('--ignore-certificate-errors')
-        chrome_options.add_argument('--disable-logging')
-        chrome_options.add_argument('--log-level=3')
+        chrome_options.add_argument("--disable-usb-device-event-log")
+        chrome_options.add_argument("--ignore-certificate-errors")
+        chrome_options.add_argument("--disable-logging")
+        chrome_options.add_argument("--log-level=3")
         chrome_options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
 
         self.driver = webdriver.Chrome(options=chrome_options)
@@ -121,8 +121,8 @@ class ChromeDriver:
         """
         if self.driver:
             referer = self.driver.execute_script("return document.referrer")
-            return referer if referer else 'https://n.dingtalk.com/'
-        return 'https://n.dingtalk.com/'
+            return referer if referer else "https://n.dingtalk.com/"
+        return "https://n.dingtalk.com/"
 
     def get_cookies(self) -> List[dict]:
         """
@@ -158,7 +158,10 @@ class ChromeDriver:
         """
         if self.driver:
             WebDriverWait(self.driver, timeout).until(
-                lambda driver: driver.execute_script("return isNaN(document.querySelector('video')?.duration)") == False
+                lambda driver: driver.execute_script(
+                    "return isNaN(document.querySelector('video')?.duration)"
+                )
+                == False
             )
 
     def close(self) -> None:

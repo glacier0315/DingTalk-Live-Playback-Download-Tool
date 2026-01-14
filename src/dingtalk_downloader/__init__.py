@@ -25,19 +25,19 @@ from .browser.firefox_driver import FirefoxDriver
 from .config.settings import Settings
 
 __all__ = [
-    'main',
-    'Downloader',
-    'CookieHandler',
-    'M3u8Parser',
-    'FileReader',
-    'validate_input',
-    'clean_file_path',
-    'join_paths',
-    'NM3u8DLRE',
-    'BrowserFactory',
-    'EdgeDriver',
-    'ChromeDriver',
-    'FirefoxDriver',
-    'Settings'
+    "main",
+    "Downloader",
+    "CookieHandler",
+    "M3u8Parser",
+    "FileReader",
+    "validate_input",
+    "clean_file_path",
+    "join_paths",
+    "NM3u8DLRE",
+    "BrowserFactory",
+    "EdgeDriver",
+    "ChromeDriver",
+    "FirefoxDriver",
+    "Settings",
 ]
-__version__ = '1.3.0'
+__version__ = "1.3.0"

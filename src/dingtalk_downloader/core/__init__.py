@@ -14,4 +14,4 @@ from .cookie_handler import CookieHandler
 from .m3u8_parser import M3u8Parser
 from .downloader import Downloader
 
-__all__ = ['CookieHandler', 'M3u8Parser', 'Downloader']
+__all__ = ["CookieHandler", "M3u8Parser", "Downloader"]

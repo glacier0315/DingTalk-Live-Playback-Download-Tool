@@ -13,7 +13,9 @@
 from typing import List, Optional
 
 
-def validate_input(prompt: str, valid_options: List[str], default_option: Optional[str] = None) -> str:
+def validate_input(
+    prompt: str, valid_options: List[str], default_option: Optional[str] = None
+) -> str:
     """
     验证用户输入。
 
@@ -32,7 +34,7 @@ def validate_input(prompt: str, valid_options: List[str], default_option: Option
     """
     while True:
         choice = input(prompt)
-        if choice == '' and default_option is not None:
+        if choice == "" and default_option is not None:
             return default_option
         if choice in valid_options:
             return choice

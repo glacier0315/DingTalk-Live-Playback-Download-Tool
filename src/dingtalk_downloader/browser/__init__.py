@@ -15,4 +15,4 @@ from .edge_driver import EdgeDriver
 from .chrome_driver import ChromeDriver
 from .firefox_driver import FirefoxDriver
 
-__all__ = ['BrowserFactory', 'EdgeDriver', 'ChromeDriver', 'FirefoxDriver']
+__all__ = ["BrowserFactory", "EdgeDriver", "ChromeDriver", "FirefoxDriver"]

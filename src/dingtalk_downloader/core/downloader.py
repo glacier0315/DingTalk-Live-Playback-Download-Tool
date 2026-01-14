@@ -19,7 +19,12 @@ from ..core.cookie_handler import CookieHandler
 from ..core.m3u8_parser import M3u8Parser
 from ..binary.n_m3u8dl_re import NM3u8DLRE
 from ..utils.path_helper import ensure_dir_exists
-from ..config.constants import SAVE_MODE_DEFAULT, SAVE_MODE_MANUAL, DEFAULT_DOWNLOAD_DIR, TEMP_M3U8_FILE
+from ..config.constants import (
+    SAVE_MODE_DEFAULT,
+    SAVE_MODE_MANUAL,
+    DEFAULT_DOWNLOAD_DIR,
+    TEMP_M3U8_FILE,
+)
 
 
 class Downloader:
@@ -73,15 +78,19 @@ class Downloader:
 
                 if m3u8_links:
                     for link in m3u8_links:
-                        m3u8_file = self.m3u8_parser.download_m3u8_file(link, TEMP_M3U8_FILE, m3u8_headers)
+                        m3u8_file = self.m3u8_parser.download_m3u8_file(
+                            link, TEMP_M3U8_FILE, m3u8_headers
+                        )
                         prefix = self.m3u8_parser.extract_prefix(link)
-                        self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
+                        self._download_video(
+                            m3u8_file, live_name, prefix, cookies_data, m3u8_headers
+                        )
                 else:
                     print("未找到包含 'm3u8' 字符的请求链接。")
 
-                print('=' * 100)
+                print("=" * 100)
                 url = input("请继续输入钉钉直播分享链接，或输入q退出程序: ")
-                if url.lower() == 'q':
+                if url.lower() == "q":
                     self.close()
                     print("程序已退出。")
                     break
@@ -113,7 +122,9 @@ class Downloader:
             print(f"共提取到 {total_links} 个钉钉直播回放分享链接。")
 
             first_link = next(iter(urls.values()))
-            browser, cookies_data, m3u8_headers, live_name = self.cookie_handler.get_cookie(first_link)
+            browser, cookies_data, m3u8_headers, live_name = self.cookie_handler.get_cookie(
+                first_link
+            )
             self.m3u8_parser = M3u8Parser(browser, self.browser_type)
 
             print(f"正在下载第 1 个视频，共 {total_links} 个视频。")
@@ -121,23 +132,31 @@ class Downloader:
 
             if m3u8_links:
                 for link in m3u8_links:
-                    m3u8_file = self.m3u8_parser.download_m3u8_file(link, TEMP_M3U8_FILE, m3u8_headers)
+                    m3u8_file = self.m3u8_parser.download_m3u8_file(
+                        link, TEMP_M3U8_FILE, m3u8_headers
+                    )
                     prefix = self.m3u8_parser.extract_prefix(link)
                     self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
 
-            print('=' * 100)
+            print("=" * 100)
 
             for idx, dingtalk_url in list(urls.items())[1:]:
                 print(f"正在下载第 {idx + 1} 个视频，共 {total_links} 个视频。")
-                cookies_data, m3u8_headers, live_name = self.cookie_handler.repeat_get_cookie(dingtalk_url)
+                cookies_data, m3u8_headers, live_name = self.cookie_handler.repeat_get_cookie(
+                    dingtalk_url
+                )
                 m3u8_links = self.m3u8_parser.fetch_m3u8_links(dingtalk_url)
 
                 if m3u8_links:
                     for link in m3u8_links:
-                        m3u8_file = self.m3u8_parser.download_m3u8_file(link, TEMP_M3U8_FILE, m3u8_headers)
+                        m3u8_file = self.m3u8_parser.download_m3u8_file(
+                            link, TEMP_M3U8_FILE, m3u8_headers
+                        )
                         prefix = self.m3u8_parser.extract_prefix(link)
-                        self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
-                print('=' * 100)
+                        self._download_video(
+                            m3u8_file, live_name, prefix, cookies_data, m3u8_headers
+                        )
+                print("=" * 100)
 
             self._continue_download()
 
@@ -150,8 +169,14 @@ class Downloader:
             print(f"发生错误: {e}")
             self.close()
 
-    def _download_video(self, m3u8_file: str, save_name: str, prefix: str,
-                     cookies_data: Dict[str, str], m3u8_headers: Dict[str, str]) -> None:
+    def _download_video(
+        self,
+        m3u8_file: str,
+        save_name: str,
+        prefix: str,
+        cookies_data: Dict[str, str],
+        m3u8_headers: Dict[str, str],
+    ) -> None:
         """
         下载视频。
 
@@ -176,7 +201,9 @@ class Downloader:
             print("用户取消了选择。视频下载已中止。")
             return
 
-        self.n_m3u8dl_re.download(m3u8_file, save_name, save_dir, prefix, cookies_data, m3u8_headers)
+        self.n_m3u8dl_re.download(
+            m3u8_file, save_name, save_dir, prefix, cookies_data, m3u8_headers
+        )
         self.saved_path = save_dir
 
     def _get_default_download_dir(self) -> str:
@@ -215,14 +242,19 @@ class Downloader:
         询问用户是否继续输入新的链接文件进行下载。
         """
         while True:
-            continue_option = input("是否继续输入钉钉直播回放链接表格路径进行下载？(按Enter继续，按q退出程序): ")
-            if continue_option.lower() == 'q':
+            continue_option = input(
+                "是否继续输入钉钉直播回放链接表格路径进行下载？(按Enter继续，按q退出程序): "
+            )
+            if continue_option.lower() == "q":
                 print("程序已退出。")
                 self.close()
                 break
             else:
                 from ..utils.file_reader import FileReader
-                file_path = input("请输入新的钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: ")
+
+                file_path = input(
+                    "请输入新的钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: "
+                )
                 new_links_dict = FileReader(file_path).read_links()
                 self.download_batch_videos(new_links_dict)
 

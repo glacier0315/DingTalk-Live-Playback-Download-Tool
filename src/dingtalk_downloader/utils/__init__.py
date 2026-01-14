@@ -14,4 +14,4 @@ from .file_reader import FileReader
 from .validator import validate_input
 from .path_helper import clean_file_path, join_paths
 
-__all__ = ['FileReader', 'validate_input', 'clean_file_path', 'join_paths']
+__all__ = ["FileReader", "validate_input", "clean_file_path", "join_paths"]

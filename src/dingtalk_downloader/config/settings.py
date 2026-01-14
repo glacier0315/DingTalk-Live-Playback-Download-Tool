@@ -35,9 +35,9 @@ class Settings:
         """
         self.config = {}
         if config_file is None:
-            config_dir = os.path.join(os.path.expanduser('~'), '.dingtalk_downloader')
+            config_dir = os.path.join(os.path.expanduser("~"), ".dingtalk_downloader")
             os.makedirs(config_dir, exist_ok=True)
-            self.config_file = os.path.join(config_dir, 'config.json')
+            self.config_file = os.path.join(config_dir, "config.json")
         else:
             self.config_file = config_file
         self.load()
@@ -50,7 +50,7 @@ class Settings:
         """
         if os.path.exists(self.config_file):
             try:
-                with open(self.config_file, 'r', encoding='utf-8') as f:
+                with open(self.config_file, "r", encoding="utf-8") as f:
                     self.config = json.load(f)
             except (json.JSONDecodeError, IOError) as e:
                 print(f"加载配置文件失败: {e}")
@@ -65,7 +65,7 @@ class Settings:
         将配置项保存到配置文件。
         """
         try:
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=4, ensure_ascii=False)
         except IOError as e:
             print(f"保存配置文件失败: {e}")

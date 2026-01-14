@@ -37,9 +37,15 @@ class NM3u8DLRE:
         else:
             self.executable_path = executable_path
 
-    def download(self, m3u8_file: str, save_name: str, save_dir: str,
-                prefix: str, cookies_data: Optional[Dict[str, str]] = None,
-                headers: Optional[Dict[str, str]] = None) -> bool:
+    def download(
+        self,
+        m3u8_file: str,
+        save_name: str,
+        save_dir: str,
+        prefix: str,
+        cookies_data: Optional[Dict[str, str]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> bool:
         """
         下载 m3u8 视频。
 
@@ -60,7 +66,9 @@ class NM3u8DLRE:
             Exception: 下载失败时
         """
         try:
-            command = self.build_command(m3u8_file, save_name, save_dir, prefix, cookies_data, headers)
+            command = self.build_command(
+                m3u8_file, save_name, save_dir, prefix, cookies_data, headers
+            )
             subprocess.run(command)
             print(f"视频下载成功完成。文件保存路径: {save_dir}")
             return True
@@ -68,9 +76,15 @@ class NM3u8DLRE:
             print(f"下载视频时发生错误: {e}")
             return False
 
-    def build_command(self, m3u8_file: str, save_name: str, save_dir: str,
-                    prefix: str, cookies_data: Optional[Dict[str, str]] = None,
-                    headers: Optional[Dict[str, str]] = None) -> List[str]:
+    def build_command(
+        self,
+        m3u8_file: str,
+        save_name: str,
+        save_dir: str,
+        prefix: str,
+        cookies_data: Optional[Dict[str, str]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> List[str]:
         """
         构建下载命令。
 
@@ -90,10 +104,14 @@ class NM3u8DLRE:
         command = [
             self.executable_path,
             m3u8_file,
-            "--ui-language", "zh-CN",
-            "--save-name", save_name,
-            "--save-dir", save_dir,
-            "--base-url", prefix,
+            "--ui-language",
+            "zh-CN",
+            "--save-name",
+            save_name,
+            "--save-dir",
+            save_dir,
+            "--base-url",
+            prefix,
         ]
 
         headers_added = []
@@ -105,14 +123,14 @@ class NM3u8DLRE:
             print(f"已添加 Cookie 请求头")
 
         if headers:
-            if 'User-Agent' in headers:
+            if "User-Agent" in headers:
                 command.extend(["-H", f"User-Agent: {headers['User-Agent']}"])
                 headers_added.append("User-Agent")
                 print(f"已添加 User-Agent 请求头")
             else:
                 print("警告: headers 中没有 User-Agent")
 
-            if 'Referer' in headers:
+            if "Referer" in headers:
                 command.extend(["-H", f"Referer: {headers['Referer']}"])
                 headers_added.append("Referer")
                 print(f"已添加 Referer 请求头")
@@ -121,22 +139,27 @@ class NM3u8DLRE:
                 headers_added.append("Referer (默认)")
                 print(f"已添加默认 Referer 请求头")
 
-            if 'Accept' in headers:
+            if "Accept" in headers:
                 command.extend(["-H", f"Accept: {headers['Accept']}"])
                 headers_added.append("Accept")
                 print(f"已添加 Accept 请求头")
 
-            if 'Accept-Language' in headers:
+            if "Accept-Language" in headers:
                 command.extend(["-H", f"Accept-Language: {headers['Accept-Language']}"])
                 headers_added.append("Accept-Language")
                 print(f"已添加 Accept-Language 请求头")
 
-            if 'Accept-Encoding' in headers:
+            if "Accept-Encoding" in headers:
                 command.extend(["-H", f"Accept-Encoding: {headers['Accept-Encoding']}"])
                 headers_added.append("Accept-Encoding")
                 print(f"已添加 Accept-Encoding 请求头")
         else:
-            command.extend(["-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"])
+            command.extend(
+                [
+                    "-H",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                ]
+            )
             command.extend(["-H", "Referer: https://n.dingtalk.com/"])
             command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
             headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
@@ -157,9 +180,9 @@ class NM3u8DLRE:
             可执行文件名
         """
         system = platform.system()
-        if system == 'Windows':
-            return 'N_m3u8DL-RE.exe'
-        elif system == 'Linux' or system == 'Darwin':
-            return './N_m3u8DL-RE'
+        if system == "Windows":
+            return "N_m3u8DL-RE.exe"
+        elif system == "Linux" or system == "Darwin":
+            return "./N_m3u8DL-RE"
         else:
             raise Exception(f"不支持的操作系统: {system}")

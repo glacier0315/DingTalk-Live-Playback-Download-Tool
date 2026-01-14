@@ -23,7 +23,7 @@ from .config.constants import (
     DOWNLOAD_MODE_SINGLE,
     DOWNLOAD_MODE_BATCH,
     SAVE_MODE_DEFAULT,
-    SAVE_MODE_MANUAL
+    SAVE_MODE_MANUAL,
 )
 
 
@@ -52,13 +52,13 @@ def single_mode() -> None:
         dingtalk_url = input("请输入钉钉直播回放分享链接: ")
         save_mode = validate_input(
             "请选择保存模式（输入1：保存到程序默认路径，输入2：手动选择保存路径模式，直接回车默认选择1）: ",
-            ['1', '2'],
-            default_option='1'
+            ["1", "2"],
+            default_option="1",
         )
         browser_option = validate_input(
             "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，输入3：Firefox，直接回车默认选择1）: ",
-            ['1', '2', '3'],
-            default_option='1'
+            ["1", "2", "3"],
+            default_option="1",
         )
 
         browser_type = BROWSER_OPTION_MAP[browser_option]
@@ -97,17 +97,19 @@ def batch_mode() -> None:
         - Exception：其他异常
     """
     try:
-        file_path = input("请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: ")
+        file_path = input(
+            "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: "
+        )
         links_dict = FileReader(file_path).read_links()
         save_mode = validate_input(
             "请选择保存模式（输入1：保存到程序默认路径，输入2：手动选择保存路径模式，直接回车默认选择1）: ",
-            ['1', '2'],
-            default_option='1'
+            ["1", "2"],
+            default_option="1",
         )
         browser_option = validate_input(
             "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，输入3：Firefox，直接回车默认选择1）: ",
-            ['1', '2', '3'],
-            default_option='1'
+            ["1", "2", "3"],
+            default_option="1",
         )
 
         browser_type = BROWSER_OPTION_MAP[browser_option]
@@ -137,8 +139,8 @@ def main() -> None:
     try:
         download_mode = validate_input(
             "请选择下载模式（输入1：单个视频下载模式，输入2：批量下载模式，直接回车默认选择1）: ",
-            ['1', '2'],
-            default_option='1'
+            ["1", "2"],
+            default_option="1",
         )
 
         if download_mode == DOWNLOAD_MODE_SINGLE:

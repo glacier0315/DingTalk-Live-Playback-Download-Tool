@@ -44,16 +44,19 @@ class FirefoxDriver:
             Firefox 浏览器实例
         """
         firefox_options = FirefoxOptions()
-        firefox_options.add_argument('--disable-usb-device-event-log')
-        firefox_options.add_argument('--ignore-certificate-errors')
-        firefox_options.add_argument('--disable-logging')
-        firefox_options.add_argument('--log-level=3')
-        firefox_options.set_capability('moz:firefoxOptions', {
-            'log': {
-                'level': 'ALL',
-                'browser': 'ALL',
-            }
-        })
+        firefox_options.add_argument("--disable-usb-device-event-log")
+        firefox_options.add_argument("--ignore-certificate-errors")
+        firefox_options.add_argument("--disable-logging")
+        firefox_options.add_argument("--log-level=3")
+        firefox_options.set_capability(
+            "moz:firefoxOptions",
+            {
+                "log": {
+                    "level": "ALL",
+                    "browser": "ALL",
+                }
+            },
+        )
 
         self.driver = webdriver.Firefox(options=firefox_options)
         return self.driver
@@ -71,11 +74,13 @@ class FirefoxDriver:
             日志列表
         """
         if self.driver:
-            logs = self.driver.execute_script("""
+            logs = self.driver.execute_script(
+                """
                 var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {};
                 var network = performance.getEntries() || {};
                 return network;
-            """)
+            """
+            )
             return logs
         return []
 
@@ -131,8 +136,8 @@ class FirefoxDriver:
         """
         if self.driver:
             referer = self.driver.execute_script("return document.referrer")
-            return referer if referer else 'https://n.dingtalk.com/'
-        return 'https://n.dingtalk.com/'
+            return referer if referer else "https://n.dingtalk.com/"
+        return "https://n.dingtalk.com/"
 
     def get_cookies(self) -> List[dict]:
         """
@@ -168,7 +173,10 @@ class FirefoxDriver:
         """
         if self.driver:
             WebDriverWait(self.driver, timeout).until(
-                lambda driver: driver.execute_script("return isNaN(document.querySelector('video')?.duration)") == False
+                lambda driver: driver.execute_script(
+                    "return isNaN(document.querySelector('video')?.duration)"
+                )
+                == False
             )
 
     def close(self) -> None:

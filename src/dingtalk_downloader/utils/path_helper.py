@@ -26,7 +26,7 @@ def clean_file_path(file_path: str) -> str:
     Returns:
         清理后的文件路径
     """
-    return file_path.strip().replace('"', '').replace("'", "")
+    return file_path.strip().replace('"', "").replace("'", "")
 
 
 def join_paths(*paths: str) -> str:

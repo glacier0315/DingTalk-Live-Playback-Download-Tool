@@ -952,4 +952,222 @@ MAJOR.MINOR.PATCH
 - 使用工具辅助规范执行（如 black、flake8 等）
 
 **联系方式**：
+## 五、代码格式化规范
+
+### 1. Black 代码格式化工具
+
+#### 1.1 工具介绍
+
+Black 是 Python 社区广泛使用的代码格式化工具，具有以下特点：
+
+- **一致性**：自动统一代码风格，消除代码风格争议
+- **确定性**：相同的代码总是产生相同的格式化结果
+- **自动化**：一键格式化，无需手动调整
+- **标准性**：遵循 PEP 8 规范，是 Python 社区的标准工具
+
+#### 1.2 安装和配置
+
+Black 已集成到项目的开发依赖中，通过以下命令安装：
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+配置文件位于项目根目录的 `pyproject.toml`，包含以下关键配置：
+
+```toml
+[tool.black]
+line-length = 100                    # 行长度设置为 100 字符
+target-version = ['py38']            # 目标 Python 版本为 3.8+
+include = '\.pyi?$'                  # 包含 .py 和 .pyi 文件
+exclude = '''                         # 排除目录和文件
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+```
+
+#### 1.3 使用方法
+
+##### 格式化当前文件
+
+```bash
+python -m black 文件名.py
+```
+
+##### 格式化整个项目
+
+```bash
+python -m black .
+```
+
+##### 检查代码格式（不修改文件）
+
+```bash
+python -m black --check .
+```
+
+##### 查看格式化差异（不修改文件）
+
+```bash
+python -m black --diff .
+```
+
+##### 格式化指定目录
+
+```bash
+python -m black src/
+python -m black tests/
+```
+
+#### 1.4 开发流程集成
+
+##### 代码提交前检查
+
+在提交代码前，必须运行以下命令确保代码格式正确：
+
+```bash
+# 检查代码格式
+python -m black --check .
+
+# 如果检查通过，可以提交代码
+git add .
+git commit -m "feat: 添加新功能"
+```
+
+##### 代码格式化后提交
+
+如果检查失败，运行以下命令格式化代码：
+
+```bash
+# 格式化代码
+python -m black .
+
+# 再次检查
+python -m black --check .
+
+# 提交代码
+git add .
+git commit -m "style: 格式化代码"
+```
+
+#### 1.5 代码格式化要求
+
+**强制要求**：
+
+1. **提交前必须格式化**：所有代码在提交前必须通过 Black 格式化检查
+2. **不得手动调整**：格式化后的代码不得手动调整，除非有充分的理由
+3. **CI/CD 检查**：代码合并前必须通过格式化检查（如果配置了 CI/CD）
+
+**推荐实践**：
+
+1. **定期格式化**：开发过程中定期运行格式化命令，保持代码风格一致
+2. **IDE 集成**：配置 IDE 自动格式化，保存时自动运行 Black
+3. **团队协作**：团队成员统一使用 Black，避免代码风格冲突
+
+#### 1.6 常见问题
+
+##### Q1: Black 格式化后的代码不符合我的习惯？
+
+**A**: Black 的设计理念是"统一优于个人偏好"。团队统一使用 Black 可以避免代码风格争议，提高代码可读性。建议接受 Black 的格式化结果。
+
+##### Q2: 某些代码不想被格式化怎么办？
+
+**A**: 可以在代码中使用 `# fmt: off` 和 `# fmt: on` 注释来跳过格式化：
+
+```python
+# fmt: off
+complex_dict = {
+    'key1': 'value1',
+    'key2': 'value2',
+    # ...
+}
+# fmt: on
+```
+
+**注意**：这种用法应该谨慎使用，仅在必要时使用。
+
+##### Q3: Black 改变了代码逻辑怎么办？
+
+**A**: Black 只改变代码格式，不会改变代码逻辑。如果发现逻辑变化，请检查代码本身是否有问题。
+
+##### Q4: 如何在 IDE 中集成 Black？
+
+**A**: 主流 IDE 都支持 Black 集成：
+
+- **VS Code**: 安装 "Black Formatter" 扩展，配置为默认格式化工具
+- **PyCharm**: 安装 Black 插件，配置为代码格式化工具
+- **Vim/Neovim**: 使用 `black` 插件或配置自动格式化
+
+#### 1.7 格式化示例
+
+##### 格式化前
+
+```python
+def calculate_total(items):
+    total=0
+    for item in items:
+        total+=item['price']*item['quantity']
+    return total
+```
+
+##### 格式化后
+
+```python
+def calculate_total(items):
+    total = 0
+    for item in items:
+        total += item["price"] * item["quantity"]
+    return total
+```
+
+主要变化：
+
+- 运算符周围添加空格
+- 单引号改为双引号
+- 代码缩进和间距统一
+
+### 2. 代码质量检查流程
+
+#### 2.1 开发前检查
+
+在开始开发新功能或修复 bug 前：
+
+1. 拉取最新代码：`git pull`
+2. 运行格式化检查：`python -m black --check .`
+3. 运行测试：`pytest`
+
+#### 2.2 开发中检查
+
+在开发过程中：
+
+1. 定期运行格式化：`python -m black .`
+2. 定期运行测试：`pytest`
+3. 确保代码符合项目规范
+
+#### 2.3 提交前检查
+
+在提交代码前：
+
+1. 运行格式化：`python -m black .`
+2. 运行格式化检查：`python -m black --check .`
+3. 运行测试：`pytest`
+4. 确保所有检查通过
+
+#### 2.4 提交信息规范
+
+提交信息应遵循 Git 提交信息规范（见第四部分），格式化相关的提交使用 `style` 类型：
+
+```bash
+git commit -m "style: 格式化代码"
+```
+
 如有疑问或建议，请联系项目维护者或在 Issue 中讨论。

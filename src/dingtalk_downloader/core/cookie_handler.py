@@ -16,7 +16,12 @@ from ..browser.browser_factory import BrowserFactory
 from ..browser.edge_driver import EdgeDriver
 from ..browser.chrome_driver import ChromeDriver
 from ..browser.firefox_driver import FirefoxDriver
-from ..config.constants import BROWSER_TYPE_EDGE, BROWSER_TYPE_CHROME, BROWSER_TYPE_FIREFOX, DEFAULT_HEADERS
+from ..config.constants import (
+    BROWSER_TYPE_EDGE,
+    BROWSER_TYPE_CHROME,
+    BROWSER_TYPE_FIREFOX,
+    DEFAULT_HEADERS,
+)
 
 
 class CookieHandler:
@@ -40,7 +45,9 @@ class CookieHandler:
         self.browser_type = browser_type
         self.browser = None
 
-    def get_cookie(self, url: str) -> Tuple[Union[EdgeDriver, ChromeDriver, FirefoxDriver], Dict[str, str], Dict[str, str], str]:
+    def get_cookie(
+        self, url: str
+    ) -> Tuple[Union[EdgeDriver, ChromeDriver, FirefoxDriver], Dict[str, str], Dict[str, str], str]:
         """
         获取 Cookie 和请求头信息。
 
@@ -69,24 +76,24 @@ class CookieHandler:
             referer = self.browser.get_referer()
 
             headers = {
-                'User-Agent': user_agent,
-                'Referer': referer,
-                'Accept': 'application/vnd.apple.mpegurl, text/plain, */*',
-                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'same-origin',
-                'Sec-Fetch-User': '?1',
-                'Upgrade-Insecure-Requests': '1'
+                "User-Agent": user_agent,
+                "Referer": referer,
+                "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
             }
 
             live_name = self._get_live_name()
             print(f"直播名称: {live_name}")
 
             cookies = self.browser.get_cookies()
-            cookie_dict = {cookie['name']: cookie['value'] for cookie in cookies}
+            cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
 
             return self.browser, cookie_dict, headers, live_name
 
@@ -128,24 +135,24 @@ class CookieHandler:
             referer = self.browser.get_referer()
 
             headers = {
-                'User-Agent': user_agent,
-                'Referer': referer,
-                'Accept': 'application/vnd.apple.mpegurl, text/plain, */*',
-                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Sec-Fetch-Dest': 'document',
-                'Sec-Fetch-Mode': 'navigate',
-                'Sec-Fetch-Site': 'same-origin',
-                'Sec-Fetch-User': '?1',
-                'Upgrade-Insecure-Requests': '1'
+                "User-Agent": user_agent,
+                "Referer": referer,
+                "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
             }
 
             live_name = self._get_live_name()
             print(f"直播名称: {live_name}")
 
             cookies = self.browser.get_cookies()
-            cookie_dict = {cookie['name']: cookie['value'] for cookie in cookies}
+            cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
 
             return cookie_dict, headers, live_name
 
@@ -165,7 +172,9 @@ class CookieHandler:
             直播视频名称
         """
         try:
-            live_name = self.browser.get_element_by_xpath('//*[@id="live-room"]/div[1]/div[1]/h3').text
+            live_name = self.browser.get_element_by_xpath(
+                '//*[@id="live-room"]/div[1]/div[1]/h3'
+            ).text
             return live_name
         except Exception as e:
             print(f"XPath 获取失败: {e}")

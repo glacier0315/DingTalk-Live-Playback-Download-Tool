@@ -17,7 +17,12 @@ from typing import List, Optional, Union
 from ..browser.edge_driver import EdgeDriver
 from ..browser.chrome_driver import ChromeDriver
 from ..browser.firefox_driver import FirefoxDriver
-from ..config.constants import BROWSER_TYPE_EDGE, BROWSER_TYPE_CHROME, BROWSER_TYPE_FIREFOX, MAX_RETRY_COUNT
+from ..config.constants import (
+    BROWSER_TYPE_EDGE,
+    BROWSER_TYPE_CHROME,
+    BROWSER_TYPE_FIREFOX,
+    MAX_RETRY_COUNT,
+)
 
 
 class M3u8Parser:
@@ -33,7 +38,12 @@ class M3u8Parser:
         max_retries: 最大重试次数
     """
 
-    def __init__(self, browser: Union[EdgeDriver, ChromeDriver, FirefoxDriver], browser_type: str, max_retries: int = MAX_RETRY_COUNT):
+    def __init__(
+        self,
+        browser: Union[EdgeDriver, ChromeDriver, FirefoxDriver],
+        browser_type: str,
+        max_retries: int = MAX_RETRY_COUNT,
+    ):
         """
         初始化 m3u8 解析器。
 
@@ -63,7 +73,7 @@ class M3u8Parser:
         """
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
-        live_uuid = query_params.get('liveUuid', [None])[0]
+        live_uuid = query_params.get("liveUuid", [None])[0]
 
         if not live_uuid:
             print("未能从 URL 提取 liveUuid，程序将退出。")
@@ -86,19 +96,19 @@ class M3u8Parser:
                             found_links = re.findall(pattern, log_message)
 
                             if found_links:
-                                cleaned_link = re.sub(r'[\]\s\\\'"]+$', '', found_links[0])
+                                cleaned_link = re.sub(r'[\]\s\\\'"]+$', "", found_links[0])
                                 m3u8_links.append(cleaned_link)
                                 print(f"获取到m3u8链接: {cleaned_link}")
                                 return m3u8_links
                         else:
-                            if 'message' in log:
-                                log_message = log['message']
+                            if "message" in log:
+                                log_message = log["message"]
                             else:
                                 log_message = str(log)
 
-                            if '.m3u8' in log_message:
-                                start_idx = log_message.find("url\":\"") + len("url\":\"")
-                                end_idx = log_message.find("\"", start_idx)
+                            if ".m3u8" in log_message:
+                                start_idx = log_message.find('url":"') + len('url":"')
+                                end_idx = log_message.find('"', start_idx)
                                 m3u8_url = log_message[start_idx:end_idx]
 
                                 if live_uuid in m3u8_url:
@@ -137,10 +147,10 @@ class M3u8Parser:
             m3u8_content = self.browser.driver.execute_script(
                 "return fetch(arguments[0], { method: 'GET', headers: arguments[1] }).then(response => response.text())",
                 url,
-                headers
+                headers,
             )
 
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 f.write(m3u8_content)
 
             return filename
@@ -161,7 +171,7 @@ class M3u8Parser:
         Returns:
             基础 URL
         """
-        pattern = re.compile(r'(https?://[^/]+/live_hp/[0-9a-f-]+)')
+        pattern = re.compile(r"(https?://[^/]+/live_hp/[0-9a-f-]+)")
         match = pattern.search(url)
         return match.group(1) if match else url
 

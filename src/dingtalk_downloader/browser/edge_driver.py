@@ -44,12 +44,12 @@ class EdgeDriver:
             Edge 浏览器实例
         """
         edge_options = EdgeOptions()
-        edge_options.add_argument('--disable-usb-device-event-log')
-        edge_options.add_argument('--ignore-certificate-errors')
-        edge_options.add_argument('--disable-logging')
-        edge_options.add_argument('--disable_ssl_verification')
-        edge_options.add_argument('--log-level=3')
-        edge_options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        edge_options.add_argument("--disable-usb-device-event-log")
+        edge_options.add_argument("--ignore-certificate-errors")
+        edge_options.add_argument("--disable-logging")
+        edge_options.add_argument("--disable_ssl_verification")
+        edge_options.add_argument("--log-level=3")
+        edge_options.add_experimental_option("excludeSwitches", ["enable-logging"])
         edge_options.set_capability("ms:loggingPrefs", {"performance": "ALL"})
 
         self.driver = webdriver.Edge(options=edge_options)
@@ -123,8 +123,8 @@ class EdgeDriver:
         """
         if self.driver:
             referer = self.driver.execute_script("return document.referrer")
-            return referer if referer else 'https://n.dingtalk.com/'
-        return 'https://n.dingtalk.com/'
+            return referer if referer else "https://n.dingtalk.com/"
+        return "https://n.dingtalk.com/"
 
     def get_cookies(self) -> List[dict]:
         """
@@ -160,7 +160,10 @@ class EdgeDriver:
         """
         if self.driver:
             WebDriverWait(self.driver, timeout).until(
-                lambda driver: driver.execute_script("return isNaN(document.querySelector('video')?.duration)") == False
+                lambda driver: driver.execute_script(
+                    "return isNaN(document.querySelector('video')?.duration)"
+                )
+                == False
             )
 
     def close(self) -> None:

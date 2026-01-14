@@ -39,7 +39,7 @@ class FileReader:
         """
         self.file_path = clean_file_path(file_path)
 
-        if not self.file_path.lower().endswith(('.csv', '.xlsx', '.xls')):
+        if not self.file_path.lower().endswith((".csv", ".xlsx", ".xls")):
             raise ValueError(f"文件格式不支持: {self.file_path}. 请使用CSV或Excel文件。")
 
     def read_links(self) -> Dict[int, str]:
@@ -57,9 +57,9 @@ class FileReader:
         try:
             links = {}
 
-            if self.file_path.lower().endswith('.csv'):
+            if self.file_path.lower().endswith(".csv"):
                 self._read_csv(links)
-            elif self.file_path.lower().endswith(('.xlsx', '.xls')):
+            elif self.file_path.lower().endswith((".xlsx", ".xls")):
                 self._read_excel(links)
 
             if not links:
@@ -79,10 +79,10 @@ class FileReader:
             links: 链接字典（用于存储提取的链接）
         """
         try:
-            df = pd.read_csv(self.file_path, encoding='utf-8')
+            df = pd.read_csv(self.file_path, encoding="utf-8")
         except UnicodeDecodeError:
             try:
-                df = pd.read_csv(self.file_path, encoding='gbk')
+                df = pd.read_csv(self.file_path, encoding="gbk")
             except UnicodeDecodeError:
                 print(f"文件 {self.file_path} 使用的编码无法识别，请尝试其他编码格式。")
                 sys.exit(1)

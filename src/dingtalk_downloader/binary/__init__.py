@@ -13,4 +13,4 @@
 from .n_m3u8dl_re import NM3u8DLRE
 from .ffmpeg_wrapper import FFmpegWrapper
 
-__all__ = ['NM3u8DLRE', 'FFmpegWrapper']
+__all__ = ["NM3u8DLRE", "FFmpegWrapper"]

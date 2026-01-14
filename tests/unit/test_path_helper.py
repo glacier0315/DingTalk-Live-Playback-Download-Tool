@@ -14,7 +14,7 @@ import sys
 import os
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from dingtalk_downloader.utils.path_helper import clean_file_path, join_paths
 
@@ -23,39 +23,40 @@ def test_clean_file_path_with_quotes():
     """测试清理包含引号的路径"""
     path = '"test/path/file.txt"'
     result = clean_file_path(path)
-    assert result == 'test/path/file.txt'
+    assert result == "test/path/file.txt"
 
 
 def test_clean_file_path_with_single_quotes():
     """测试清理包含单引号的路径"""
     path = "'test/path/file.txt'"
     result = clean_file_path(path)
-    assert result == 'test/path/file.txt'
+    assert result == "test/path/file.txt"
 
 
 def test_clean_file_path_with_spaces():
     """测试清理包含空格的路径"""
-    path = '  test/path/file.txt  '
+    path = "  test/path/file.txt  "
     result = clean_file_path(path)
-    assert result == 'test/path/file.txt'
+    assert result == "test/path/file.txt"
 
 
 def test_clean_file_path_normal():
     """测试清理正常路径"""
-    path = 'test/path/file.txt'
+    path = "test/path/file.txt"
     result = clean_file_path(path)
-    assert result == 'test/path/file.txt'
+    assert result == "test/path/file.txt"
 
 
 def test_join_paths():
     """测试拼接路径"""
     import os
-    result = join_paths('test', 'path', 'file.txt')
-    expected = os.path.join('test', 'path', 'file.txt')
+
+    result = join_paths("test", "path", "file.txt")
+    expected = os.path.join("test", "path", "file.txt")
     assert result == expected
 
 
 def test_join_paths_single():
     """测试拼接单个路径"""
-    result = join_paths('test')
-    assert result == 'test'
+    result = join_paths("test")
+    assert result == "test"

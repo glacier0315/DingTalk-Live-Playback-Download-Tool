@@ -32,11 +32,13 @@ class FFmpegWrapper:
             executable_path: 可执行文件路径，默认为 None（使用默认路径）
         """
         if executable_path is None:
-            self.executable_path = 'ffmpeg'
+            self.executable_path = "ffmpeg"
         else:
             self.executable_path = executable_path
 
-    def convert(self, input_file: str, output_file: str, options: Optional[List[str]] = None) -> bool:
+    def convert(
+        self, input_file: str, output_file: str, options: Optional[List[str]] = None
+    ) -> bool:
         """
         转换音视频文件。
 
@@ -62,7 +64,9 @@ class FFmpegWrapper:
             print(f"转换音视频时发生错误: {e}")
             return False
 
-    def build_command(self, input_file: str, output_file: str, options: Optional[List[str]] = None) -> List[str]:
+    def build_command(
+        self, input_file: str, output_file: str, options: Optional[List[str]] = None
+    ) -> List[str]:
         """
         构建转换命令。
 
@@ -76,7 +80,7 @@ class FFmpegWrapper:
         Returns:
             命令列表
         """
-        command = [self.executable_path, '-i', input_file]
+        command = [self.executable_path, "-i", input_file]
 
         if options:
             command.extend(options)
