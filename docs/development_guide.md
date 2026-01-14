@@ -17,52 +17,389 @@
 - **操作系统**：Windows 10/11、macOS 10.14+、Linux (Ubuntu 18.04+)
 - **Python 版本**：Python 3.8 或更高版本
 - **浏览器**：Edge、Chrome 或 Firefox（用于获取 Cookie）
+- **内存**：建议至少 4GB RAM
+- **磁盘空间**：建议至少 2GB 可用空间
 
-### 1.2 克隆项目
+### 1.2 Python 环境准备
+
+#### 1.2.1 安装 Python
+
+**Windows 系统**：
+
+1. 访问 [Python 官网](https://www.python.org/downloads/)
+2. 下载 Python 3.8 或更高版本的安装程序
+3. 运行安装程序，**务必勾选 "Add Python to PATH"** 选项
+4. 完成安装后，打开命令提示符验证安装：
 
 ```bash
-git clone https://github.com/your-username/DingTalk-Live-Playback-Download-Tool.git
+python --version
+pip --version
+```
+
+**macOS 系统**：
+
+使用 Homebrew 安装：
+
+```bash
+# 安装 Homebrew（如果未安装）
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# 安装 Python
+brew install python@3.9
+```
+
+**Linux 系统**：
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install python3.9 python3-pip python3-venv
+
+# CentOS/RHEL
+sudo yum install python39 python39-pip
+```
+
+#### 1.2.2 创建虚拟环境（推荐）
+
+创建虚拟环境可以隔离项目依赖，避免与系统 Python 环境冲突：
+
+```bash
+# 创建虚拟环境
+python -m venv venv
+
+# 激活虚拟环境
+# Windows
+venv\Scripts\activate
+
+# macOS/Linux
+source venv/bin/activate
+```
+
+激活后，命令提示符前会显示 `(venv)` 标识。
+
+### 1.3 克隆项目
+
+```bash
+# 克隆项目仓库
+git clone https://github.com/glacier0315/DingTalk-Live-Playback-Download-Tool.git
+
+# 进入项目目录
 cd DingTalk-Live-Playback-Download-Tool
 ```
 
-### 1.3 安装依赖
+### 1.4 安装依赖
 
-#### 安装 Python 依赖
+#### 1.4.1 升级 pip
 
 ```bash
-# 安装项目依赖
-pip install -r requirements.txt
+# 升级 pip 到最新版本
+pip install --upgrade pip
+```
 
+#### 1.4.2 安装项目依赖
+
+```bash
+# 安装项目运行依赖
+pip install -r requirements.txt
+```
+
+**requirements.txt 包含的主要依赖**：
+
+- `selenium`: 浏览器自动化
+- `requests`: HTTP 请求
+- `pandas`: 数据处理
+- `openpyxl`: Excel 文件处理
+- `webdriver-manager`: 浏览器驱动管理
+
+#### 1.4.3 安装开发依赖
+
+```bash
 # 安装开发依赖（包含 Black、pytest 等工具）
 pip install -r requirements-dev.txt
 ```
 
-#### 安装浏览器驱动
+**requirements-dev.txt 包含的主要依赖**：
 
-项目使用 Selenium 自动化浏览器，需要安装对应的浏览器驱动：
+- `black`: 代码格式化工具
+- `pytest`: 测试框架
+- `pytest-mock`: Mock 测试工具
+- `pytest-cov`: 测试覆盖率工具
+- `mypy`: 类型检查工具
+- `pylint`: 代码质量检查工具
 
-- **Edge**: 自动下载（使用 EdgeDriverManager）
-- **Chrome**: 自动下载（使用 ChromeDriverManager）
-- **Firefox**: 自动下载（使用 GeckoDriverManager）
+#### 1.4.4 使用国内镜像源（可选）
 
-### 1.4 配置环境变量
-
-创建 `.env` 文件（参考 `.env.example`）：
+如果下载速度较慢，可以使用国内镜像源：
 
 ```bash
+# 使用清华大学镜像源
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+# 使用阿里云镜像源
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+
+# 使用豆瓣镜像源
+pip install -r requirements.txt -i https://pypi.douban.com/simple/
+```
+
+### 1.5 安装浏览器驱动
+
+项目使用 Selenium 自动化浏览器，需要安装对应的浏览器驱动。
+
+#### 1.5.1 自动安装（推荐）
+
+项目已集成 `webdriver-manager`，会自动下载和管理浏览器驱动：
+
+```python
+# Edge 浏览器驱动
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from selenium.webdriver.edge.service import Service
+
+service = Service(EdgeChromiumDriverManager().install())
+
+# Chrome 浏览器驱动
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+
+service = Service(ChromeDriverManager().install())
+
+# Firefox 浏览器驱动
+from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.firefox.service import Service
+
+service = Service(GeckoDriverManager().install())
+```
+
+#### 1.5.2 手动安装
+
+如果自动安装失败，可以手动下载浏览器驱动：
+
+**Edge 浏览器驱动**：
+
+1. 访问 [Edge WebDriver 官网](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
+2. 下载与你的 Edge 浏览器版本匹配的驱动
+3. 将驱动文件放到系统 PATH 环境变量包含的目录中
+
+**Chrome 浏览器驱动**：
+
+1. 访问 [ChromeDriver 官网](https://chromedriver.chromium.org/downloads)
+2. 下载与你的 Chrome 浏览器版本匹配的驱动
+3. 将驱动文件放到系统 PATH 环境变量包含的目录中
+
+**Firefox 浏览器驱动**：
+
+1. 访问 [GeckoDriver 官网](https://github.com/mozilla/geckodriver/releases)
+2. 下载与你的操作系统匹配的驱动
+3. 将驱动文件放到系统 PATH 环境变量包含的目录中
+
+#### 1.5.3 验证浏览器驱动安装
+
+```python
+from selenium import webdriver
+
+# 测试 Edge 浏览器
+driver = webdriver.Edge()
+driver.get("https://www.example.com")
+print("Edge 浏览器驱动安装成功")
+driver.quit()
+
+# 测试 Chrome 浏览器
+driver = webdriver.Chrome()
+driver.get("https://www.example.com")
+print("Chrome 浏览器驱动安装成功")
+driver.quit()
+
+# 测试 Firefox 浏览器
+driver = webdriver.Firefox()
+driver.get("https://www.example.com")
+print("Firefox 浏览器驱动安装成功")
+driver.quit()
+```
+
+### 1.6 配置环境变量
+
+#### 1.6.1 创建 .env 文件
+
+```bash
+# 复制示例配置文件
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，配置必要的环境变量（如有需要）。
+#### 1.6.2 编辑 .env 文件
 
-### 1.5 验证安装
+编辑 `.env` 文件，配置必要的环境变量（如有需要）：
 
 ```bash
-# 运行测试验证安装
-pytest
+# 浏览器类型（edge、chrome、firefox）
+BROWSER_TYPE=edge
 
+# 下载模式（single、batch）
+DOWNLOAD_MODE=single
+
+# 保存模式（default、manual）
+SAVE_MODE=default
+
+# 下载目录
+DOWNLOAD_DIR=Downloads
+
+# 最大重试次数
+MAX_RETRY_COUNT=5
+
+# 请求超时时间（秒）
+REQUEST_TIMEOUT=30
+```
+
+#### 1.6.3 加载环境变量
+
+项目使用 `python-dotenv` 库加载环境变量，在代码中自动加载 `.env` 文件：
+
+```python
+from dotenv import load_dotenv
+
+load_dotenv()
+```
+
+### 1.7 验证安装
+
+#### 1.7.1 验证 Python 环境
+
+```bash
+# 检查 Python 版本
+python --version
+
+# 检查 pip 版本
+pip --version
+
+# 检查已安装的包
+pip list
+```
+
+#### 1.7.2 验证依赖安装
+
+```bash
+# 检查项目依赖
+pip show selenium requests pandas openpyxl
+
+# 检查开发依赖
+pip show black pytest pytest-mock pytest-cov mypy pylint
+```
+
+#### 1.7.3 验证 Black 配置
+
+```bash
 # 检查 Black 配置
 python -m black --check .
+
+# 如果没有格式问题，会显示 "All done!"
+```
+
+#### 1.7.4 运行测试
+
+```bash
+# 运行所有测试
+pytest
+
+# 运行测试并显示详细输出
+pytest -v
+
+# 运行测试并显示覆盖率
+pytest --cov=src/dingtalk_downloader --cov-report=html
+```
+
+#### 1.7.5 运行项目
+
+```bash
+# 运行主程序
+python -m dingtalk_downloader.main
+```
+
+### 1.8 常见安装问题
+
+#### Q1: Python 安装后命令行找不到 python？
+
+**A**: Windows 系统需要手动添加 Python 到 PATH 环境变量：
+
+1. 右键"此电脑" → "属性" → "高级系统设置" → "环境变量"
+2. 在"系统变量"中找到"Path"，点击"编辑"
+3. 添加 Python 安装路径（如 `C:\Python39`）和 Scripts 目录（如 `C:\Python39\Scripts`）
+4. 重新打开命令提示符
+
+#### Q2: pip 安装依赖失败？
+
+**A**: 尝试以下解决方案：
+
+1. 升级 pip：`pip install --upgrade pip`
+2. 使用国内镜像源：`pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
+3. 创建虚拟环境后重试
+4. 检查网络连接
+
+#### Q3: 浏览器驱动下载失败？
+
+**A**: 尝试以下解决方案：
+
+1. 检查网络连接
+2. 手动下载浏览器驱动（参考 1.5.2 节）
+3. 使用代理设置（如果需要）
+4. 检查防火墙设置
+
+#### Q4: 虚拟环境激活失败？
+
+**A**: Windows 系统可能需要以管理员身份运行命令提示符，或者使用 PowerShell：
+
+```powershell
+# PowerShell 激活虚拟环境
+.\venv\Scripts\Activate.ps1
+```
+
+如果遇到执行策略错误，运行以下命令：
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+#### Q5: 依赖版本冲突？
+
+**A**: 使用 pip 的依赖解析器：
+
+```bash
+# 使用 pip 的依赖解析器
+pip install -r requirements.txt --use-deprecated=legacy-resolver
+```
+
+或者使用 `pip-tools` 管理依赖：
+
+```bash
+pip install pip-tools
+pip-compile requirements.in
+pip-sync requirements.txt
+```
+
+#### Q6: Windows 系统缺少 Microsoft Visual C++ 运行库？
+
+**A**: 某些 Python 包需要 Microsoft Visual C++ 运行库，下载并安装：
+
+- [Microsoft Visual C++ Redistributable](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
+
+#### Q7: macOS 系统缺少 Xcode 命令行工具？
+
+**A**: 安装 Xcode 命令行工具：
+
+```bash
+xcode-select --install
+```
+
+#### Q8: Linux 系统缺少系统依赖？
+
+**A**: 安装必要的系统依赖：
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install build-essential python3-dev libssl-dev libffi-dev
+
+# CentOS/RHEL
+sudo yum groupinstall "Development Tools"
+sudo yum install python3-devel openssl-devel libffi-devel
 ```
 
 ## 二、开发流程
@@ -442,10 +779,10 @@ def test_batch_download_flow():
     """测试批量下载流程"""
     reader = FileReader()
     links = reader.read_csv_file("tests/fixtures/sample_links.csv")
-    
+
     downloader = Downloader()
     results = downloader.batch_download(links)
-    
+
     assert all(results)
 ```
 
@@ -461,11 +798,11 @@ from dingtalk_downloader.core.downloader import Downloader
 def test_download_with_mock():
     """使用 Mock 测试下载功能"""
     downloader = Downloader()
-    
+
     with patch.object(downloader, '_download_video') as mock_download:
         mock_download.return_value = True
         result = downloader.download("https://example.com/video.m3u8")
-        
+
         assert result is True
         mock_download.assert_called_once()
 ```
