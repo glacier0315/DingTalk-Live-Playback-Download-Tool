@@ -10,15 +10,21 @@ __pycache__/
 *.pyd
 .pytest_cache/
 .pyre/
+*.py[cod]
+*$py.class
+*.so
+.Python
 
 # 环境文件
 venv/
 env/
+ENV/
 .env
 .env.local
 
 # 日志与临时文件
 *.log
+logs/
 Logs/
 tmp/
 temp/
@@ -37,6 +43,10 @@ htmlcov/
 dist/
 build/
 *.egg
+
+# Config
+.env
+config.toml
 
 # 其他临时文件（新增）
 .tox/
