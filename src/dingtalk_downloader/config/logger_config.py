@@ -109,7 +109,6 @@ class LoggerConfig:
             logging.info(f"日志文件: {log_filename}")
 
         except Exception as e:
-            print(f"日志系统初始化失败: {e}")
             root_logger = logging.getLogger()
             root_logger.setLevel(logging.INFO)
             console_handler = logging.StreamHandler()
@@ -118,6 +117,7 @@ class LoggerConfig:
                 logging.Formatter("[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s")
             )
             root_logger.addHandler(console_handler)
+            root_logger.error(f"日志系统初始化失败: {e}", exc_info=True)
             LoggerConfig._initialized = True
 
     @staticmethod

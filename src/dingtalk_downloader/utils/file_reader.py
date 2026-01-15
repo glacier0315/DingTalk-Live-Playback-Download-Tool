@@ -79,7 +79,6 @@ class FileReader:
 
         except Exception as e:
             logger.error(f"读取文件时发生错误: {e}", exc_info=True)
-            print(f"读取文件时发生错误: {e}")
             sys.exit(1)
 
     def _read_csv(self, links: Dict[int, str]) -> None:
@@ -95,7 +94,7 @@ class FileReader:
             try:
                 df = pd.read_csv(self.file_path, encoding="gbk")
             except UnicodeDecodeError:
-                print(f"文件 {self.file_path} 使用的编码无法识别，请尝试其他编码格式。")
+                logger.warning(f"文件 {self.file_path} 使用的编码无法识别，请尝试其他编码格式")
                 sys.exit(1)
 
         self._extract_links_from_dataframe(df, links)

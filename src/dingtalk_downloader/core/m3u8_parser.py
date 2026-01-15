@@ -80,7 +80,7 @@ class M3u8Parser:
         live_uuid = query_params.get("liveUuid", [None])[0]
 
         if not live_uuid:
-            print("未能从 URL 提取 liveUuid，程序将退出。")
+            logger.error("未能从 URL 提取 liveUuid，程序将退出")
             return None
 
         m3u8_links = []
@@ -102,7 +102,7 @@ class M3u8Parser:
                             if found_links:
                                 cleaned_link = re.sub(r'[\]\s\\\'"]+$', "", found_links[0])
                                 m3u8_links.append(cleaned_link)
-                                print(f"获取到m3u8链接: {cleaned_link}")
+                                logger.debug(f"获取到m3u8链接: {cleaned_link}")
                                 return m3u8_links
                         else:
                             if "message" in log:
@@ -116,17 +116,17 @@ class M3u8Parser:
                                 m3u8_url = log_message[start_idx:end_idx]
 
                                 if live_uuid in m3u8_url:
-                                    print(f"获取到m3u8链接: {m3u8_url}")
+                                    logger.debug(f"获取到m3u8链接: {m3u8_url}")
                                     m3u8_links.append(m3u8_url)
                                     return m3u8_links
                     except Exception as e:
-                        print(f"处理日志时发生错误: {e}")
+                          logger.error(f"处理日志时发生错误: {e}", exc_info=True)
 
-                print(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接，重试中...")
+                logger.warning(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接，重试中")
                 self._refresh_page()
 
             except Exception as e:
-                print(f"获取 m3u8 链接时发生错误: {e}")
+                logger.error(f"获取 m3u8 链接时发生错误: {e}", exc_info=True)
 
         return None
 
@@ -160,7 +160,7 @@ class M3u8Parser:
             return filename
 
         except Exception as e:
-            print(f"下载 m3u8 文件时发生错误: {e}")
+            logger.error(f"下载 m3u8 文件时发生错误: {e}", exc_info=True)
             sys.exit(1)
 
     def extract_prefix(self, url: str) -> str:
@@ -187,6 +187,6 @@ class M3u8Parser:
         """
         try:
             self.browser.driver.execute_script("location.reload();")
-            print("页面已刷新")
+            logger.debug("页面已刷新")
         except Exception as e:
-            print(f"刷新页面时发生错误: {e}")
+            logger.error(f"刷新页面时发生错误: {e}", exc_info=True)

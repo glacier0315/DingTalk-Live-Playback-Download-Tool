@@ -71,7 +71,7 @@ class CookieHandler:
         Raises:
             Exception: 获取失败时
         """
-        logger.info(f"开始获取 Cookie - URL: {url[:50]}...")
+        logger.info(f"开始获取 Cookie - URL: {url}")
 
         try:
             self.browser = BrowserFactory.create_browser(self.browser_type)
@@ -87,7 +87,7 @@ class CookieHandler:
 
             user_agent = self.browser.get_user_agent()
             referer = self.browser.get_referer()
-            logger.debug(f"User-Agent: {user_agent[:50]}...")
+            logger.debug(f"User-Agent: {user_agent}")
             logger.debug(f"Referer: {referer}")
 
             headers = {
@@ -138,7 +138,7 @@ class CookieHandler:
         Raises:
             Exception: 获取失败时
         """
-        logger.info(f"重复获取 Cookie - URL: {url[:50]}...")
+        logger.info(f"重复获取 Cookie - URL: {url}")
 
         try:
             if self.browser is None:
@@ -157,7 +157,7 @@ class CookieHandler:
 
             user_agent = self.browser.get_user_agent()
             referer = self.browser.get_referer()
-            logger.debug(f"User-Agent: {user_agent[:50]}...")
+            logger.debug(f"User-Agent: {user_agent}")
             logger.debug(f"Referer: {referer}")
 
             headers = {

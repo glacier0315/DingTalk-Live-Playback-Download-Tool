@@ -75,7 +75,7 @@ class Downloader:
         Raises:
             Exception: 下载失败时
         """
-        logger.info(f"开始下载单个视频: {url[:50]}...")
+        logger.info(f"开始下载单个视频: {url}")
 
         try:
             browser, cookies_data, m3u8_headers, live_name = self.cookie_handler.get_cookie(url)
@@ -91,14 +91,14 @@ class Downloader:
                 if m3u8_links:
                     logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
                     for link in m3u8_links:
-                        logger.info(f"处理 m3u8 链接: {link[:80]}...")
+                        logger.info(f"处理 m3u8 链接: {link}")
                         m3u8_file = self.m3u8_parser.download_m3u8_file(
                             link, TEMP_M3U8_FILE, m3u8_headers
                         )
                         logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
                         prefix = self.m3u8_parser.extract_prefix(link)
-                        logger.info(f"提取到基础 URL: {prefix[:80]}...")
+                        logger.info(f"提取到基础 URL: {prefix}")
 
                         self._download_video(
                             m3u8_file, live_name, prefix, cookies_data, m3u8_headers
@@ -107,14 +107,13 @@ class Downloader:
                 else:
                     logger.warning("未找到包含 'm3u8' 字符的请求链接")
 
-                print("=" * 100)
                 url = input("请继续输入钉钉直播分享链接，或输入q退出程序: ")
                 if url.lower() == "q":
                     logger.info("用户选择退出程序")
                     self.close()
                     print("程序已退出。")
                     break
-                logger.info(f"用户输入新链接: {url[:50]}...")
+                logger.info(f"用户输入新链接: {url}")
                 cookies_data, m3u8_headers, live_name = self.cookie_handler.repeat_get_cookie(url)
                 logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
@@ -145,7 +144,6 @@ class Downloader:
 
         try:
             total_links = len(urls)
-            print(f"共提取到 {total_links} 个钉钉直播回放分享链接。")
             logger.info(f"共提取到 {total_links} 个钉钉直播回放分享链接")
 
             first_link = next(iter(urls.values()))
@@ -157,32 +155,29 @@ class Downloader:
             self.m3u8_parser = M3u8Parser(browser, self.browser_type)
             logger.info("m3u8 解析器创建成功")
 
-            print(f"正在下载第 1 个视频，共 {total_links} 个视频。")
-            logger.info("开始下载第 1 个视频")
+            logger.info(f"正在下载第 1 个视频，共 {total_links} 个视频")
 
             m3u8_links = self.m3u8_parser.fetch_m3u8_links(first_link)
 
             if m3u8_links:
-                logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
-                for link in m3u8_links:
-                    logger.info(f"处理 m3u8 链接: {link[:80]}...")
-                    m3u8_file = self.m3u8_parser.download_m3u8_file(
-                        link, TEMP_M3U8_FILE, m3u8_headers
-                    )
-                    logger.info(f"m3u8 文件下载成功: {m3u8_file}")
+                    logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
+                    for link in m3u8_links:
+                        logger.info(f"处理 m3u8 链接: {link}")
+                        m3u8_file = self.m3u8_parser.download_m3u8_file(
+                            link, TEMP_M3U8_FILE, m3u8_headers
+                        )
+                        logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
-                    prefix = self.m3u8_parser.extract_prefix(link)
-                    logger.info(f"提取到基础 URL: {prefix[:80]}...")
+                        prefix = self.m3u8_parser.extract_prefix(link)
+                        logger.info(f"提取到基础 URL: {prefix}")
 
                     self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
                     logger.info(f"视频下载完成: {live_name}")
-
             print("=" * 100)
             logger.info("第 1 个视频下载完成")
 
             for idx, dingtalk_url in list(urls.items())[1:]:
-                print(f"正在下载第 {idx + 1} 个视频，共 {total_links} 个视频。")
-                logger.info(f"开始下载第 {idx + 1} 个视频")
+                logger.info(f"正在下载第 {idx + 1} 个视频，共 {total_links} 个视频")
 
                 cookies_data, m3u8_headers, live_name = self.cookie_handler.repeat_get_cookie(
                     dingtalk_url
@@ -194,20 +189,19 @@ class Downloader:
                 if m3u8_links:
                     logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
                     for link in m3u8_links:
-                        logger.info(f"处理 m3u8 链接: {link[:80]}...")
+                        logger.info(f"处理 m3u8 链接: {link}")
                         m3u8_file = self.m3u8_parser.download_m3u8_file(
                             link, TEMP_M3U8_FILE, m3u8_headers
                         )
                         logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
                         prefix = self.m3u8_parser.extract_prefix(link)
-                        logger.info(f"提取到基础 URL: {prefix[:80]}...")
+                        logger.info(f"提取到基础 URL: {prefix}")
 
                         self._download_video(
                             m3u8_file, live_name, prefix, cookies_data, m3u8_headers
                         )
                         logger.info(f"视频下载完成: {live_name}")
-                print("=" * 100)
                 logger.info(f"第 {idx + 1} 个视频下载完成")
 
             self._continue_download()
@@ -220,7 +214,6 @@ class Downloader:
 
         except Exception as e:
             logger.error(f"批量下载视频时发生错误: {e}", exc_info=True)
-            print(f"发生错误: {e}")
             self.close()
 
     def _download_video(
@@ -253,7 +246,6 @@ class Downloader:
             logger.info(f"使用手动选择目录: {save_dir}")
         else:
             logger.error(f"无效的保存模式: {self.save_mode}")
-            print("无效的保存模式")
             return
 
         if not save_dir:

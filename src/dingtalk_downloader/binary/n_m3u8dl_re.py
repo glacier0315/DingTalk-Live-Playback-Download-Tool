@@ -76,13 +76,12 @@ class NM3u8DLRE:
             command = self.build_command(
                 m3u8_file, save_name, save_dir, prefix, cookies_data, headers
             )
-            logger.debug(f"执行命令: {' '.join(command[:5])}...")
+            logger.debug(f"执行命令: {' '.join(command)}")
             subprocess.run(command)
             logger.info(f"视频下载成功完成。文件保存路径: {save_dir}")
             return True
         except Exception as e:
             logger.error(f"下载视频时发生错误: {e}", exc_info=True)
-            print(f"下载视频时发生错误: {e}")
             return False
 
     def build_command(
@@ -129,52 +128,52 @@ class NM3u8DLRE:
             cookie_string = "; ".join([f"{name}={value}" for name, value in cookies_data.items()])
             command.extend(["-H", f"Cookie: {cookie_string}"])
             headers_added.append("Cookie")
-            print(f"已添加 Cookie 请求头")
+            logger.debug("已添加 Cookie 请求头")
 
         if headers:
             if "User-Agent" in headers:
                 command.extend(["-H", f"User-Agent: {headers['User-Agent']}"])
                 headers_added.append("User-Agent")
-                print(f"已添加 User-Agent 请求头")
+                logger.debug("已添加 User-Agent 请求头")
             else:
-                print("警告: headers 中没有 User-Agent")
+                logger.warning("headers 中没有 User-Agent")
 
             if "Referer" in headers:
                 command.extend(["-H", f"Referer: {headers['Referer']}"])
                 headers_added.append("Referer")
-                print(f"已添加 Referer 请求头")
+                logger.debug("已添加 Referer 请求头")
             else:
                 command.extend(["-H", "Referer: https://n.dingtalk.com/"])
                 headers_added.append("Referer (默认)")
-                print(f"已添加默认 Referer 请求头")
+                logger.debug("已添加默认 Referer 请求头")
 
             if "Accept" in headers:
                 command.extend(["-H", f"Accept: {headers['Accept']}"])
                 headers_added.append("Accept")
-                print(f"已添加 Accept 请求头")
+                logger.debug("已添加 Accept 请求头")
 
             if "Accept-Language" in headers:
                 command.extend(["-H", f"Accept-Language: {headers['Accept-Language']}"])
                 headers_added.append("Accept-Language")
-                print(f"已添加 Accept-Language 请求头")
+                logger.debug("已添加 Accept-Language 请求头")
 
             if "Accept-Encoding" in headers:
                 command.extend(["-H", f"Accept-Encoding: {headers['Accept-Encoding']}"])
                 headers_added.append("Accept-Encoding")
-                print(f"已添加 Accept-Encoding 请求头")
+                logger.debug("已添加 Accept-Encoding 请求头")
         else:
-            command.extend(
-                [
-                    "-H",
-                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                ]
-            )
-            command.extend(["-H", "Referer: https://n.dingtalk.com/"])
-            command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
-            headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
-            print("已添加默认请求头")
+              command.extend(
+                  [
+                      "-H",
+                      "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                  ]
+              )
+              command.extend(["-H", "Referer: https://n.dingtalk.com/"])
+              command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
+              headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
+              logger.debug("已添加默认请求头")
 
-        print(f"总共添加了 {len(headers_added)} 个请求头: {', '.join(headers_added)}")
+        logger.debug(f"总共添加了 {len(headers_added)} 个请求头: {', '.join(headers_added)}")
 
         return command
 

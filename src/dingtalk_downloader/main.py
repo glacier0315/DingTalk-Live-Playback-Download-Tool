@@ -57,7 +57,7 @@ def single_mode() -> None:
 
     try:
         dingtalk_url = input("请输入钉钉直播回放分享链接: ")
-        logger.info(f"用户输入链接: {dingtalk_url[:50]}...")
+        logger.info(f"用户输入链接: {dingtalk_url}")
 
         save_mode = validate_input(
             "请选择保存模式（输入1：保存到程序默认路径，输入2：手动选择保存路径模式，直接回车默认选择1）: ",
@@ -88,7 +88,6 @@ def single_mode() -> None:
 
     except Exception as e:
         logger.error(f"发生错误: {e}", exc_info=True)
-        print(f"发生错误: {e}")
         sys.exit(1)
 
 
@@ -154,7 +153,6 @@ def batch_mode() -> None:
 
     except Exception as e:
         logger.error(f"发生错误: {e}", exc_info=True)
-        print(f"发生错误: {e}")
         sys.exit(1)
 
 

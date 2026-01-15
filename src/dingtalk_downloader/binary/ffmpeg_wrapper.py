@@ -58,10 +58,10 @@ class FFmpegWrapper:
         try:
             command = self.build_command(input_file, output_file, options)
             subprocess.run(command)
-            print(f"音视频转换成功完成。输出文件: {output_file}")
+            logger.info(f"音视频转换成功完成。输出文件: {output_file}")
             return True
         except Exception as e:
-            print(f"转换音视频时发生错误: {e}")
+            logger.error(f"转换音视频时发生错误: {e}", exc_info=True)
             return False
 
     def build_command(

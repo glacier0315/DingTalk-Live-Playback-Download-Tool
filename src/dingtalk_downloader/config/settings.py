@@ -12,7 +12,10 @@
 
 import os
 import json
+import logging
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class Settings:
@@ -53,7 +56,7 @@ class Settings:
                 with open(self.config_file, "r", encoding="utf-8") as f:
                     self.config = json.load(f)
             except (json.JSONDecodeError, IOError) as e:
-                print(f"加载配置文件失败: {e}")
+                logger.error(f"加载配置文件失败: {e}", exc_info=True)
                 self.config = {}
         else:
             self.config = {}
@@ -68,7 +71,7 @@ class Settings:
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=4, ensure_ascii=False)
         except IOError as e:
-            print(f"保存配置文件失败: {e}")
+            logger.error(f"保存配置文件失败: {e}", exc_info=True)
 
     def get(self, key: str, default: Any = None) -> Any:
         """
