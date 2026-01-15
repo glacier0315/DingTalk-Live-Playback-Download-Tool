@@ -44,3 +44,9 @@ build/
 *.swp
 *.swo
 *~
+
+# assets目录说明
+# assets目录包含项目所需的静态资源文件,应该包含在版本控制中
+# assets/bin/: 外部二进制程序(N_m3u8DL-RE.exe, ffmpeg.exe等)
+# assets/template/: 模板文件(批量下载模板.xlsx等)
+# assets/ICO/: 图标资源文件(icon.ico, icon.png等)

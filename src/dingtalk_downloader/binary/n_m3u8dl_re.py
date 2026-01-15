@@ -205,10 +205,11 @@ class NM3u8DLRE:
         Returns:
             可执行文件名
         """
+        import os
         system = platform.system()
         if system == "Windows":
-            return "N_m3u8DL-RE.exe"
+            return os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
         elif system == "Linux" or system == "Darwin":
-            return "./N_m3u8DL-RE"
+            return os.path.join("assets", "bin", "N_m3u8DL-RE")
         else:
             raise Exception(f"不支持的操作系统: {system}")

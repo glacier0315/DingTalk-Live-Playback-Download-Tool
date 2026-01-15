@@ -10,10 +10,13 @@ from dingtalk_downloader.binary.ffmpeg_wrapper import FFmpegWrapper
 class TestFFmpegWrapperInit:
     """测试 FFmpegWrapper 初始化"""
 
-    def test_init_default_path(self):
+    @patch('platform.system')
+    def test_init_default_path(self, mock_system):
         """测试使用默认路径初始化"""
+        mock_system.return_value = "Windows"
         wrapper = FFmpegWrapper()
-        assert wrapper.executable_path == "ffmpeg"
+        import os
+        assert wrapper.executable_path == os.path.join("assets", "bin", "ffmpeg.exe")
 
     def test_init_custom_path(self):
         """测试使用自定义路径初始化"""
@@ -25,28 +28,39 @@ class TestFFmpegWrapperInit:
 class TestFFmpegWrapperBuildCommand:
     """测试构建命令"""
 
-    def test_build_command_basic(self):
+    @patch('platform.system')
+    def test_build_command_basic(self, mock_system):
         """测试构建基本命令"""
+        mock_system.return_value = "Windows"
         wrapper = FFmpegWrapper()
         command = wrapper.build_command("input.mp4", "output.mp4", None)
         
-        assert command == ["ffmpeg", "-i", "input.mp4", "output.mp4"]
+        import os
+        expected = [os.path.join("assets", "bin", "ffmpeg.exe"), "-i", "input.mp4", "output.mp4"]
+        assert command == expected
 
-    def test_build_command_with_options(self):
+    @patch('platform.system')
+    def test_build_command_with_options(self, mock_system):
         """测试构建带选项的命令"""
+        mock_system.return_value = "Windows"
         wrapper = FFmpegWrapper()
         options = ["-c:v", "libx264", "-c:a", "aac"]
         command = wrapper.build_command("input.mp4", "output.mp4", options)
         
-        expected = ["ffmpeg", "-i", "input.mp4", "-c:v", "libx264", "-c:a", "aac", "output.mp4"]
+        import os
+        expected = [os.path.join("assets", "bin", "ffmpeg.exe"), "-i", "input.mp4", "-c:v", "libx264", "-c:a", "aac", "output.mp4"]
         assert command == expected
 
-    def test_build_command_empty_options(self):
+    @patch('platform.system')
+    def test_build_command_empty_options(self, mock_system):
         """测试空选项列表"""
+        mock_system.return_value = "Windows"
         wrapper = FFmpegWrapper()
         command = wrapper.build_command("input.mp4", "output.mp4", [])
         
-        assert command == ["ffmpeg", "-i", "input.mp4", "output.mp4"]
+        import os
+        expected = [os.path.join("assets", "bin", "ffmpeg.exe"), "-i", "input.mp4", "output.mp4"]
+        assert command == expected
 
     def test_build_command_custom_executable(self):
         """测试自定义可执行文件路径"""
@@ -102,13 +116,16 @@ class TestFFmpegWrapperConvert:
         assert call_args[0] == "/custom/path/ffmpeg"
 
     @patch('dingtalk_downloader.binary.ffmpeg_wrapper.subprocess.run')
-    def test_convert_command_structure(self, mock_run):
+    @patch('platform.system')
+    def test_convert_command_structure(self, mock_system, mock_run):
         """测试转换命令结构"""
+        mock_system.return_value = "Windows"
         wrapper = FFmpegWrapper()
         wrapper.convert("input.mp4", "output.mp4", None)
         
+        import os
         call_args = mock_run.call_args[0][0]
-        assert call_args[0] == "ffmpeg"
+        assert call_args[0] == os.path.join("assets", "bin", "ffmpeg.exe")
         assert "-i" in call_args
         assert "input.mp4" in call_args
         assert "output.mp4" in call_args

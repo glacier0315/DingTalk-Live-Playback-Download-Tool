@@ -16,21 +16,24 @@ class TestNM3u8DLREInit:
         """测试 Windows 系统默认初始化"""
         mock_system.return_value = "Windows"
         dl = NM3u8DLRE()
-        assert dl.executable_path == "N_m3u8DL-RE.exe"
+        import os
+        assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
 
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
     def test_init_default_linux(self, mock_system):
         """测试 Linux 系统默认初始化"""
         mock_system.return_value = "Linux"
         dl = NM3u8DLRE()
-        assert dl.executable_path == "./N_m3u8DL-RE"
+        import os
+        assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE")
 
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
     def test_init_default_macos(self, mock_system):
         """测试 macOS 系统默认初始化"""
         mock_system.return_value = "Darwin"
         dl = NM3u8DLRE()
-        assert dl.executable_path == "./N_m3u8DL-RE"
+        import os
+        assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE")
 
     def test_init_custom_path(self):
         """测试自定义路径初始化"""
@@ -47,21 +50,24 @@ class TestNM3u8DLREGetExecutableName:
         """测试 Windows 系统可执行文件名"""
         mock_system.return_value = "Windows"
         name = NM3u8DLRE.get_executable_name()
-        assert name == "N_m3u8DL-RE.exe"
+        import os
+        assert name == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
 
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
     def test_get_executable_name_linux(self, mock_system):
         """测试 Linux 系统可执行文件名"""
         mock_system.return_value = "Linux"
         name = NM3u8DLRE.get_executable_name()
-        assert name == "./N_m3u8DL-RE"
+        import os
+        assert name == os.path.join("assets", "bin", "N_m3u8DL-RE")
 
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
     def test_get_executable_name_macos(self, mock_system):
         """测试 macOS 系统可执行文件名"""
         mock_system.return_value = "Darwin"
         name = NM3u8DLRE.get_executable_name()
-        assert name == "./N_m3u8DL-RE"
+        import os
+        assert name == os.path.join("assets", "bin", "N_m3u8DL-RE")
 
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
     def test_get_executable_name_unsupported(self, mock_system):
@@ -342,7 +348,8 @@ class TestNM3u8DLREIntegration:
         mock_system.return_value = "Windows"
         dl = NM3u8DLRE()
         
-        assert dl.executable_path == "N_m3u8DL-RE.exe"
+        import os
+        assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
         
         command = dl.build_command(
             m3u8_file="test.m3u8",

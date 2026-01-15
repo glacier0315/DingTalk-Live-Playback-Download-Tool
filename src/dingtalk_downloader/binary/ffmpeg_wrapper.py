@@ -34,8 +34,16 @@ class FFmpegWrapper:
         Args:
             executable_path: 可执行文件路径，默认为 None（使用默认路径）
         """
+        import os
+        import platform
         if executable_path is None:
-            self.executable_path = "ffmpeg"
+            system = platform.system()
+            if system == "Windows":
+                self.executable_path = os.path.join("assets", "bin", "ffmpeg.exe")
+            elif system == "Linux" or system == "Darwin":
+                self.executable_path = os.path.join("assets", "bin", "ffmpeg")
+            else:
+                self.executable_path = "ffmpeg"
         else:
             self.executable_path = executable_path
 

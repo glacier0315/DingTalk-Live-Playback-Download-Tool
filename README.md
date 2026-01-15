@@ -34,6 +34,94 @@ DingTalk-Live-Playback-Download-Tool 是一个功能强大的钉钉直播回放�
 - **Binary 模块**：二进制工具封装，集成 N_m3u8DL-RE 和 FFmpeg 等专业工具
 - **Config 模块**：配置管理，统一管理项目配置和常量定义
 
+## 项目目录结构
+
+```
+DingTalk-Live-Playback-Download-Tool/
+├── src/                                    # 源代码目录
+│   └── dingtalk_downloader/                # 项目包名
+│       ├── __init__.py
+│       ├── main.py                         # 程序入口文件
+│       ├── core/                           # 核心业务逻辑模块
+│       ├── utils/                          # 工具函数模块
+│       ├── binary/                         # 二进制程序调用模块
+│       ├── browser/                        # 浏览器自动化模块
+│       └── config/                         # 配置管理模块
+├── tests/                                 # 测试代码目录
+│   ├── unit/                               # 单元测试
+│   ├── integration/                        # 集成测试
+│   └── fixtures/                           # 测试数据
+│       ├── sample_links.csv
+│       └── sample_links.xlsx
+├── assets/                                 # 静态资源目录
+│   ├── bin/                                # 外部二进制程序目录
+│   │   ├── N_m3u8DL-RE.exe                 # N_m3u8DL-RE可执行文件(Windows)
+│   │   ├── N_m3u8DL-RE                     # N_m3u8DL-RE可执行文件(Linux/macOS)
+│   │   ├── ffmpeg.exe                      # FFmpeg可执行文件(Windows)
+│   │   └── ffmpeg                          # FFmpeg可执行文件(Linux/macOS)
+│   ├── template/                           # 模板文件目录
+│   │   └── 批量下载模板.xlsx               # 批量下载模板文件
+│   └── ICO/                                # 图标资源目录
+│       ├── icon-512x512.png
+│       ├── icon.ico
+│       └── icon.png
+├── docs/                                  # 文档目录
+│   ├── development_standard.md              # 开发规范文档
+│   ├── development_guide.md                # 开发指南文档
+│   └── project_status.md                 # 项目现状记录
+├── requirements.txt                        # Python依赖包列表
+├── requirements-dev.txt                    # 开发依赖包列表
+├── .gitignore                             # Git忽略文件配置
+├── .trae/                                 # Trae IDE配置目录
+│   └── rules/
+│       └── project_rules.md                # 项目规则文档
+└── README.md                              # 项目说明文档
+```
+
+### 目录说明
+
+- **src/**: 源代码目录，包含所有 Python 代码
+- **tests/**: 测试代码目录，包含单元测试、集成测试和测试数据
+- **assets/**: 静态资源目录，包含外部二进制程序、模板文件和图标资源
+- **docs/**: 文档目录，包含开发规范、开发指南和项目记录
+- **requirements.txt**: 项目运行所需的 Python 依赖包
+- **requirements-dev.txt**: 开发所需的额外依赖包（测试、代码格式化等）
+
+## 文件路径规范
+
+### 外部二进制文件路径
+
+项目使用的外部二进制程序统一存放在 `assets/bin` 目录下：
+
+- **N_m3u8DL-RE**
+
+  - Windows: `assets/bin/N_m3u8DL-RE.exe`
+  - Linux/macOS: `assets/bin/N_m3u8DL-RE`
+
+- **FFmpeg**
+  - Windows: `assets/bin/ffmpeg.exe`
+  - Linux/macOS: `assets/bin/ffmpeg`
+
+### 模板文件路径
+
+批量下载模板文件存放在 `assets/template` 目录下：
+
+- **批量下载模板**: `assets/template/批量下载模板.xlsx`
+
+### 图标资源路径
+
+图标资源文件存放在 `assets/ICO` 目录下：
+
+- `assets/ICO/icon-512x512.png`
+- `assets/ICO/icon.ico`
+- `assets/ICO/icon.png`
+
+### 路径使用说明
+
+- 代码中通过 `os.path.join()` 或 `pathlib.Path` 构建跨平台兼容的路径
+- 所有文件路径引用都遵循上述规范
+- 详细路径规范请参考 [development_standard.md](docs/development_standard.md)
+
 ## 快速开始
 
 ### 环境要求
