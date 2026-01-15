@@ -9,6 +9,7 @@
 ### FileReader - 文件读取工具类
 
 **功能**：
+
 - 从 CSV 文件中读取链接
 - 从 Excel 文件中读取链接
 - 自动处理不同编码（UTF-8、GBK）
@@ -17,6 +18,7 @@
 ### PathHelper - 路径处理工具函数
 
 **功能**：
+
 - 清理文件路径（去除引号和空格）
 - 拼接多个路径片段
 - 确保目录存在
@@ -25,6 +27,7 @@
 ### Validator - 输入验证工具函数
 
 **功能**：
+
 - 验证用户输入
 - 支持默认选项
 - 捕获 EOFError 和 KeyboardInterrupt
@@ -198,12 +201,14 @@ print(f"您选择了: {choice}")
 
 ### FileReader 类
 
-#### __init__(file_path: str)
+#### **init**(file_path: str)
 
 **参数**：
+
 - `file_path`：文件路径（CSV/Excel）
 
 **异常**：
+
 - `FileNotFoundError`：文件不存在时
 - `ValueError`：文件格式不支持时
 
@@ -214,9 +219,11 @@ print(f"您选择了: {choice}")
 **参数**：无
 
 **返回值**：
+
 - `Dict[int, str]`：链接字典 {index: url}
 
 **异常**：
+
 - `Exception`：读取失败时
 
 **功能**：从文件中读取钉钉直播链接
@@ -226,19 +233,23 @@ print(f"您选择了: {choice}")
 #### clean_file_path(file_path: str) -> str
 
 **参数**：
+
 - `file_path`：文件路径
 
 **返回值**：
+
 - `str`：清理后的文件路径
 
 **功能**：清理文件路径（去除引号和空格）
 
-#### join_paths(*paths: str) -> str
+#### join_paths(\*paths: str) -> str
 
 **参数**：
+
 - `*paths`：路径片段
 
 **返回值**：
+
 - `str`：拼接后的路径
 
 **功能**：拼接多个路径片段
@@ -246,6 +257,7 @@ print(f"您选择了: {choice}")
 #### ensure_dir_exists(dir_path: str) -> None
 
 **参数**：
+
 - `dir_path`：目录路径
 
 **返回值**：无
@@ -255,9 +267,11 @@ print(f"您选择了: {choice}")
 #### get_file_extension(file_path: str) -> str
 
 **参数**：
+
 - `file_path`：文件路径
 
 **返回值**：
+
 - `str`：文件扩展名（包含点号）
 
 **功能**：获取文件扩展名
@@ -267,14 +281,17 @@ print(f"您选择了: {choice}")
 #### validate_input(prompt: str, valid_options: List[str], default_option: Optional[str] = None) -> str
 
 **参数**：
+
 - `prompt`：提示信息
 - `valid_options`：有效选项列表
 - `default_option`：默认选项
 
 **返回值**：
+
 - `str`：用户选择的选项
 
 **异常**：
+
 - `ValueError`：输入无效时
 - `EOFError`：输入流结束时
 - `KeyboardInterrupt`：用户中断时
@@ -286,10 +303,12 @@ print(f"您选择了: {choice}")
 ### 依赖的外部库
 
 1. **pandas**
+
    - 数据处理库
    - 用于读取 CSV 和 Excel 文件
 
 2. **openpyxl**
+
    - Excel 文件处理库
    - 用于读取 .xlsx 文件
 
@@ -359,18 +378,22 @@ print(f"您选择了: {choice}")
 ## 注意事项
 
 1. **文件编码**
+
    - CSV 文件支持 UTF-8 和 GBK 编码
    - 如果编码无法识别，程序会退出
 
 2. **文件格式**
+
    - 只支持 CSV 和 Excel 文件
    - Excel 文件支持 .xlsx 和 .xls 格式
 
 3. **链接提取**
+
    - 只提取以 "https://n.dingtalk.com" 开头的链接
    - 遍历所有工作表和单元格
 
 4. **输入验证**
+
    - 支持默认选项（直接按 Enter）
    - 捕获 EOFError 和 KeyboardInterrupt
 
@@ -381,23 +404,32 @@ print(f"您选择了: {choice}")
 ## 扩展方向
 
 1. **支持更多文件格式**
+
    - 添加对 JSON、TXT 等格式的支持
 
 2. **链接验证**
+
    - 添加链接有效性验证
    - 检查链接是否可访问
 
 3. **编码检测**
+
    - 自动检测文件编码
    - 支持更多编码格式
 
 4. **路径规范化**
+
    - 添加路径规范化功能
    - 处理相对路径和绝对路径转换
 
 5. **输入增强**
    - 添加输入超时功能
    - 添加输入掩码功能
+
+## 维护责任人
+
+- **主要维护者**：项目团队
+- **最后更新日期**：2025-01-15
 
 ## 相关文档
 

@@ -9,6 +9,7 @@
 ### constants.py - 常量定义模块
 
 **功能**：
+
 - 定义项目中的所有常量
 - 包括浏览器类型、下载模式、保存模式等
 - 提供映射关系（选项映射）
@@ -16,6 +17,7 @@
 ### logger_config.py - 日志配置模块
 
 **功能**：
+
 - 配置和管理日志系统
 - 支持控制台和文件日志输出
 - 支持日志轮转和自动清理
@@ -24,6 +26,7 @@
 ### settings.py - 配置管理模块
 
 **功能**：
+
 - 管理用户配置项
 - 支持配置文件的加载和保存
 - 提供配置项的获取和设置接口
@@ -297,6 +300,7 @@ settings = Settings(config_file="/path/to/config.json")
 #### setup_logging(log_level: Optional[str] = None) -> None
 
 **参数**：
+
 - `log_level`：日志级别，默认从环境变量 LOG_LEVEL 读取
 
 **功能**：初始化日志系统
@@ -304,9 +308,11 @@ settings = Settings(config_file="/path/to/config.json")
 #### get_logger(name: str) -> logging.Logger
 
 **参数**：
+
 - `name`：logger 名称，通常使用 `__name__`
 
 **返回值**：
+
 - `logging.Logger`：logger 实例
 
 **功能**：获取 logger 实例
@@ -314,15 +320,17 @@ settings = Settings(config_file="/path/to/config.json")
 #### clean_old_logs(days: int = 30) -> None
 
 **参数**：
+
 - `days`：保留天数，默认 30 天
 
 **功能**：清理过期日志文件
 
 ### Settings 类
 
-#### __init__(config_file: Optional[str] = None)
+#### **init**(config_file: Optional[str] = None)
 
 **参数**：
+
 - `config_file`：配置文件路径，默认为 None（使用默认路径）
 
 **功能**：初始化配置管理器
@@ -346,10 +354,12 @@ settings = Settings(config_file="/path/to/config.json")
 #### get(key: str, default: Any = None) -> Any
 
 **参数**：
+
 - `key`：配置项键
 - `default`：默认值
 
 **返回值**：
+
 - `Any`：配置项值，如果不存在则返回默认值
 
 **功能**：获取配置项
@@ -357,6 +367,7 @@ settings = Settings(config_file="/path/to/config.json")
 #### set(key: str, value: Any) -> None
 
 **参数**：
+
 - `key`：配置项键
 - `value`：配置项值
 
@@ -419,20 +430,24 @@ settings = Settings(config_file="/path/to/config.json")
 ## 注意事项
 
 1. **常量使用**
+
    - 所有常量都应该通过 `constants.py` 导入使用
    - 不要在代码中硬编码常量值
 
 2. **日志级别**
+
    - 支持通过环境变量 `LOG_LEVEL` 设置
    - 默认级别为 INFO
    - 支持的级别：DEBUG、INFO、WARNING、ERROR、CRITICAL
 
 3. **日志文件**
+
    - 日志文件按日期命名
    - 单个文件最大 10MB
    - 最多保留 5 个备份文件
 
 4. **配置文件**
+
    - 默认路径为 `~/.dingtalk_downloader/config.json`
    - 支持 JSON 格式
    - 自动创建目录
@@ -444,25 +459,34 @@ settings = Settings(config_file="/path/to/config.json")
 ## 扩展方向
 
 1. **配置验证**
+
    - 添加配置项验证逻辑
    - 支持配置项类型检查
 
 2. **配置模板**
+
    - 提供配置文件模板
    - 支持配置项默认值
 
 3. **日志增强**
+
    - 支持日志压缩
    - 支持日志上传到远程服务器
    - 支持日志过滤
 
 4. **多环境配置**
+
    - 支持开发、测试、生产环境配置
    - 支持配置文件切换
 
 5. **配置热更新**
    - 支持配置文件监听
    - 支持配置热更新
+
+## 维护责任人
+
+- **主要维护者**：项目团队
+- **最后更新日期**：2025-01-15
 
 ## 相关文档
 

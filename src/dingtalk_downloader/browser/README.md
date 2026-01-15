@@ -9,6 +9,7 @@
 ### BrowserFactory - 浏览器工厂类
 
 **功能**：
+
 - 统一浏览器创建逻辑
 - 根据浏览器类型创建对应的浏览器实例
 - 提供工厂方法模式
@@ -16,6 +17,7 @@
 ### EdgeDriver - Edge 浏览器驱动类
 
 **功能**：
+
 - 创建和配置 Edge 浏览器实例
 - 提供浏览器操作方法（导航、获取元素、获取 Cookie 等）
 - 获取浏览器性能日志
@@ -23,6 +25,7 @@
 ### ChromeDriver - Chrome 浏览器驱动类
 
 **功能**：
+
 - 创建和配置 Chrome 浏览器实例
 - 提供浏览器操作方法（导航、获取元素、获取 Cookie 等）
 - 获取浏览器性能日志
@@ -30,6 +33,7 @@
 ### FirefoxDriver - Firefox 浏览器驱动类
 
 **功能**：
+
 - 创建和配置 Firefox 浏览器实例
 - 提供浏览器操作方法（导航、获取元素、获取 Cookie 等）
 - 获取浏览器性能日志
@@ -238,19 +242,22 @@ driver = firefox_driver.create_driver()
 #### create_browser(browser_type: str) -> Union[EdgeDriver, ChromeDriver, FirefoxDriver]
 
 **参数**：
+
 - `browser_type`：浏览器类型（edge/chrome/firefox）
 
 **返回值**：
+
 - `Union[EdgeDriver, ChromeDriver, FirefoxDriver]`：浏览器实例
 
 **功能**：创建浏览器实例
 
 **异常**：
+
 - `ValueError`：浏览器类型不支持时
 
 ### EdgeDriver/ChromeDriver/FirefoxDriver 类
 
-#### __init__()
+#### **init**()
 
 **参数**：无
 
@@ -261,6 +268,7 @@ driver = firefox_driver.create_driver()
 **参数**：无
 
 **返回值**：
+
 - `webdriver.Edge/Chrome/Firefox`：浏览器实例
 
 **功能**：创建浏览器实例
@@ -268,9 +276,11 @@ driver = firefox_driver.create_driver()
 #### get_log(log_type: str) -> List[dict]
 
 **参数**：
+
 - `log_type`：日志类型（如 "performance"）
 
 **返回值**：
+
 - `List[dict]`：日志列表
 
 **功能**：获取浏览器日志
@@ -278,9 +288,11 @@ driver = firefox_driver.create_driver()
 #### get_element_by_xpath(xpath: str)
 
 **参数**：
+
 - `xpath`：XPath 表达式
 
 **返回值**：
+
 - 元素对象
 
 **功能**：通过 XPath 获取元素
@@ -288,9 +300,11 @@ driver = firefox_driver.create_driver()
 #### get_element_by_class_name(class_name: str)
 
 **参数**：
+
 - `class_name`：类名
 
 **返回值**：
+
 - 元素对象
 
 **功能**：通过类名获取元素
@@ -300,6 +314,7 @@ driver = firefox_driver.create_driver()
 **参数**：无
 
 **返回值**：
+
 - `str`：User-Agent 字符串
 
 **功能**：获取 User-Agent
@@ -309,6 +324,7 @@ driver = firefox_driver.create_driver()
 **参数**：无
 
 **返回值**：
+
 - `str`：Referer 字符串
 
 **功能**：获取 Referer
@@ -318,6 +334,7 @@ driver = firefox_driver.create_driver()
 **参数**：无
 
 **返回值**：
+
 - `List[dict]`：Cookie 列表
 
 **功能**：获取 Cookie
@@ -325,6 +342,7 @@ driver = firefox_driver.create_driver()
 #### navigate(url: str) -> None
 
 **参数**：
+
 - `url`：目标 URL
 
 **返回值**：无
@@ -334,6 +352,7 @@ driver = firefox_driver.create_driver()
 #### wait_for_video(timeout: int = 20) -> None
 
 **参数**：
+
 - `timeout`：超时时间（秒），默认为 20
 
 **返回值**：无
@@ -403,20 +422,24 @@ driver = firefox_driver.create_driver()
 ## 注意事项
 
 1. **浏览器配置**
+
    - 禁用 USB 设备事件日志
    - 忽略证书错误
    - 禁用日志输出
    - 启用性能日志
 
 2. **资源释放**
+
    - 使用完毕后必须调用 `close()` 方法
    - 避免浏览器进程残留
 
 3. **异常处理**
+
    - 捕获浏览器操作异常
    - 记录详细错误信息
 
 4. **日志记录**
+
    - 记录浏览器创建、操作、关闭等关键步骤
    - 记录异常信息
 
@@ -427,20 +450,29 @@ driver = firefox_driver.create_driver()
 ## 扩展方向
 
 1. **支持更多浏览器**
+
    - 添加对 Safari、Opera 等浏览器的支持
 
 2. **无头模式**
+
    - 添加无头浏览器模式支持
 
 3. **代理支持**
+
    - 添加代理服务器配置
 
 4. **用户数据目录**
+
    - 支持自定义用户数据目录
 
 5. **性能优化**
    - 优化浏览器启动速度
    - 减少内存占用
+
+## 维护责任人
+
+- **主要维护者**：项目团队
+- **最后更新日期**：2025-01-15
 
 ## 相关文档
 

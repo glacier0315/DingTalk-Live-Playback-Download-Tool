@@ -9,6 +9,7 @@
 ### FFmpegWrapper - FFmpeg 调用封装
 
 **功能**：
+
 - 封装 FFmpeg 工具的调用逻辑
 - 提供音视频文件转换功能
 - 自动检测操作系统并使用对应的可执行文件
@@ -16,6 +17,7 @@
 ### NM3u8DLRE - N_m3u8DL-RE 调用封装
 
 **功能**：
+
 - 封装 N_m3u8DL-RE 工具的调用逻辑
 - 提供从 m3u8 文件下载视频流的功能
 - 支持自定义 Cookie 和请求头
@@ -164,9 +166,10 @@ else:
 
 ### FFmpegWrapper 类
 
-#### __init__(executable_path: Optional[str] = None)
+#### **init**(executable_path: Optional[str] = None)
 
 **参数**：
+
 - `executable_path`：可执行文件路径，默认为 None（自动检测）
 
 **功能**：初始化 FFmpeg 调用器
@@ -174,11 +177,13 @@ else:
 #### convert(input_file: str, output_file: str, options: Optional[List[str]] = None) -> bool
 
 **参数**：
+
 - `input_file`：输入文件路径
 - `output_file`：输出文件路径
 - `options`：FFmpeg 选项列表，默认为 None
 
 **返回值**：
+
 - `bool`：转换是否成功
 
 **功能**：转换音视频文件
@@ -186,20 +191,23 @@ else:
 #### build_command(input_file: str, output_file: str, options: Optional[List[str]] = None) -> List[str]
 
 **参数**：
+
 - `input_file`：输入文件路径
 - `output_file`：输出文件路径
 - `options`：FFmpeg 选项列表，默认为 None
 
 **返回值**：
+
 - `List[str]`：命令列表
 
 **功能**：构建 FFmpeg 转换命令
 
 ### NM3u8DLRE 类
 
-#### __init__(executable_path: Optional[str] = None)
+#### **init**(executable_path: Optional[str] = None)
 
 **参数**：
+
 - `executable_path`：可执行文件路径，默认为 None（自动检测）
 
 **功能**：初始化 N_m3u8DL-RE 调用器
@@ -207,6 +215,7 @@ else:
 #### download(m3u8_file: str, save_name: str, save_dir: str, prefix: str, cookies_data: Optional[Dict[str, str]] = None, headers: Optional[Dict[str, str]] = None) -> bool
 
 **参数**：
+
 - `m3u8_file`：m3u8 文件路径
 - `save_name`：保存文件名
 - `save_dir`：保存目录
@@ -215,6 +224,7 @@ else:
 - `headers`：请求头字典，默认为 None
 
 **返回值**：
+
 - `bool`：下载是否成功
 
 **功能**：下载 m3u8 视频
@@ -222,6 +232,7 @@ else:
 #### build_command(m3u8_file: str, save_name: str, save_dir: str, prefix: str, cookies_data: Optional[Dict[str, str]] = None, headers: Optional[Dict[str, str]] = None) -> List[str]
 
 **参数**：
+
 - `m3u8_file`：m3u8 文件路径
 - `save_name`：保存文件名
 - `save_dir`：保存目录
@@ -230,6 +241,7 @@ else:
 - `headers`：请求头字典，默认为 None
 
 **返回值**：
+
 - `List[str]`：命令列表
 
 **功能**：构建 N_m3u8DL-RE 下载命令
@@ -239,6 +251,7 @@ else:
 **参数**：无
 
 **返回值**：
+
 - `str`：可执行文件名
 
 **功能**：获取可执行文件名（静态方法）
@@ -248,6 +261,7 @@ else:
 ### 依赖的外部工具
 
 1. **FFmpeg**
+
    - 音视频处理工具
    - 用于音视频格式转换
 
@@ -301,16 +315,19 @@ m3u8 文件路径
 ## 注意事项
 
 1. **可执行文件路径**
+
    - 默认路径为 `assets/bin/` 目录
    - 支持自定义路径
    - 自动检测操作系统
 
 2. **错误处理**
+
    - 捕获子进程异常
    - 检查返回码和输出
    - 记录详细错误信息
 
 3. **日志记录**
+
    - 记录命令执行过程
    - 记录成功/失败信息
    - 记录错误详情
@@ -323,19 +340,28 @@ m3u8 文件路径
 ## 扩展方向
 
 1. **支持更多工具**
+
    - 添加对其他音视频处理工具的支持
 
 2. **进度回调**
+
    - 添加下载/转换进度回调函数
 
 3. **并发下载**
+
    - 支持多线程/多进程下载
 
 4. **断点续传**
+
    - 支持下载中断后继续下载
 
 5. **更多格式支持**
    - 扩展支持更多音视频格式
+
+## 维护责任人
+
+- **主要维护者**：项目团队
+- **最后更新日期**：2025-01-15
 
 ## 相关文档
 

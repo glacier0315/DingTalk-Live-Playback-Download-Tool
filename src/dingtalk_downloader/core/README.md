@@ -9,6 +9,7 @@
 ### CookieHandler - Cookie 处理模块
 
 **功能**：
+
 - 通过 Selenium 自动化浏览器获取登录后的 Cookie
 - 获取请求头信息（User-Agent、Referer 等）
 - 获取直播视频名称
@@ -17,6 +18,7 @@
 ### M3u8Parser - m3u8 解析模块
 
 **功能**：
+
 - 从浏览器网络日志中提取 m3u8 链接
 - 下载 m3u8 文件
 - 提取基础 URL（prefix）
@@ -26,6 +28,7 @@
 ### Downloader - 下载器核心模块
 
 **功能**：
+
 - 协调 Cookie 获取、m3u8 解析、视频下载
 - 支持单个视频下载
 - 支持批量视频下载
@@ -314,9 +317,10 @@ downloader.close()
 
 ### CookieHandler 类
 
-#### __init__(browser_type: str)
+#### **init**(browser_type: str)
 
 **参数**：
+
 - `browser_type`：浏览器类型（edge/chrome/firefox）
 
 **功能**：初始化 Cookie 处理器
@@ -324,9 +328,11 @@ downloader.close()
 #### get_cookie(url: str) -> Tuple[Union[EdgeDriver, ChromeDriver, FirefoxDriver], Dict[str, str], Dict[str, str], str]
 
 **参数**：
+
 - `url`：钉钉直播回放分享链接
 
 **返回值**：
+
 - `Tuple`：包含四个元素的元组
   - `browser`：浏览器实例
   - `cookie_dict`：Cookie 字典
@@ -338,9 +344,11 @@ downloader.close()
 #### repeat_get_cookie(url: str) -> Tuple[Dict[str, str], Dict[str, str], str]
 
 **参数**：
+
 - `url`：钉钉直播回放分享链接
 
 **返回值**：
+
 - `Tuple`：包含三个元素的元组
   - `cookie_dict`：Cookie 字典
   - `headers`：请求头字典
@@ -358,9 +366,10 @@ downloader.close()
 
 ### M3u8Parser 类
 
-#### __init__(browser: Union[EdgeDriver, ChromeDriver, FirefoxDriver], browser_type: str, max_retries: int = MAX_RETRY_COUNT)
+#### **init**(browser: Union[EdgeDriver, ChromeDriver, FirefoxDriver], browser_type: str, max_retries: int = MAX_RETRY_COUNT)
 
 **参数**：
+
 - `browser`：浏览器实例
 - `browser_type`：浏览器类型（edge/chrome/firefox）
 - `max_retries`：最大重试次数，默认为 5
@@ -370,9 +379,11 @@ downloader.close()
 #### fetch_m3u8_links(url: str) -> Optional[List[str]]
 
 **参数**：
+
 - `url`：钉钉直播回放分享链接
 
 **返回值**：
+
 - `Optional[List[str]]`：m3u8 链接列表，如果提取失败则返回 None
 
 **功能**：从浏览器网络日志中提取 m3u8 链接
@@ -380,11 +391,13 @@ downloader.close()
 #### download_m3u8_file(url: str, filename: str, headers: dict) -> str
 
 **参数**：
+
 - `url`：m3u8 文件 URL
 - `filename`：保存的文件名
 - `headers`：请求头字典
 
 **返回值**：
+
 - `str`：m3u8 文件路径
 
 **功能**：下载 m3u8 文件
@@ -392,18 +405,21 @@ downloader.close()
 #### extract_prefix(url: str) -> str
 
 **参数**：
+
 - `url`：m3u8 文件 URL
 
 **返回值**：
+
 - `str`：基础 URL
 
 **功能**：提取基础 URL
 
 ### Downloader 类
 
-#### __init__(browser_type: str, save_mode: str)
+#### **init**(browser_type: str, save_mode: str)
 
 **参数**：
+
 - `browser_type`：浏览器类型（edge/chrome/firefox）
 - `save_mode`：保存模式（1：默认路径，2：手动选择）
 
@@ -412,6 +428,7 @@ downloader.close()
 #### download_single_video(url: str) -> None
 
 **参数**：
+
 - `url`：钉钉直播回放分享链接
 
 **返回值**：无
@@ -421,6 +438,7 @@ downloader.close()
 #### download_batch_videos(urls: Dict[int, str]) -> None
 
 **参数**：
+
 - `urls`：链接字典 {index: url}
 
 **返回值**：无
@@ -508,18 +526,22 @@ downloader.close()
 ## 注意事项
 
 1. **浏览器资源管理**
+
    - 使用完毕后必须调用 `close()` 方法
    - 避免浏览器进程残留
 
 2. **重试机制**
+
    - m3u8 链接提取失败时会自动重试
    - 最多重试 `MAX_RETRY_COUNT` 次
 
 3. **异常处理**
+
    - 捕获所有异常并记录日志
    - 异常时自动关闭浏览器
 
 4. **用户交互**
+
    - Cookie 获取时需要用户手动登录
    - 支持继续下载新链接
 
@@ -530,19 +552,28 @@ downloader.close()
 ## 扩展方向
 
 1. **断点续传**
+
    - 支持下载中断后继续下载
 
 2. **下载队列管理**
+
    - 添加下载队列，支持暂停、恢复、取消等操作
 
 3. **进度显示**
+
    - 添加下载进度条和实时速度显示
 
 4. **多线程下载**
+
    - 支持多线程下载提高速度
 
 5. **下载历史记录**
    - 记录下载历史，支持重新下载
+
+## 维护责任人
+
+- **主要维护者**：项目团队
+- **最后更新日期**：2025-01-15
 
 ## 相关文档
 
