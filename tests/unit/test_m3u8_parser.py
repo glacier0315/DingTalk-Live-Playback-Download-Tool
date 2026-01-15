@@ -151,7 +151,7 @@ def test_m3u8_parser_download_m3u8_file(mock_browser, tmp_path):
 
 
 def test_m3u8_parser_download_m3u8_file_with_headers(mock_browser, tmp_path):
-    """测试下载 m3u8 文件 - 带请求头"""
+    """测试下载 m3u8 文件 - 带请求头（headers 参数保留但不使用）"""
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
     
     temp_file = tmp_path / "test.m3u8"
@@ -163,6 +163,11 @@ def test_m3u8_parser_download_m3u8_file_with_headers(mock_browser, tmp_path):
     assert result == str(temp_file)
     assert temp_file.exists()
     mock_browser.driver.execute_script.assert_called_once()
+    # 验证调用时不包含 headers 参数
+    call_args = mock_browser.driver.execute_script.call_args
+    assert call_args[0][0] == "return fetch(arguments[0], { method: 'GET' }).then(response => response.text())"
+    assert call_args[0][1] == "https://test.com/test.m3u8"
+    assert len(call_args[0]) == 2  # 只有 script 和 url 两个参数
 
 
 def test_m3u8_parser_refresh_page(mock_browser):

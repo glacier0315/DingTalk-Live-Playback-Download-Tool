@@ -131,11 +131,12 @@ class M3u8Parser:
         下载 m3u8 文件。
 
         通过浏览器 JavaScript 执行 fetch 请求下载 m3u8 文件。
+        使用浏览器默认请求头（包括已登录的 Cookie），避免跨域问题。
 
         Args:
             url: m3u8 文件 URL
             filename: 保存的文件名
-            headers: 请求头字典
+            headers: 请求头字典（保留参数以兼容接口，但实际不使用）
 
         Returns:
             m3u8 文件路径
@@ -145,9 +146,8 @@ class M3u8Parser:
         """
         try:
             m3u8_content = self.browser.driver.execute_script(
-                "return fetch(arguments[0], { method: 'GET', headers: arguments[1] }).then(response => response.text())",
+                "return fetch(arguments[0], { method: 'GET' }).then(response => response.text())",
                 url,
-                headers,
             )
 
             with open(filename, "w", encoding="utf-8") as f:
