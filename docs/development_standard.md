@@ -342,11 +342,18 @@ DingTalk-Live-Playback-Download-Tool/
 │ └── fixtures/ # 测试数据
 │ ├── sample_links.csv
 │ └── sample_links.xlsx
-├── assets/ # 静态资源目录（存放外部二进制程序）
-│ ├── N_m3u8DL-RE.exe # N_m3u8DL-RE 可执行文件
-│ ├── N_m3u8DL-RE # N_m3u8DL-RE 可执行文件（Linux/macOS）
-│ ├── ffmpeg.exe # FFmpeg 可执行文件
-│ └── ffmpeg # FFmpeg 可执行文件（Linux/macOS）
+├── assets/ # 静态资源目录
+│ ├── bin/ # 外部二进制程序目录
+│ │ ├── N_m3u8DL-RE.exe # N_m3u8DL-RE 可执行文件(Windows)
+│ │ ├── N_m3u8DL-RE # N_m3u8DL-RE 可执行文件(Linux/macOS)
+│ │ ├── ffmpeg.exe # FFmpeg 可执行文件(Windows)
+│ │ └── ffmpeg # FFmpeg 可执行文件(Linux/macOS)
+│ ├── template/ # 模板文件目录
+│ │ └── 批量下载模板.xlsx # 批量下载模板文件
+│ └── ICO/ # 图标资源目录
+│ ├── icon-512x512.png
+│ ├── icon.ico
+│ └── icon.png
 ├── scripts/ # 辅助脚本目录（验证、部署等）
 │ ├── setup.py # 安装脚本
 │ ├── validate_dependencies.py # 依赖验证脚本
@@ -388,9 +395,102 @@ DingTalk-Live-Playback-Download-Tool/
 
 #### assets/ 静态资源目录
 
-- **职责**：存放外部二进制程序和静态资源
-- **原则**：所有外部依赖的可执行文件统一管理
-- **命名**：保持原始文件名
+- **职责**:存放外部二进制程序、模板文件和静态资源
+- **原则**:所有外部依赖的可执行文件和静态资源统一管理
+- **命名**:保持原始文件名,遵循统一的命名规范
+
+##### assets/bin/ 外部二进制程序目录
+
+- **职责**:存放项目所需的外部二进制程序和可执行文件
+- **原则**:仅存放可执行文件和必要的依赖文件
+- **命名**:使用小写字母、数字、连字符和下划线
+
+##### assets/template/ 模板文件目录
+
+- **职责**:存放项目使用的模板文件
+- **原则**:仅存放模板文件,便于用户下载和使用
+- **命名**:保持原始文件名,支持中文
+
+##### assets/ICO/ 图标资源目录
+
+- **职责**:存放项目图标和图片资源
+- **原则**:仅存放图标和图片文件
+- **命名**:使用描述性文件名
+
+### 外部二进制文件管理规范
+
+#### 标准化存放路径
+
+**外部二进制文件标准路径**: `assets/bin/`
+
+#### 核心用途与职责范围
+
+- 存放项目所需的外部二进制程序和可执行文件
+- 统一管理跨平台的可执行文件(Windows/Linux/macOS)
+- 提供统一的二进制文件访问接口
+- 便于版本管理和依赖控制
+
+#### 允许存放的文件类型
+
+- Windows 平台: `.exe` 可执行文件
+- Linux/macOS 平台: 无扩展名的可执行文件
+- 必要的依赖文件: `.dll`(Windows)、`.so`(Linux)、`.dylib`(macOS)
+
+#### 严格的类型限制
+
+- 仅允许可执行文件和必要的依赖文件
+- 不允许配置文件、数据文件、文档文件
+- 不允许脚本文件(.bat, .sh, .ps1 等)
+- 不允许临时文件和缓存文件
+
+#### 统一的文件命名规范
+
+**命名格式**: 使用小写字母、数字、连字符(-)和下划线(\_)
+
+**长度限制**: 文件名长度不超过 255 个字符
+
+**特殊字符规则**:
+
+- 允许: a-z, 0-9, -, \_
+- 不允许: 空格, @, #, $, %, ^, &, \*, (, ), +, =, {, }, [, ], |, \, :, ;, ", ', <, >, ?, /
+
+**示例**:
+
+- ✅ `n_m3u8dl-re.exe`
+- ✅ `ffmpeg.exe`
+- ❌ `N_m3u8DL-RE.exe`(大写字母)
+- ❌ `n m3u8dl re.exe`(空格)
+- ❌ `n_m3u8dl-re@v1.0.exe`(特殊字符)
+
+#### 标准路径展示
+
+**N_m3u8DL-RE 工具路径**:
+
+- Windows: `assets/bin/N_m3u8DL-RE.exe`
+- Linux/macOS: `assets/bin/N_m3u8DL-RE`
+
+**FFmpeg 工具路径**:
+
+- Windows: `assets/bin/ffmpeg.exe`
+- Linux/macOS: `assets/bin/ffmpeg`
+
+### 批量下载模板路径规范
+
+**批量下载模板标准路径**: `assets/template/批量下载模板.xlsx`
+
+该模板文件用于批量下载模式,用户可以填写钉钉直播回放链接,程序会自动读取并批量下载。
+
+### ICO 文件夹路径规范
+
+**ICO 文件夹标准路径**: `assets/ICO/`
+
+**图标文件路径**:
+
+- `assets/ICO/icon-512x512.png`
+- `assets/ICO/icon.ico`
+- `assets/ICO/icon.png`
+
+该目录存放项目图标和图片资源,用于应用程序的界面展示。
 
 #### scripts/ 辅助脚本目录
 

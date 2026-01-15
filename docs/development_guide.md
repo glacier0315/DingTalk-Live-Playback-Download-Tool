@@ -914,7 +914,86 @@ pytest --pdb
 
 **A**: 在 GitHub Issues 中创建新的 Issue，描述你的功能建议和使用场景。
 
-## 六、资源链接
+## 六、项目结构说明
+
+### 6.1 完整项目目录结构
+
+```markdown
+DingTalk-Live-Playback-Download-Tool/
+├── src/                                    # 源代码目录
+│   └── dingtalk_downloader/                # 项目包名
+│       ├── __init__.py
+│       ├── main.py                         # 程序入口文件
+│       ├── core/                           # 核心业务逻辑模块
+│       ├── utils/                          # 工具函数模块
+│       ├── binary/                         # 二进制程序调用模块
+│       ├── browser/                        # 浏览器自动化模块
+│       └── config/                         # 配置管理模块
+├── tests/                                  # 测试代码目录
+│   ├── unit/                               # 单元测试
+│   ├── integration/                        # 集成测试
+│   └── fixtures/                           # 测试数据
+│       ├── sample_links.csv
+│       └── sample_links.xlsx
+├── assets/                                 # 静态资源目录
+│   ├── bin/                                # 外部二进制程序目录
+│   │   ├── N_m3u8DL-RE.exe                 # N_m3u8DL-RE可执行文件(Windows)
+│   │   ├── N_m3u8DL-RE                     # N_m3u8DL-RE可执行文件(Linux/macOS)
+│   │   ├── ffmpeg.exe                      # FFmpeg可执行文件(Windows)
+│   │   └── ffmpeg                          # FFmpeg可执行文件(Linux/macOS)
+│   ├── template/                           # 模板文件目录
+│   │   └── 批量下载模板.xlsx               # 批量下载模板文件
+│   └── ICO/                                # 图标资源目录
+│       ├── icon-512x512.png
+│       ├── icon.ico
+│       └── icon.png
+├── docs/                                   # 文档目录
+│   ├── development_standard.md             # 开发规范
+│   ├── development_guide.md               # 开发指南
+│   └── project_status.md                  # 项目现状记录
+├── scripts/                                # 辅助脚本目录
+├── requirements.txt                        # 依赖清单
+├── requirements-dev.txt                    # 开发依赖清单
+├── .gitignore                              # Git忽略文件
+├── .env.example                            # 环境变量示例文件
+├── README.md                               # 项目说明
+├── LICENSE                                 # 许可证
+├── pyproject.toml                          # 项目配置文件
+└── setup.cfg                               # 安装配置文件
+```
+
+### 6.2 文件路径说明
+
+#### 外部二进制文件路径
+
+**外部二进制文件标准路径**: `assets/bin/`
+
+**N_m3u8DL-RE工具路径**:
+- Windows: `assets/bin/N_m3u8DL-RE.exe`
+- Linux/macOS: `assets/bin/N_m3u8DL-RE`
+
+**FFmpeg工具路径**:
+- Windows: `assets/bin/ffmpeg.exe`
+- Linux/macOS: `assets/bin/ffmpeg`
+
+#### 批量下载模板路径
+
+**批量下载模板标准路径**: `assets/template/批量下载模板.xlsx`
+
+该模板文件用于批量下载模式,用户可以填写钉钉直播回放链接,程序会自动读取并批量下载。
+
+#### ICO文件夹路径
+
+**ICO文件夹标准路径**: `assets/ICO/`
+
+**图标文件路径**:
+- `assets/ICO/icon-512x512.png`
+- `assets/ICO/icon.ico`
+- `assets/ICO/icon.png`
+
+该目录存放项目图标和图片资源,用于应用程序的界面展示。
+
+## 七、资源链接
 
 - [项目开发规范](development_standard.md)
 - [Black 官方文档](https://black.readthedocs.io/)
