@@ -8,12 +8,16 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2025-01-15: 添加日志记录
 """
 
 import sys
+import logging
 import pandas as pd
 from typing import Dict
 from .path_helper import clean_file_path
+
+logger = logging.getLogger(__name__)
 
 
 class FileReader:
@@ -38,8 +42,10 @@ class FileReader:
             ValueError: 文件格式不支持时
         """
         self.file_path = clean_file_path(file_path)
+        logger.debug(f"文件读取器初始化 - 文件路径: {self.file_path}")
 
         if not self.file_path.lower().endswith((".csv", ".xlsx", ".xls")):
+            logger.error(f"文件格式不支持: {self.file_path}")
             raise ValueError(f"文件格式不支持: {self.file_path}. 请使用CSV或Excel文件。")
 
     def read_links(self) -> Dict[int, str]:
@@ -54,6 +60,8 @@ class FileReader:
         Raises:
             Exception: 读取失败时
         """
+        logger.info(f"开始读取文件链接: {self.file_path}")
+
         try:
             links = {}
 
@@ -63,11 +71,14 @@ class FileReader:
                 self._read_excel(links)
 
             if not links:
+                logger.error("未找到有效的钉钉直播链接")
                 raise ValueError("未找到有效的钉钉直播链接。")
 
+            logger.info(f"从文件中读取到 {len(links)} 个链接")
             return links
 
         except Exception as e:
+            logger.error(f"读取文件时发生错误: {e}", exc_info=True)
             print(f"读取文件时发生错误: {e}")
             sys.exit(1)
 

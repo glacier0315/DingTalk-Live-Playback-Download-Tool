@@ -8,14 +8,18 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2025-01-15: 添加日志记录
 """
 
+import logging
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class EdgeDriver:
@@ -33,6 +37,7 @@ class EdgeDriver:
         初始化 Edge 浏览器驱动。
         """
         self.driver: Optional[webdriver.Edge] = None
+        logger.debug("Edge 浏览器驱动初始化")
 
     def create_driver(self) -> webdriver.Edge:
         """
@@ -43,6 +48,8 @@ class EdgeDriver:
         Returns:
             Edge 浏览器实例
         """
+        logger.info("开始创建 Edge 浏览器驱动")
+
         edge_options = EdgeOptions()
         edge_options.add_argument("--disable-usb-device-event-log")
         edge_options.add_argument("--ignore-certificate-errors")
@@ -53,6 +60,7 @@ class EdgeDriver:
         edge_options.set_capability("ms:loggingPrefs", {"performance": "ALL"})
 
         self.driver = webdriver.Edge(options=edge_options)
+        logger.info("Edge 浏览器驱动创建成功")
         return self.driver
 
     def get_log(self, log_type: str) -> List[dict]:
@@ -170,6 +178,8 @@ class EdgeDriver:
         """
         关闭浏览器，释放资源。
         """
+        logger.info("开始关闭 Edge 浏览器")
         if self.driver:
             self.driver.quit()
             self.driver = None
+        logger.info("Edge 浏览器关闭完成")

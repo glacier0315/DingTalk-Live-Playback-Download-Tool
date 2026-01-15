@@ -8,11 +8,15 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2025-01-15: 添加日志记录
 """
 
 import subprocess
 import platform
+import logging
 from typing import Dict, Optional, List
+
+logger = logging.getLogger(__name__)
 
 
 class NM3u8DLRE:
@@ -36,6 +40,7 @@ class NM3u8DLRE:
             self.executable_path = self.get_executable_name()
         else:
             self.executable_path = executable_path
+        logger.debug(f"N_m3u8DL-RE 调用器初始化 - 可执行文件: {self.executable_path}")
 
     def download(
         self,
@@ -65,14 +70,18 @@ class NM3u8DLRE:
         Raises:
             Exception: 下载失败时
         """
+        logger.info(f"开始下载视频 - 文件名: {save_name}, 保存目录: {save_dir}")
+
         try:
             command = self.build_command(
                 m3u8_file, save_name, save_dir, prefix, cookies_data, headers
             )
+            logger.debug(f"执行命令: {' '.join(command[:5])}...")
             subprocess.run(command)
-            print(f"视频下载成功完成。文件保存路径: {save_dir}")
+            logger.info(f"视频下载成功完成。文件保存路径: {save_dir}")
             return True
         except Exception as e:
+            logger.error(f"下载视频时发生错误: {e}", exc_info=True)
             print(f"下载视频时发生错误: {e}")
             return False
 

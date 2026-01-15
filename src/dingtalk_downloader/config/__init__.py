@@ -8,9 +8,11 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2025-01-15: 添加日志配置模块导出
 """
 
 from .constants import *
 from .settings import Settings
+from .logger_config import LoggerConfig
 
-__all__ = ["Settings"]
+__all__ = ["Settings", "LoggerConfig"]

@@ -8,10 +8,13 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2025-01-15: 添加日志记录
 """
 
 import sys
+import logging
 from typing import Dict
+from .config.logger_config import LoggerConfig
 from .core.downloader import Downloader
 from .utils.validator import validate_input
 from .utils.file_reader import FileReader
@@ -25,6 +28,8 @@ from .config.constants import (
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def single_mode() -> None:
@@ -48,28 +53,41 @@ def single_mode() -> None:
         - KeyboardInterrupt：用户中断
         - Exception：其他异常
     """
+    logger.info("进入单个视频下载模式")
+
     try:
         dingtalk_url = input("请输入钉钉直播回放分享链接: ")
+        logger.info(f"用户输入链接: {dingtalk_url[:50]}...")
+
         save_mode = validate_input(
             "请选择保存模式（输入1：保存到程序默认路径，输入2：手动选择保存路径模式，直接回车默认选择1）: ",
             ["1", "2"],
             default_option="1",
         )
+        logger.info(f"用户选择保存模式: {save_mode}")
+
         browser_option = validate_input(
             "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，输入3：Firefox，直接回车默认选择1）: ",
             ["1", "2", "3"],
             default_option="1",
         )
+        logger.info(f"用户选择浏览器选项: {browser_option}")
 
         browser_type = BROWSER_OPTION_MAP[browser_option]
+        logger.info(f"浏览器类型: {browser_type}")
+
         downloader = Downloader(browser_type, save_mode)
+        logger.info("下载器创建成功")
+
         downloader.download_single_video(dingtalk_url)
 
     except KeyboardInterrupt:
+        logger.warning("用户中断程序")
         print("\n程序已被用户终止。")
         sys.exit(0)
 
     except Exception as e:
+        logger.error(f"发生错误: {e}", exc_info=True)
         print(f"发生错误: {e}")
         sys.exit(1)
 
@@ -96,31 +114,46 @@ def batch_mode() -> None:
         - KeyboardInterrupt：用户中断
         - Exception：其他异常
     """
+    logger.info("进入批量下载模式")
+
     try:
         file_path = input(
             "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: "
         )
+        logger.info(f"用户输入文件路径: {file_path}")
+
         links_dict = FileReader(file_path).read_links()
+        logger.info(f"从文件中读取到 {len(links_dict)} 个链接")
+
         save_mode = validate_input(
             "请选择保存模式（输入1：保存到程序默认路径，输入2：手动选择保存路径模式，直接回车默认选择1）: ",
             ["1", "2"],
             default_option="1",
         )
+        logger.info(f"用户选择保存模式: {save_mode}")
+
         browser_option = validate_input(
             "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，输入3：Firefox，直接回车默认选择1）: ",
             ["1", "2", "3"],
             default_option="1",
         )
+        logger.info(f"用户选择浏览器选项: {browser_option}")
 
         browser_type = BROWSER_OPTION_MAP[browser_option]
+        logger.info(f"浏览器类型: {browser_type}")
+
         downloader = Downloader(browser_type, save_mode)
+        logger.info("下载器创建成功")
+
         downloader.download_batch_videos(links_dict)
 
     except KeyboardInterrupt:
+        logger.warning("用户中断程序")
         print("\n程序已被用户终止。")
         sys.exit(0)
 
     except Exception as e:
+        logger.error(f"发生错误: {e}", exc_info=True)
         print(f"发生错误: {e}")
         sys.exit(1)
 
@@ -131,10 +164,15 @@ def main() -> None:
 
     显示欢迎信息，获取用户输入的下载模式，调用相应的下载函数。
     """
+    LoggerConfig.setup_logging()
+
     print("=" * 47)
     print("     欢迎使用钉钉直播回放下载工具 v1.3")
     print("         构建日期：2024年12月18日")
     print("=" * 47)
+
+    logger.info("程序启动")
+    logger.info("钉钉直播回放下载工具 v1.3")
 
     try:
         download_mode = validate_input(
@@ -142,6 +180,7 @@ def main() -> None:
             ["1", "2"],
             default_option="1",
         )
+        logger.info(f"用户选择下载模式: {download_mode}")
 
         if download_mode == DOWNLOAD_MODE_SINGLE:
             single_mode()
@@ -149,12 +188,16 @@ def main() -> None:
             batch_mode()
 
     except KeyboardInterrupt:
+        logger.warning("用户中断程序")
         print("\n程序已被用户终止。")
         sys.exit(0)
 
     except Exception as e:
+        logger.error(f"发生错误: {e}", exc_info=True)
         print(f"发生错误: {e}")
         sys.exit(1)
+
+    logger.info("程序退出")
 
 
 if __name__ == "__main__":

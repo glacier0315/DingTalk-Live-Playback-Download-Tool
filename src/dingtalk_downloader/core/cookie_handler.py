@@ -8,9 +8,11 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2025-01-15: 添加日志记录
 """
 
 import sys
+import logging
 from typing import Dict, Tuple, Union
 from ..browser.browser_factory import BrowserFactory
 from ..browser.edge_driver import EdgeDriver
@@ -22,6 +24,8 @@ from ..config.constants import (
     BROWSER_TYPE_FIREFOX,
     DEFAULT_HEADERS,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CookieHandler:
@@ -44,6 +48,7 @@ class CookieHandler:
         """
         self.browser_type = browser_type
         self.browser = None
+        logger.debug(f"Cookie 处理器初始化 - 浏览器类型: {browser_type}")
 
     def get_cookie(
         self, url: str
@@ -66,14 +71,24 @@ class CookieHandler:
         Raises:
             Exception: 获取失败时
         """
+        logger.info(f"开始获取 Cookie - URL: {url[:50]}...")
+
         try:
             self.browser = BrowserFactory.create_browser(self.browser_type)
+            logger.info("浏览器实例创建成功")
+
             self.browser.create_driver()
+            logger.info("浏览器驱动创建成功")
+
             self.browser.navigate(url)
+            logger.info("导航到指定 URL")
+
             input("请在浏览器中登录钉钉账户后，按Enter键继续...")
 
             user_agent = self.browser.get_user_agent()
             referer = self.browser.get_referer()
+            logger.debug(f"User-Agent: {user_agent[:50]}...")
+            logger.debug(f"Referer: {referer}")
 
             headers = {
                 "User-Agent": user_agent,
@@ -88,17 +103,19 @@ class CookieHandler:
                 "Sec-Fetch-User": "?1",
                 "Upgrade-Insecure-Requests": "1",
             }
+            logger.info("请求头构建完成")
 
             live_name = self._get_live_name()
-            print(f"直播名称: {live_name}")
+            logger.info(f"直播名称: {live_name}")
 
             cookies = self.browser.get_cookies()
             cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
+            logger.info(f"获取到 {len(cookie_dict)} 个 Cookie")
 
             return self.browser, cookie_dict, headers, live_name
 
         except Exception as e:
-            print(f"获取Cookie时发生错误: {e}")
+            logger.error(f"获取Cookie时发生错误: {e}", exc_info=True)
             if self.browser:
                 self.browser.close()
             sys.exit(1)
@@ -121,18 +138,27 @@ class CookieHandler:
         Raises:
             Exception: 获取失败时
         """
+        logger.info(f"重复获取 Cookie - URL: {url[:50]}...")
+
         try:
             if self.browser is None:
+                logger.warning("浏览器实例不存在，调用 get_cookie")
                 return self.get_cookie(url)
 
             self.browser.navigate(url)
+            logger.info("导航到指定 URL")
+
             try:
                 self.browser.wait_for_video(20)
+                logger.info("视频加载完成")
             except Exception as e:
+                logger.warning(f"等待视频加载时发生错误: {e}")
                 input("未能确定页面是否成功加载。请在页面加载后，按Enter键继续...")
 
             user_agent = self.browser.get_user_agent()
             referer = self.browser.get_referer()
+            logger.debug(f"User-Agent: {user_agent[:50]}...")
+            logger.debug(f"Referer: {referer}")
 
             headers = {
                 "User-Agent": user_agent,
@@ -147,17 +173,19 @@ class CookieHandler:
                 "Sec-Fetch-User": "?1",
                 "Upgrade-Insecure-Requests": "1",
             }
+            logger.info("请求头构建完成")
 
             live_name = self._get_live_name()
-            print(f"直播名称: {live_name}")
+            logger.info(f"直播名称: {live_name}")
 
             cookies = self.browser.get_cookies()
             cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
+            logger.info(f"获取到 {len(cookie_dict)} 个 Cookie")
 
             return cookie_dict, headers, live_name
 
         except Exception as e:
-            print(f"重复获取Cookie时发生错误: {e}")
+            logger.error(f"重复获取Cookie时发生错误: {e}", exc_info=True)
             if self.browser:
                 self.browser.close()
             sys.exit(1)
@@ -175,20 +203,24 @@ class CookieHandler:
             live_name = self.browser.get_element_by_xpath(
                 '//*[@id="live-room"]/div[1]/div[1]/h3'
             ).text
+            logger.debug(f"通过 XPath 获取直播名称: {live_name}")
             return live_name
         except Exception as e:
-            print(f"XPath 获取失败: {e}")
+            logger.debug(f"XPath 获取失败: {e}")
             try:
                 live_name = self.browser.get_element_by_class_name("vwi5-oG8").text
+                logger.debug(f"通过 CSS Selector 获取直播名称: {live_name}")
                 return live_name
             except Exception as e:
-                print(f"CSS Selector 获取失败: {e}")
+                logger.warning(f"CSS Selector 获取失败: {e}")
                 return "直播视频名称不可获取"
 
     def close(self) -> None:
         """
         关闭浏览器，释放资源。
         """
+        logger.info("开始释放 Cookie 处理器资源")
         if self.browser:
             self.browser.close()
             self.browser = None
+        logger.info("Cookie 处理器资源释放完成")

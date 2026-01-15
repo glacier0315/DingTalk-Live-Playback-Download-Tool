@@ -8,14 +8,18 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2025-01-15: 添加日志记录
 """
 
+import logging
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class FirefoxDriver:
@@ -33,6 +37,7 @@ class FirefoxDriver:
         初始化 Firefox 浏览器驱动。
         """
         self.driver: Optional[webdriver.Firefox] = None
+        logger.debug("Firefox 浏览器驱动初始化")
 
     def create_driver(self) -> webdriver.Firefox:
         """
@@ -43,6 +48,8 @@ class FirefoxDriver:
         Returns:
             Firefox 浏览器实例
         """
+        logger.info("开始创建 Firefox 浏览器驱动")
+
         firefox_options = FirefoxOptions()
         firefox_options.add_argument("--disable-usb-device-event-log")
         firefox_options.add_argument("--ignore-certificate-errors")
@@ -59,6 +66,7 @@ class FirefoxDriver:
         )
 
         self.driver = webdriver.Firefox(options=firefox_options)
+        logger.info("Firefox 浏览器驱动创建成功")
         return self.driver
 
     def get_log(self, log_type: str) -> List[dict]:
@@ -183,6 +191,8 @@ class FirefoxDriver:
         """
         关闭浏览器，释放资源。
         """
+        logger.info("开始关闭 Firefox 浏览器")
         if self.driver:
             self.driver.quit()
             self.driver = None
+        logger.info("Firefox 浏览器关闭完成")

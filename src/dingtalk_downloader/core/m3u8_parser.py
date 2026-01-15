@@ -8,10 +8,12 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2025-01-15: 添加日志记录
 """
 
 import re
 import sys
+import logging
 from urllib.parse import urlparse, parse_qs
 from typing import List, Optional, Union
 from ..browser.edge_driver import EdgeDriver
@@ -23,6 +25,8 @@ from ..config.constants import (
     BROWSER_TYPE_FIREFOX,
     MAX_RETRY_COUNT,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class M3u8Parser:
