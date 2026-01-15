@@ -44,3 +44,31 @@ def test_validate_input_invalid_option(mock_print, mock_input):
     result = validate_input("请选择: ", ["1", "2", "3"])
     assert result == "1"
     assert mock_print.call_count == 1
+
+
+@patch("builtins.input")
+@patch("builtins.print")
+def test_validate_input_eof_error_with_default(mock_print, mock_input):
+    """测试 EOFError - 有默认选项"""
+    mock_input.side_effect = EOFError()
+    result = validate_input("请选择: ", ["1", "2", "3"], default_option="1")
+    assert result == "1"
+    mock_print.assert_called()
+
+
+@patch("builtins.input")
+def test_validate_input_eof_error_without_default(mock_input):
+    """测试 EOFError - 无默认选项"""
+    mock_input.side_effect = EOFError()
+    with pytest.raises(EOFError):
+        validate_input("请选择: ", ["1", "2", "3"])
+
+
+@patch("builtins.input")
+@patch("builtins.print")
+def test_validate_input_keyboard_interrupt(mock_print, mock_input):
+    """测试 KeyboardInterrupt"""
+    mock_input.side_effect = KeyboardInterrupt()
+    with pytest.raises(KeyboardInterrupt):
+        validate_input("请选择: ", ["1", "2", "3"])
+    mock_print.assert_called()

@@ -20,6 +20,7 @@ def validate_input(
     验证用户输入。
 
     支持默认选项，如果用户直接按 Enter，则返回默认选项。
+    增强异常处理，捕获 EOFError 和 KeyboardInterrupt。
 
     Args:
         prompt: 提示信息
@@ -31,11 +32,22 @@ def validate_input(
 
     Raises:
         ValueError: 输入无效时
+        EOFError: 输入流结束时
+        KeyboardInterrupt: 用户中断时
     """
     while True:
-        choice = input(prompt)
-        if choice == "" and default_option is not None:
-            return default_option
-        if choice in valid_options:
-            return choice
-        print("无效的选择，请重新输入。")
+        try:
+            choice = input(prompt)
+            if choice == "" and default_option is not None:
+                return default_option
+            if choice in valid_options:
+                return choice
+            print("无效的选择，请重新输入。")
+        except EOFError:
+            if default_option is not None:
+                print(f"\n输入流结束，使用默认选项: {default_option}")
+                return default_option
+            raise
+        except KeyboardInterrupt:
+            print("\n用户中断输入")
+            raise
