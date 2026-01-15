@@ -100,10 +100,14 @@ class Downloader:
                         prefix = self.m3u8_parser.extract_prefix(link)
                         logger.info(f"提取到基础 URL: {prefix}")
 
-                        self._download_video(
+                        download_success = self._download_video(
                             m3u8_file, live_name, prefix, cookies_data, m3u8_headers
                         )
-                        logger.info(f"视频下载完成: {live_name}")
+
+                        if download_success:
+                            logger.info(f"视频下载完成: {live_name}")
+                        else:
+                            logger.error(f"视频下载失败: {live_name}")
                 else:
                     logger.warning("未找到包含 'm3u8' 字符的请求链接")
 
@@ -223,7 +227,7 @@ class Downloader:
         prefix: str,
         cookies_data: Dict[str, str],
         m3u8_headers: Dict[str, str],
-    ) -> None:
+    ) -> bool:
         """
         下载视频。
 
@@ -235,6 +239,9 @@ class Downloader:
             prefix: 基础 URL
             cookies_data: Cookie 字典
             m3u8_headers: 请求头字典
+
+        Returns:
+            bool: 下载成功返回 True，下载失败返回 False
         """
         logger.info(f"开始下载视频 - 文件名: {save_name}")
 
@@ -246,19 +253,25 @@ class Downloader:
             logger.info(f"使用手动选择目录: {save_dir}")
         else:
             logger.error(f"无效的保存模式: {self.save_mode}")
-            return
+            return False
 
         if not save_dir:
             logger.warning("用户取消了目录选择")
             print("用户取消了选择。视频下载已中止。")
-            return
+            return False
 
         logger.info(f"调用 N_m3u8DL-RE 下载视频")
-        self.n_m3u8dl_re.download(
+        download_success = self.n_m3u8dl_re.download(
             m3u8_file, save_name, save_dir, prefix, cookies_data, m3u8_headers
         )
-        self.saved_path = save_dir
-        logger.info(f"视频下载成功完成 - 保存路径: {save_dir}")
+
+        if download_success:
+            self.saved_path = save_dir
+            logger.info(f"视频下载成功完成 - 保存路径: {save_dir}")
+            return True
+        else:
+            logger.error(f"视频下载失败 - 文件名: {save_name}")
+            return False
 
     def _get_default_download_dir(self) -> str:
         """

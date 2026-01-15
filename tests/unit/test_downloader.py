@@ -106,10 +106,12 @@ def test_downloader_download_video_default_mode(mock_n_m3u8dl_re, mock_m3u8_pars
     
     mock_cookies = {"session": "test"}
     mock_headers = {"User-Agent": "test"}
+    mock_n_m3u8dl_re.return_value.download.return_value = True
     
-    downloader._download_video("test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers)
+    result = downloader._download_video("test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers)
 
     mock_n_m3u8dl_re.return_value.download.assert_called_once()
+    assert result is True
 
 
 @patch("dingtalk_downloader.core.downloader.CookieHandler")
@@ -122,6 +124,65 @@ def test_downloader_download_video_invalid_mode(mock_n_m3u8dl_re, mock_m3u8_pars
     mock_cookies = {"session": "test"}
     mock_headers = {"User-Agent": "test"}
     
-    downloader._download_video("test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers)
+    result = downloader._download_video("test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers)
 
     mock_n_m3u8dl_re.return_value.download.assert_not_called()
+    assert result is False
+
+
+@patch("dingtalk_downloader.core.downloader.CookieHandler")
+@patch("dingtalk_downloader.core.downloader.M3u8Parser")
+@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
+def test_downloader_download_video_success(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
+    """测试下载成功"""
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    
+    mock_cookies = {"session": "test"}
+    mock_headers = {"User-Agent": "test"}
+    mock_n_m3u8dl_re.return_value.download.return_value = True
+    
+    result = downloader._download_video("test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers)
+
+    assert result is True
+    assert downloader.saved_path is not None
+    assert "Downloads" in downloader.saved_path
+
+
+@patch("dingtalk_downloader.core.downloader.CookieHandler")
+@patch("dingtalk_downloader.core.downloader.M3u8Parser")
+@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
+def test_downloader_download_video_failure(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
+    """测试下载失败"""
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    
+    mock_cookies = {"session": "test"}
+    mock_headers = {"User-Agent": "test"}
+    mock_n_m3u8dl_re.return_value.download.return_value = False
+    
+    result = downloader._download_video("test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers)
+
+    assert result is False
+    assert downloader.saved_path is None
+
+
+@patch("dingtalk_downloader.core.downloader.CookieHandler")
+@patch("dingtalk_downloader.core.downloader.M3u8Parser")
+@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
+def test_downloader_download_video_cancelled(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
+    """测试用户取消目录选择"""
+    with patch("dingtalk_downloader.core.downloader.tk.Tk") as mock_tk, \
+         patch("dingtalk_downloader.core.downloader.filedialog.askdirectory") as mock_askdirectory:
+        mock_root = MagicMock()
+        mock_tk.return_value = mock_root
+        mock_askdirectory.return_value = ""
+        
+        downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_MANUAL)
+        
+        mock_cookies = {"session": "test"}
+        mock_headers = {"User-Agent": "test"}
+        
+        result = downloader._download_video("test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers)
+
+        assert result is False
+        assert downloader.saved_path is None
+        mock_n_m3u8dl_re.return_value.download.assert_not_called()
