@@ -164,12 +164,11 @@ def main() -> None:
     LoggerConfig.setup_logging()
 
     print("=" * 47)
-    print("     欢迎使用钉钉直播回放下载工具 v1.5")
+    print("     欢迎使用钉钉直播回放下载工具 v1.5.0")
     print("         构建日期：2026年01月15日")
     print("=" * 47)
 
     logger.info("程序启动")
-    logger.info("钉钉直播回放下载工具 v1.3")
 
     try:
         download_mode = validate_input(
