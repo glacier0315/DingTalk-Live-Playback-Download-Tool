@@ -146,39 +146,32 @@ class NM3u8DLRE:
             cookie_string = "; ".join([f"{name}={value}" for name, value in cookies_data.items()])
             command.extend(["-H", f"Cookie: {cookie_string}"])
             headers_added.append("Cookie")
-            logger.debug("已添加 Cookie 请求头")
 
         if headers:
             if "User-Agent" in headers:
                 command.extend(["-H", f"User-Agent: {headers['User-Agent']}"])
                 headers_added.append("User-Agent")
-                logger.debug("已添加 User-Agent 请求头")
             else:
                 logger.warning("headers 中没有 User-Agent")
 
             if "Referer" in headers:
                 command.extend(["-H", f"Referer: {headers['Referer']}"])
                 headers_added.append("Referer")
-                logger.debug("已添加 Referer 请求头")
             else:
                 command.extend(["-H", "Referer: https://n.dingtalk.com/"])
                 headers_added.append("Referer (默认)")
-                logger.debug("已添加默认 Referer 请求头")
 
             if "Accept" in headers:
                 command.extend(["-H", f"Accept: {headers['Accept']}"])
                 headers_added.append("Accept")
-                logger.debug("已添加 Accept 请求头")
 
             if "Accept-Language" in headers:
                 command.extend(["-H", f"Accept-Language: {headers['Accept-Language']}"])
                 headers_added.append("Accept-Language")
-                logger.debug("已添加 Accept-Language 请求头")
 
             if "Accept-Encoding" in headers:
                 command.extend(["-H", f"Accept-Encoding: {headers['Accept-Encoding']}"])
                 headers_added.append("Accept-Encoding")
-                logger.debug("已添加 Accept-Encoding 请求头")
         else:
               command.extend(
                   [
@@ -189,9 +182,9 @@ class NM3u8DLRE:
               command.extend(["-H", "Referer: https://n.dingtalk.com/"])
               command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
               headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
-              logger.debug("已添加默认请求头")
 
-        logger.debug(f"总共添加了 {len(headers_added)} 个请求头: {', '.join(headers_added)}")
+        if headers_added:
+            logger.debug(f"已添加请求头: {', '.join(headers_added)}")
 
         return command
 

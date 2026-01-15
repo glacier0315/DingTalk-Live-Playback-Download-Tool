@@ -75,11 +75,11 @@ class Downloader:
         Raises:
             Exception: 下载失败时
         """
-        logger.info(f"开始下载单个视频: {url}")
+        logger.info("开始下载单个视频")
 
         try:
             browser, cookies_data, m3u8_headers, live_name = self.cookie_handler.get_cookie(url)
-            logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
+            logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
 
             self.m3u8_parser = M3u8Parser(browser, self.browser_type)
             logger.info("m3u8 解析器创建成功")
@@ -91,7 +91,7 @@ class Downloader:
                 if m3u8_links:
                     logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
                     for link in m3u8_links:
-                        logger.info(f"处理 m3u8 链接: {link}")
+                        logger.debug(f"处理 m3u8 链接: {link}")
                         m3u8_file = self.m3u8_parser.download_m3u8_file(
                             link, TEMP_M3U8_FILE, m3u8_headers
                         )
@@ -148,7 +148,6 @@ class Downloader:
 
         try:
             total_links = len(urls)
-            logger.info(f"共提取到 {total_links} 个钉钉直播回放分享链接")
 
             first_link = next(iter(urls.values()))
             browser, cookies_data, m3u8_headers, live_name = self.cookie_handler.get_cookie(
@@ -193,7 +192,7 @@ class Downloader:
                 if m3u8_links:
                     logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
                     for link in m3u8_links:
-                        logger.info(f"处理 m3u8 链接: {link}")
+                        logger.debug(f"处理 m3u8 链接: {link}")
                         m3u8_file = self.m3u8_parser.download_m3u8_file(
                             link, TEMP_M3U8_FILE, m3u8_headers
                         )
@@ -267,7 +266,6 @@ class Downloader:
 
         if download_success:
             self.saved_path = save_dir
-            logger.info(f"视频下载成功完成 - 保存路径: {save_dir}")
             return True
         else:
             logger.error(f"视频下载失败 - 文件名: {save_name}")
@@ -328,7 +326,7 @@ class Downloader:
                 file_path = input(
                     "请输入新的钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: "
                 )
-                logger.info(f"用户输入文件路径: {file_path}")
+                logger.info("用户已输入文件路径")
 
                 new_links_dict = FileReader(file_path).read_links()
                 logger.info(f"从文件中读取到 {len(new_links_dict)} 个链接")

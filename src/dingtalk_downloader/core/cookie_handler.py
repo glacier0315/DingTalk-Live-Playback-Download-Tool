@@ -138,7 +138,7 @@ class CookieHandler:
         Raises:
             Exception: 获取失败时
         """
-        logger.info(f"重复获取 Cookie - URL: {url}")
+        logger.info("重复获取 Cookie")
 
         try:
             if self.browser is None:

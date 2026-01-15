@@ -122,12 +122,14 @@ class M3u8Parser:
                     except Exception as e:
                           logger.error(f"处理日志时发生错误: {e}", exc_info=True)
 
-                logger.warning(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接，重试中")
+                logger.debug(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接，重试中")
                 self._refresh_page()
 
             except Exception as e:
                 logger.error(f"获取 m3u8 链接时发生错误: {e}", exc_info=True)
 
+        if not m3u8_links:
+            logger.warning(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
         return None
 
     def download_m3u8_file(self, url: str, filename: str, headers: dict) -> str:

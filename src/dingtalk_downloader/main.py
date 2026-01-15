@@ -71,13 +71,12 @@ def single_mode() -> None:
             ["1", "2", "3"],
             default_option="1",
         )
-        logger.info(f"用户选择浏览器选项: {browser_option}")
+        logger.info(f"浏览器选项: {browser_option}")
 
         browser_type = BROWSER_OPTION_MAP[browser_option]
-        logger.info(f"浏览器类型: {browser_type}")
 
         downloader = Downloader(browser_type, save_mode)
-        logger.info("下载器创建成功")
+        logger.info(f"下载器创建成功 - 浏览器: {browser_type}, 保存模式: {save_mode}")
 
         downloader.download_single_video(dingtalk_url)
 
@@ -119,7 +118,7 @@ def batch_mode() -> None:
         file_path = input(
             "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: "
         )
-        logger.info(f"用户输入文件路径: {file_path}")
+        logger.info("用户已输入文件路径")
 
         links_dict = FileReader(file_path).read_links()
         logger.info(f"从文件中读取到 {len(links_dict)} 个链接")
