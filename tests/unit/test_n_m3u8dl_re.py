@@ -2,6 +2,7 @@
 N_m3u8DL_RE 单元测试
 """
 
+import subprocess
 import pytest
 from unittest.mock import patch, Mock
 from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
@@ -230,6 +231,9 @@ class TestNM3u8DLREDownload:
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
     def test_download_success(self, mock_run):
         """测试下载成功"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="INFO: 下载成功", stderr=""
+        )
         dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
         result = dl.download(
             m3u8_file="test.m3u8",
@@ -246,6 +250,9 @@ class TestNM3u8DLREDownload:
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
     def test_download_with_cookies(self, mock_run):
         """测试带 Cookie 的下载"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="INFO: 下载成功", stderr=""
+        )
         dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
         cookies = {"session": "abc123"}
         result = dl.download(
@@ -266,6 +273,9 @@ class TestNM3u8DLREDownload:
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
     def test_download_with_headers(self, mock_run):
         """测试带请求头的下载"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="INFO: 下载成功", stderr=""
+        )
         dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
         headers = {"User-Agent": "Mozilla/5.0"}
         result = dl.download(
@@ -326,6 +336,9 @@ class TestNM3u8DLREIntegration:
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
     def test_full_workflow(self, mock_system, mock_run):
         """测试完整工作流程"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="INFO: 下载成功", stderr=""
+        )
         mock_system.return_value = "Windows"
         dl = NM3u8DLRE()
         
@@ -358,6 +371,9 @@ class TestNM3u8DLREIntegration:
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
     def test_multiple_downloads(self, mock_run):
         """测试多次下载"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="INFO: 下载成功", stderr=""
+        )
         dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
         
         result1 = dl.download("test1.m3u8", "output1", "/downloads", "https://example.com")
@@ -368,3 +384,163 @@ class TestNM3u8DLREIntegration:
         assert result2 is True
         assert result3 is True
         assert mock_run.call_count == 3
+
+
+class TestNM3u8DLREDownloadStatus:
+    """测试下载状态判断"""
+
+    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
+    def test_download_success_no_errors(self, mock_run):
+        """测试下载成功，无错误"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="INFO: 下载成功", stderr=""
+        )
+        dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
+        result = dl.download(
+            m3u8_file="test.m3u8",
+            save_name="output",
+            save_dir="/downloads",
+            prefix="https://example.com",
+            cookies_data=None,
+            headers=None
+        )
+        
+        assert result is True
+        assert mock_run.call_args[1]['capture_output'] is True
+        assert mock_run.call_args[1]['text'] is True
+
+    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
+    def test_download_failure_nonzero_exit_code(self, mock_run):
+        """测试下载失败，退出码非0"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="", stderr="ERROR: 下载失败"
+        )
+        dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
+        result = dl.download(
+            m3u8_file="test.m3u8",
+            save_name="output",
+            save_dir="/downloads",
+            prefix="https://example.com",
+            cookies_data=None,
+            headers=None
+        )
+        
+        assert result is False
+
+    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
+    def test_download_failure_error_in_output(self, mock_run):
+        """测试下载失败，输出包含ERROR:"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="ERROR: 分片数量校验不通过, 共144个,已下载18.", stderr=""
+        )
+        dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
+        result = dl.download(
+            m3u8_file="test.m3u8",
+            save_name="output",
+            save_dir="/downloads",
+            prefix="https://example.com",
+            cookies_data=None,
+            headers=None
+        )
+        
+        assert result is False
+
+    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
+    def test_download_failure_failed_in_output(self, mock_run):
+        """测试下载失败，输出包含Failed"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="ERROR: Failed", stderr=""
+        )
+        dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
+        result = dl.download(
+            m3u8_file="test.m3u8",
+            save_name="output",
+            save_dir="/downloads",
+            prefix="https://example.com",
+            cookies_data=None,
+            headers=None
+        )
+        
+        assert result is False
+
+    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
+    def test_download_failure_403_errors(self, mock_run):
+        """测试下载失败，403错误"""
+        output = """INFO: 开始下载
+WARN: Response status code does not indicate success: 403 (Forbidden).
+ERROR: 分片数量校验不通过, 共144个,已下载18.
+ERROR: Failed"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout=output, stderr=""
+        )
+        dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
+        result = dl.download(
+            m3u8_file="test.m3u8",
+            save_name="output",
+            save_dir="/downloads",
+            prefix="https://example.com",
+            cookies_data=None,
+            headers=None
+        )
+        
+        assert result is False
+
+    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
+    def test_download_success_with_warnings(self, mock_run):
+        """测试下载成功，有WARN但无ERROR"""
+        output = """INFO: 开始下载
+WARN: 读取媒体信息...
+INFO: 下载完成"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout=output, stderr=""
+        )
+        dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
+        result = dl.download(
+            m3u8_file="test.m3u8",
+            save_name="output",
+            save_dir="/downloads",
+            prefix="https://example.com",
+            cookies_data=None,
+            headers=None
+        )
+        
+        assert result is True
+
+    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
+    def test_download_failure_exception(self, mock_run):
+        """测试下载失败，抛出异常"""
+        mock_run.side_effect = Exception("下载过程中发生错误")
+        dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
+        result = dl.download(
+            m3u8_file="test.m3u8",
+            save_name="output",
+            save_dir="/downloads",
+            prefix="https://example.com",
+            cookies_data=None,
+            headers=None
+        )
+        
+        assert result is False
+
+    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
+    def test_download_capture_output(self, mock_run):
+        """测试捕获输出"""
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="INFO: 下载成功", stderr=""
+        )
+        dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
+        dl.download(
+            m3u8_file="test.m3u8",
+            save_name="output",
+            save_dir="/downloads",
+            prefix="https://example.com",
+            cookies_data=None,
+            headers=None
+        )
+        
+        assert mock_run.called
+        call_kwargs = mock_run.call_args[1]
+        assert 'capture_output' in call_kwargs
+        assert call_kwargs['capture_output'] is True
+        assert 'text' in call_kwargs
+        assert call_kwargs['text'] is True

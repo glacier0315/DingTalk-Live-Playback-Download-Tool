@@ -77,7 +77,25 @@ class NM3u8DLRE:
                 m3u8_file, save_name, save_dir, prefix, cookies_data, headers
             )
             logger.debug(f"执行命令: {' '.join(command)}")
-            subprocess.run(command)
+            result = subprocess.run(command, capture_output=True, text=True)
+
+            if result.returncode != 0:
+                logger.error(f"视频下载失败 - 子进程退出码: {result.returncode}")
+                return False
+
+            output = result.stdout + result.stderr
+
+            if "ERROR:" in output or "Failed" in output:
+                error_lines = []
+                for line in output.split('\n'):
+                    if 'ERROR:' in line or 'Failed' in line:
+                        error_lines.append(line.strip())
+                error_info = '\n'.join(error_lines)
+                logger.error(f"视频下载失败")
+                if error_info:
+                    logger.error(f"错误信息:\n{error_info}")
+                return False
+
             logger.info(f"视频下载成功完成。文件保存路径: {save_dir}")
             return True
         except Exception as e:
