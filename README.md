@@ -94,7 +94,6 @@ DingTalk-Live-Playback-Download-Tool/
 项目使用的外部二进制程序统一存放在 `assets/bin` 目录下：
 
 - **N_m3u8DL-RE**
-
   - Windows: `assets/bin/N_m3u8DL-RE.exe`
   - Linux/macOS: `assets/bin/N_m3u8DL-RE`
 
@@ -163,7 +162,7 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 
 # 运行程序
-python -m dingtalk_downloader.main
+python -m src.dingtalk_downloader.main
 ```
 
 ### 基本使用
