@@ -288,7 +288,8 @@ class TestNM3u8DLREBuildCommand:
         )
 
         assert any("Referer:" in arg for arg in command)
-        assert not any("User-Agent:" in arg for arg in command)
+        assert any("User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" in arg for arg in command)
+        assert any("Accept: application/vnd.apple.mpegurl, text/plain, */*" in arg for arg in command)
 
     @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
     @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')

@@ -33,6 +33,12 @@ class NM3u8DLRE:
         log_dir (str): 日志文件目录
     """
 
+    DEFAULT_HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://n.dingtalk.com/",
+        "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
+    }
+
     def __init__(self, executable_path: Optional[str] = None):
         """
         初始化 N_m3u8DL-RE 调用器。
@@ -198,34 +204,41 @@ class NM3u8DLRE:
             self._get_log_file_path(),
         ]
 
+        self._add_headers_to_command(command, headers, cookies_data)
+
+        return command
+
+    def _add_headers_to_command(
+        self,
+        command: List[str],
+        headers: Optional[Dict[str, str]],
+        cookies_data: Optional[Dict[str, str]]
+    ) -> None:
+        """
+        添加请求头到命令。
+
+        Args:
+            command: 命令列表
+            headers: 请求头字典
+            cookies_data: Cookie 字典
+        """
         headers_added = []
 
-        default_headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Referer": "https://n.dingtalk.com/",
-            "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
-        }
-
-        if headers:
-            for key, value in headers.items():
-                default_headers[key] = value
-
         if cookies_data:
-            cookie_string = "; ".join([f"{name}={value}" for name, value in cookies_data.items()])
+            cookie_string = "; ".join(f"{name}={value}" for name, value in cookies_data.items())
             command.extend(["-H", f"Cookie: {cookie_string}"])
-            headers_added.append("Cookie")
+            headers_added.append(f"Cookie: {cookie_string}")
 
-        for key, value in default_headers.items():
+        merged_headers = self.DEFAULT_HEADERS.copy()
+        if headers:
+            merged_headers.update(headers)
+
+        for key, value in merged_headers.items():
             command.extend(["-H", f"{key}: {value}"])
-            if headers and key in headers:
-                headers_added.append(key)
-            else:
-                headers_added.append(f"{key} (默认)")
+            headers_added.append(f"{key}: {value}")
 
         if headers_added:
             logger.debug(f"已添加请求头: {', '.join(headers_added)}")
-
-        return command
 
     @staticmethod
     def get_executable_name() -> str:
