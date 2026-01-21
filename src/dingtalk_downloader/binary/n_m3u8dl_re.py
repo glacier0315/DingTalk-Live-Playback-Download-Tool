@@ -200,46 +200,27 @@ class NM3u8DLRE:
 
         headers_added = []
 
+        default_headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Referer": "https://n.dingtalk.com/",
+            "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
+        }
+
+        if headers:
+            for key, value in headers.items():
+                default_headers[key] = value
+
         if cookies_data:
             cookie_string = "; ".join([f"{name}={value}" for name, value in cookies_data.items()])
             command.extend(["-H", f"Cookie: {cookie_string}"])
             headers_added.append("Cookie")
 
-        if headers:
-            if "User-Agent" in headers:
-                command.extend(["-H", f"User-Agent: {headers['User-Agent']}"])
-                headers_added.append("User-Agent")
+        for key, value in default_headers.items():
+            command.extend(["-H", f"{key}: {value}"])
+            if headers and key in headers:
+                headers_added.append(key)
             else:
-                logger.warning("headers 中没有 User-Agent")
-
-            if "Referer" in headers:
-                command.extend(["-H", f"Referer: {headers['Referer']}"])
-                headers_added.append("Referer")
-            else:
-                command.extend(["-H", "Referer: https://n.dingtalk.com/"])
-                headers_added.append("Referer (默认)")
-
-            if "Accept" in headers:
-                command.extend(["-H", f"Accept: {headers['Accept']}"])
-                headers_added.append("Accept")
-
-            if "Accept-Language" in headers:
-                command.extend(["-H", f"Accept-Language: {headers['Accept-Language']}"])
-                headers_added.append("Accept-Language")
-
-            if "Accept-Encoding" in headers:
-                command.extend(["-H", f"Accept-Encoding: {headers['Accept-Encoding']}"])
-                headers_added.append("Accept-Encoding")
-        else:
-            command.extend(
-                [
-                    "-H",
-                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                ]
-            )
-            command.extend(["-H", "Referer: https://n.dingtalk.com/"])
-            command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
-            headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
+                headers_added.append(f"{key} (默认)")
 
         if headers_added:
             logger.debug(f"已添加请求头: {', '.join(headers_added)}")

@@ -9,13 +9,13 @@
 修改历史：
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
+    - 2026-01-21: 重构-拆分过长方法,提取m3u8下载逻辑,移除sys.exit调用,完善类型注解
 """
 
-import sys
 import os
 import tkinter as tk
 from tkinter import filedialog
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 import logging
 from ..core.cookie_handler import CookieHandler
 from ..core.m3u8_parser import M3u8Parser
@@ -29,6 +29,12 @@ from ..config.constants import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class DownloadError(Exception):
+    """下载异常"""
+
+    pass
 
 
 class Downloader:
@@ -63,6 +69,79 @@ class Downloader:
 
         logger.info(f"下载器初始化完成 - 浏览器类型: {browser_type}, 保存模式: {save_mode}")
 
+    def _fetch_and_download_m3u8(
+        self,
+        url: str,
+        m3u8_headers: Dict[str, str],
+    ) -> Tuple[str, str]:
+        """
+        获取并下载m3u8文件。
+
+        Args:
+            url: 钉钉直播回放分享链接
+            m3u8_headers: 请求头字典
+
+        Returns:
+            tuple: (m3u8_file, prefix)
+
+        Raises:
+            DownloadError: 获取或下载失败时
+        """
+        logger.info("开始获取 m3u8 链接")
+        m3u8_links = self.m3u8_parser.fetch_m3u8_links(url)
+
+        if not m3u8_links:
+            raise DownloadError("未找到m3u8链接")
+
+        logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
+
+        m3u8_file = self.m3u8_parser.download_m3u8_file(
+            m3u8_links[0], TEMP_M3U8_FILE, m3u8_headers
+        )
+        logger.info(f"m3u8 文件下载成功: {m3u8_file}")
+
+        prefix = self.m3u8_parser.extract_prefix(m3u8_links[0])
+        logger.info(f"提取到基础 URL: {prefix}")
+
+        return m3u8_file, prefix
+
+    def _process_single_video(
+        self,
+        url: str,
+        cookies_data: Dict[str, str],
+        m3u8_headers: Dict[str, str],
+        live_name: str,
+    ) -> bool:
+        """
+        处理单个视频下载。
+
+        Args:
+            url: 钉钉直播回放分享链接
+            cookies_data: Cookie 字典
+            m3u8_headers: 请求头字典
+            live_name: 直播视频名称
+
+        Returns:
+            bool: 下载成功返回 True，下载失败返回 False
+        """
+        try:
+            m3u8_file, prefix = self._fetch_and_download_m3u8(url, m3u8_headers)
+
+            download_success = self._download_video(
+                m3u8_file, live_name, prefix, cookies_data, m3u8_headers
+            )
+
+            if download_success:
+                logger.info(f"视频下载完成: {live_name}")
+            else:
+                logger.error(f"视频下载失败: {live_name}")
+
+            return download_success
+
+        except Exception as e:
+            logger.error(f"处理视频时发生错误: {e}", exc_info=True)
+            raise DownloadError(f"处理视频失败: {e}") from e
+
     def download_single_video(self, url: str) -> None:
         """
         下载单个视频。
@@ -73,7 +152,7 @@ class Downloader:
             url: 钉钉直播回放分享链接
 
         Raises:
-            Exception: 下载失败时
+            DownloadError: 下载失败时
         """
         logger.info("开始下载单个视频")
 
@@ -85,31 +164,11 @@ class Downloader:
             logger.info("m3u8 解析器创建成功")
 
             while True:
-                logger.info("开始获取 m3u8 链接")
-                m3u8_links = self.m3u8_parser.fetch_m3u8_links(url)
-
-                if m3u8_links:
-                    logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
-                    for link in m3u8_links:
-                        logger.debug(f"处理 m3u8 链接: {link}")
-                        m3u8_file = self.m3u8_parser.download_m3u8_file(
-                            link, TEMP_M3U8_FILE, m3u8_headers
-                        )
-                        logger.info(f"m3u8 文件下载成功: {m3u8_file}")
-
-                        prefix = self.m3u8_parser.extract_prefix(link)
-                        logger.info(f"提取到基础 URL: {prefix}")
-
-                        download_success = self._download_video(
-                            m3u8_file, live_name, prefix, cookies_data, m3u8_headers
-                        )
-
-                        if download_success:
-                            logger.info(f"视频下载完成: {live_name}")
-                        else:
-                            logger.error(f"视频下载失败: {live_name}")
-                else:
-                    logger.warning("未找到包含 'm3u8' 字符的请求链接")
+                try:
+                    self._process_single_video(url, cookies_data, m3u8_headers, live_name)
+                except DownloadError as e:
+                    logger.error(f"视频下载失败: {e}")
+                    print(f"下载失败: {e}")
 
                 url = input("请继续输入钉钉直播分享链接，或输入q退出程序: ")
                 if url.lower() == "q":
@@ -125,12 +184,10 @@ class Downloader:
             logger.warning("用户中断下载")
             print("\n程序已被用户终止。")
             self.close()
-            sys.exit(0)
-
+            raise
         except Exception as e:
             logger.error(f"下载单个视频时发生错误: {e}", exc_info=True)
-            print(f"发生错误: {e}")
-            self.close()
+            raise DownloadError(f"下载单个视频失败: {e}") from e
 
     def download_batch_videos(self, urls: Dict[int, str]) -> None:
         """
@@ -142,7 +199,7 @@ class Downloader:
             urls: 链接字典 {index: url}
 
         Raises:
-            Exception: 下载失败时
+            DownloadError: 下载失败时
         """
         logger.info(f"开始批量下载视频，共 {len(urls)} 个链接")
 
@@ -160,22 +217,13 @@ class Downloader:
 
             logger.info(f"正在下载第 1 个视频，共 {total_links} 个视频")
 
-            m3u8_links = self.m3u8_parser.fetch_m3u8_links(first_link)
-
-            if m3u8_links:
-                logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
-                for link in m3u8_links:
-                    logger.info(f"处理 m3u8 链接: {link}")
-                    m3u8_file = self.m3u8_parser.download_m3u8_file(
-                        link, TEMP_M3U8_FILE, m3u8_headers
-                    )
-                    logger.info(f"m3u8 文件下载成功: {m3u8_file}")
-
-                    prefix = self.m3u8_parser.extract_prefix(link)
-                    logger.info(f"提取到基础 URL: {prefix}")
-
+            try:
+                m3u8_file, prefix = self._fetch_and_download_m3u8(first_link, m3u8_headers)
                 self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
                 logger.info(f"视频下载完成: {live_name}")
+            except DownloadError as e:
+                logger.error(f"第 1 个视频下载失败: {e}")
+
             print("=" * 100)
             logger.info("第 1 个视频下载完成")
 
@@ -187,24 +235,13 @@ class Downloader:
                 )
                 logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
-                m3u8_links = self.m3u8_parser.fetch_m3u8_links(dingtalk_url)
+                try:
+                    m3u8_file, prefix = self._fetch_and_download_m3u8(dingtalk_url, m3u8_headers)
+                    self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
+                    logger.info(f"视频下载完成: {live_name}")
+                except DownloadError as e:
+                    logger.error(f"第 {idx + 1} 个视频下载失败: {e}")
 
-                if m3u8_links:
-                    logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
-                    for link in m3u8_links:
-                        logger.debug(f"处理 m3u8 链接: {link}")
-                        m3u8_file = self.m3u8_parser.download_m3u8_file(
-                            link, TEMP_M3U8_FILE, m3u8_headers
-                        )
-                        logger.info(f"m3u8 文件下载成功: {m3u8_file}")
-
-                        prefix = self.m3u8_parser.extract_prefix(link)
-                        logger.info(f"提取到基础 URL: {prefix}")
-
-                        self._download_video(
-                            m3u8_file, live_name, prefix, cookies_data, m3u8_headers
-                        )
-                        logger.info(f"视频下载完成: {live_name}")
                 logger.info(f"第 {idx + 1} 个视频下载完成")
 
             self._continue_download()
@@ -213,11 +250,10 @@ class Downloader:
             logger.warning("用户中断批量下载")
             print("\n程序已被用户终止。")
             self.close()
-            sys.exit(0)
-
+            raise
         except Exception as e:
             logger.error(f"批量下载视频时发生错误: {e}", exc_info=True)
-            self.close()
+            raise DownloadError(f"批量下载失败: {e}") from e
 
     def _download_video(
         self,
