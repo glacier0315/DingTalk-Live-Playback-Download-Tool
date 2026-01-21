@@ -106,10 +106,18 @@ n_m3u8dl_re:
   # 可执行文件路径
   # 说明：N_m3u8DL-RE工具的完整路径
   executable_path: "assets/bin/N_m3u8DL-RE.exe"
-  
+
   # UI语言
   # 说明：N_m3u8DL-RE工具的界面语言
   ui_language: "zh-CN"
+
+  # 临时文件目录
+  # 说明：N_m3u8DL-RE工具下载过程中的临时文件存储目录
+  temp_dir: "temp"
+
+  # 日志文件目录
+  # 说明：N_m3u8DL-RE工具的日志文件保存目录
+  log_dir: "logs"
 
 # ========================================
 # FFmpeg配置

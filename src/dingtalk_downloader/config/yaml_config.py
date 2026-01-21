@@ -249,6 +249,8 @@ class YamlConfig:
             "n_m3u8dl_re": {
                 "executable_path": "assets/bin/N_m3u8DL-RE.exe",
                 "ui_language": "zh-CN",
+                "temp_dir": "temp",
+                "log_dir": "logs",
             },
             "ffmpeg": {
                 "executable_path": "assets/bin/ffmpeg.exe",

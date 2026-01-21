@@ -13,8 +13,10 @@
 
 import subprocess
 import platform
+import os
 import logging
 from typing import Dict, Optional, List
+from ..config.yaml_config import YamlConfig
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,8 @@ class NM3u8DLRE:
 
     Attributes:
         executable_path (str): 可执行文件路径
+        temp_dir (str): 临时文件目录
+        log_dir (str): 日志文件目录
     """
 
     def __init__(self, executable_path: Optional[str] = None):
@@ -40,7 +44,57 @@ class NM3u8DLRE:
             self.executable_path = self.get_executable_name()
         else:
             self.executable_path = executable_path
-        logger.debug(f"N_m3u8DL-RE 调用器初始化 - 可执行文件: {self.executable_path}")
+
+        config = YamlConfig()
+        config.load()
+        self.temp_dir = config.get("n_m3u8dl_re.temp_dir", "temp")
+        self.log_dir = config.get("n_m3u8dl_re.log_dir", "logs")
+
+        self._ensure_directories_exist()
+
+        logger.debug(f"N_m3u8DL-RE 调用器初始化完成")
+        logger.debug(f"可执行文件: {self.executable_path}")
+        logger.debug(f"临时目录: {self.temp_dir}")
+        logger.debug(f"日志目录: {self.log_dir}")
+
+    def _ensure_directories_exist(self) -> None:
+        """
+        确保临时目录和日志目录存在。
+
+        如果目录不存在，则自动创建。
+        """
+        from ..utils.path_helper import ensure_dir_exists
+
+        try:
+            ensure_dir_exists(self.temp_dir)
+            logger.debug(f"临时目录已就绪: {self.temp_dir}")
+        except Exception as e:
+            logger.error(f"创建临时目录失败: {e}")
+            raise
+
+        try:
+            ensure_dir_exists(self.log_dir)
+            logger.debug(f"日志目录已就绪: {self.log_dir}")
+        except Exception as e:
+            logger.error(f"创建日志目录失败: {e}")
+            raise
+
+    def _get_log_file_path(self) -> str:
+        """
+        获取日志文件路径。
+
+        使用时间戳确保日志文件唯一性。
+
+        Returns:
+            日志文件完整路径
+        """
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_file_name = f"n_m3u8dl_re_{timestamp}.log"
+        log_file_path = os.path.join(self.log_dir, log_file_name)
+        logger.debug(f"日志文件路径: {log_file_path}")
+        return log_file_path
 
     def download(
         self,
@@ -114,7 +168,7 @@ class NM3u8DLRE:
         """
         构建下载命令。
 
-        构建 N_m3u8DL-RE 下载命令，包括文件名、保存目录、基础 URL、Cookie 和请求头。
+        构建 N_m3u8DL-RE 下载命令，包括文件名、保存目录、基础 URL、Cookie、请求头、临时目录和日志文件路径。
 
         Args:
             m3u8_file: m3u8 文件路径
@@ -138,6 +192,10 @@ class NM3u8DLRE:
             save_dir,
             "--base-url",
             prefix,
+            "--tmp-dir",
+            self.temp_dir,
+            "--log-file-path",
+            self._get_log_file_path(),
         ]
 
         headers_added = []
