@@ -222,12 +222,11 @@ class NM3u8DLRE:
             headers: 请求头字典
             cookies_data: Cookie 字典
         """
-        headers_added = []
 
         if cookies_data:
             cookie_string = "; ".join(f"{name}={value}" for name, value in cookies_data.items())
             command.extend(["-H", f"Cookie: {cookie_string}"])
-            headers_added.append(f"Cookie: {cookie_string}")
+            logger.debug(f"已添加请求头，Cookie: ...")
 
         merged_headers = self.DEFAULT_HEADERS.copy()
         if headers:
@@ -235,10 +234,7 @@ class NM3u8DLRE:
 
         for key, value in merged_headers.items():
             command.extend(["-H", f"{key}: {value}"])
-            headers_added.append(f"{key}: {value}")
-
-        if headers_added:
-            logger.debug(f"已添加请求头: {', '.join(headers_added)}")
+            logger.debug(f"已添加请求头，{key}: {value}")
 
     @staticmethod
     def get_executable_name() -> str:
