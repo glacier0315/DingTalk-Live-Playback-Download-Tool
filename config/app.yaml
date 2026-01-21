@@ -24,11 +24,11 @@ download:
   # 默认下载目录（相对于项目根目录）
   # 说明：当保存模式为默认时，视频将保存到此目录
   default_dir: "Downloads"
-  
+
   # 临时m3u8文件名
   # 说明：下载过程中使用的临时文件名
   temp_m3u8_file: "output.m3u8"
-  
+
   # 最大重试次数
   # 说明：获取m3u8链接失败时的最大重试次数
   max_retry_count: 5
@@ -40,11 +40,11 @@ browser:
   # 默认浏览器类型
   # 可选值：edge, chrome, firefox
   default_type: "edge"
-  
+
   # 是否使用无头模式
   # 说明：无头模式下浏览器不显示界面
   headless: false
-  
+
   # 页面加载超时时间（秒）
   # 说明：等待页面加载完成的最大时间
   timeout: 30
@@ -56,21 +56,21 @@ logging:
   # 日志级别
   # 可选值：DEBUG, INFO, WARNING, ERROR, CRITICAL
   # 说明：DEBUG显示所有日志，CRITICAL只显示严重错误
-  level: "INFO"
-  
+  level: "DEBUG"
+
   # 日志目录
   # 说明：日志文件保存目录
   dir: "logs"
-  
+
   # 单个日志文件最大大小（字节）
   # 说明：超过此大小会自动创建新文件
   # 10485760 = 10MB
   max_bytes: 10485760
-  
+
   # 保留的日志文件数量
   # 说明：超过此数量的旧日志文件会被删除
   backup_count: 5
-  
+
   # 日志保留天数
   # 说明：超过此天数的日志文件会被清理
   retention_days: 30
@@ -82,19 +82,19 @@ headers:
   # User-Agent
   # 说明：标识客户端类型和版本
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-  
+
   # Referer
   # 说明：表示请求的来源页面
   referer: "https://n.dingtalk.com/"
-  
+
   # Accept
   # 说明：指定客户端能够接收的内容类型
   accept: "application/vnd.apple.mpegurl, text/plain, */*"
-  
+
   # Accept-Language
   # 说明：指定客户端偏好的语言
   accept_language: "zh-CN,zh;q=0.9,en;q=0.8"
-  
+
   # Accept-Encoding
   # 说明：指定客户端支持的压缩算法
   accept_encoding: "gzip, deflate, br"
