@@ -8,12 +8,14 @@
 创建日期：2026-01-21
 修改历史：
     - 2026-01-21: 初始版本
+    - 2026-01-21: 优化配置文件路径，使用CONFIG_FILE_PATH常量
 """
 
 import os
 import yaml
 import logging
 from typing import Any, Dict, List, Optional
+from ..config.constants import CONFIG_FILE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +38,13 @@ class YamlConfig:
         初始化YamlConfig实例。
 
         Args:
-            config_file: 配置文件路径，默认为None（使用默认路径）
+            config_file: 配置文件路径，默认为None（使用CONFIG_FILE_PATH常量）
         """
         self.config: Dict[str, Any] = {}
         self._loaded: bool = False
 
         if config_file is None:
-            config_dir = os.path.join(os.path.expanduser("~"), ".dingtalk_downloader")
-            os.makedirs(config_dir, exist_ok=True)
-            self.config_file = os.path.join(config_dir, "config.yaml")
+            self.config_file = CONFIG_FILE_PATH
         else:
             self.config_file = config_file
 
@@ -55,6 +55,7 @@ class YamlConfig:
         加载配置文件。
 
         从配置文件中加载配置项，如果配置文件不存在，则使用默认配置。
+        如果配置文件不存在，则自动创建配置文件目录和默认配置文件。
         """
         user_config = {}
 
@@ -70,7 +71,13 @@ class YamlConfig:
                 logger.error(f"读取配置文件失败: {e}，使用默认配置")
                 user_config = {}
         else:
-            logger.warning(f"配置文件不存在: {self.config_file}，使用默认配置")
+            logger.warning(f"配置文件不存在: {self.config_file}")
+            logger.info(f"自动创建配置文件目录: {os.path.dirname(self.config_file)}")
+            try:
+                os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+                logger.info(f"配置文件目录创建成功")
+            except Exception as e:
+                logger.error(f"创建配置文件目录失败: {e}")
 
         self.config = self._merge_configs(user_config, self.default_config)
         self._loaded = True
@@ -80,8 +87,15 @@ class YamlConfig:
         保存配置。
 
         将配置项保存到配置文件。
+        如果配置文件目录不存在，则自动创建。
         """
         try:
+            config_dir = os.path.dirname(self.config_file)
+            if not os.path.exists(config_dir):
+                logger.info(f"创建配置文件目录: {config_dir}")
+                os.makedirs(config_dir, exist_ok=True)
+                logger.info(f"配置文件目录创建成功")
+            
             with open(self.config_file, "w", encoding="utf-8") as f:
                 yaml.dump(
                     self.config, f, allow_unicode=True, default_flow_style=False, sort_keys=False

@@ -25,10 +25,10 @@ from dingtalk_downloader.config.yaml_config import YamlConfig
 def test_yaml_config_init_default_path():
     """测试YamlConfig初始化 - 使用默认路径"""
     config = YamlConfig()
-    
+
     assert config.config == {}
-    assert ".dingtalk_downloader" in config.config_file
-    assert "config.yaml" in config.config_file
+    assert "config" in config.config_file
+    assert "app.yaml" in config.config_file
     assert config._loaded is False
 
 

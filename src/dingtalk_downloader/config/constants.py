@@ -10,6 +10,9 @@
     - 2025-01-14: 初始版本
 """
 
+# 配置文件路径
+CONFIG_FILE_PATH = "./config/app.yaml"
+
 # 浏览器类型
 BROWSER_TYPE_EDGE = "edge"
 BROWSER_TYPE_CHROME = "chrome"
