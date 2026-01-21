@@ -87,11 +87,11 @@ class NM3u8DLRE:
 
             if "ERROR:" in output or "Failed" in output:
                 error_lines = []
-                for line in output.split('\n'):
-                    if 'ERROR:' in line or 'Failed' in line:
+                for line in output.split("\n"):
+                    if "ERROR:" in line or "Failed" in line:
                         error_lines.append(line.strip())
-                error_info = '\n'.join(error_lines)
-                logger.error(f"视频下载失败")
+                error_info = "\n".join(error_lines)
+                logger.error("视频下载失败")
                 if error_info:
                     logger.error(f"错误信息:\n{error_info}")
                 return False
@@ -173,15 +173,15 @@ class NM3u8DLRE:
                 command.extend(["-H", f"Accept-Encoding: {headers['Accept-Encoding']}"])
                 headers_added.append("Accept-Encoding")
         else:
-              command.extend(
-                  [
-                      "-H",
-                      "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                  ]
-              )
-              command.extend(["-H", "Referer: https://n.dingtalk.com/"])
-              command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
-              headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
+            command.extend(
+                [
+                    "-H",
+                    "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                ]
+            )
+            command.extend(["-H", "Referer: https://n.dingtalk.com/"])
+            command.extend(["-H", "Accept: application/vnd.apple.mpegurl, text/plain, */*"])
+            headers_added.extend(["User-Agent (默认)", "Referer (默认)", "Accept (默认)"])
 
         if headers_added:
             logger.debug(f"已添加请求头: {', '.join(headers_added)}")
@@ -199,6 +199,7 @@ class NM3u8DLRE:
             可执行文件名
         """
         import os
+
         system = platform.system()
         if system == "Windows":
             return os.path.join("assets", "bin", "N_m3u8DL-RE.exe")

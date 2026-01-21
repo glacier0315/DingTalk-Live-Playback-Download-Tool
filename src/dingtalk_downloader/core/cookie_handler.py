@@ -13,16 +13,8 @@
 
 import sys
 import logging
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Any
 from ..browser.browser_factory import BrowserFactory
-from ..browser.edge_driver import EdgeDriver
-from ..browser.chrome_driver import ChromeDriver
-from ..browser.firefox_driver import FirefoxDriver
-from ..config.constants import (
-    BROWSER_TYPE_EDGE,
-    BROWSER_TYPE_CHROME,
-    BROWSER_TYPE_FIREFOX,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +43,7 @@ class CookieHandler:
 
     def get_cookie(
         self, url: str
-    ) -> Tuple[Union[EdgeDriver, ChromeDriver, FirefoxDriver], Dict[str, str], Dict[str, str], str]:
+    ) -> Tuple[Any, Dict[str, str], Dict[str, str], str]:
         """
         获取 Cookie 和请求头信息。
 

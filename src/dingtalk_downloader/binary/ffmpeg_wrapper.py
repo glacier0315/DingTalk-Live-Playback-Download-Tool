@@ -36,6 +36,7 @@ class FFmpegWrapper:
         """
         import os
         import platform
+
         if executable_path is None:
             system = platform.system()
             if system == "Windows":

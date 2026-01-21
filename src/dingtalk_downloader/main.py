@@ -19,12 +19,8 @@ from .utils.validator import validate_input
 from .utils.file_reader import FileReader
 from .config.constants import (
     BROWSER_OPTION_MAP,
-    DOWNLOAD_MODE_MAP,
-    SAVE_MODE_MAP,
     DOWNLOAD_MODE_SINGLE,
     DOWNLOAD_MODE_BATCH,
-    SAVE_MODE_DEFAULT,
-    SAVE_MODE_MANUAL,
 )
 
 logger = logging.getLogger(__name__)

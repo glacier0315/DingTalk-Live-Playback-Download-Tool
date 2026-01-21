@@ -120,7 +120,7 @@ class M3u8Parser:
                                     m3u8_links.append(m3u8_url)
                                     return m3u8_links
                     except Exception as e:
-                          logger.error(f"处理日志时发生错误: {e}", exc_info=True)
+                        logger.error(f"处理日志时发生错误: {e}", exc_info=True)
 
                 logger.debug(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接，重试中")
                 self._refresh_page()

@@ -163,19 +163,19 @@ class Downloader:
             m3u8_links = self.m3u8_parser.fetch_m3u8_links(first_link)
 
             if m3u8_links:
-                    logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
-                    for link in m3u8_links:
-                        logger.info(f"处理 m3u8 链接: {link}")
-                        m3u8_file = self.m3u8_parser.download_m3u8_file(
-                            link, TEMP_M3U8_FILE, m3u8_headers
-                        )
-                        logger.info(f"m3u8 文件下载成功: {m3u8_file}")
+                logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
+                for link in m3u8_links:
+                    logger.info(f"处理 m3u8 链接: {link}")
+                    m3u8_file = self.m3u8_parser.download_m3u8_file(
+                        link, TEMP_M3U8_FILE, m3u8_headers
+                    )
+                    logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
-                        prefix = self.m3u8_parser.extract_prefix(link)
-                        logger.info(f"提取到基础 URL: {prefix}")
+                    prefix = self.m3u8_parser.extract_prefix(link)
+                    logger.info(f"提取到基础 URL: {prefix}")
 
-                    self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
-                    logger.info(f"视频下载完成: {live_name}")
+                self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
+                logger.info(f"视频下载完成: {live_name}")
             print("=" * 100)
             logger.info("第 1 个视频下载完成")
 
@@ -259,7 +259,7 @@ class Downloader:
             print("用户取消了选择。视频下载已中止。")
             return False
 
-        logger.info(f"调用 N_m3u8DL-RE 下载视频")
+        logger.info("调用 N_m3u8DL-RE 下载视频")
         download_success = self.n_m3u8dl_re.download(
             m3u8_file, save_name, save_dir, prefix, cookies_data, m3u8_headers
         )

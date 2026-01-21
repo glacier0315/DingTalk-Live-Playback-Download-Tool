@@ -165,10 +165,9 @@ class ChromeDriver:
         """
         if self.driver:
             WebDriverWait(self.driver, timeout).until(
-                lambda driver: driver.execute_script(
+                lambda driver: not driver.execute_script(
                     "return isNaN(document.querySelector('video')?.duration)"
                 )
-                == False
             )
 
     def close(self) -> None:

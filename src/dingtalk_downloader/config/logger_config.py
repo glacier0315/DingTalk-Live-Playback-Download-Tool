@@ -94,7 +94,8 @@ class LoggerConfig:
             root_logger.addHandler(console_handler)
 
             log_filename = os.path.join(
-                LoggerConfig._log_dir, f"dingtalk_downloader_{datetime.now().strftime('%Y-%m-%d')}.log"
+                LoggerConfig._log_dir,
+                f"dingtalk_downloader_{datetime.now().strftime('%Y-%m-%d')}.log",
             )
             file_handler = RotatingFileHandlerWithCleanup(log_filename)
             file_handler.setLevel(numeric_level)
