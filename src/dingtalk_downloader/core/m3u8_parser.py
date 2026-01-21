@@ -9,6 +9,7 @@
 修改历史：
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
+    - 2026-01-21: 重构-消除魔法数字,优化日志处理
 """
 
 import re
@@ -27,6 +28,9 @@ from ..config.constants import (
 )
 
 logger = logging.getLogger(__name__)
+
+FIRST_ELEMENT_INDEX = 0
+LOG_TYPE_PERFORMANCE = "performance"
 
 
 class M3u8Parser:
@@ -77,7 +81,7 @@ class M3u8Parser:
         """
         parsed_url = urlparse(url)
         query_params = parse_qs(parsed_url.query)
-        live_uuid = query_params.get("liveUuid", [None])[0]
+        live_uuid = query_params.get("liveUuid", [None])[FIRST_ELEMENT_INDEX]
 
         if not live_uuid:
             logger.error("未能从 URL 提取 liveUuid，程序将退出")
@@ -88,9 +92,9 @@ class M3u8Parser:
         for attempt in range(self.max_retries):
             try:
                 if self.browser_type in [BROWSER_TYPE_EDGE, BROWSER_TYPE_CHROME]:
-                    logs = self.browser.get_log("performance")
+                    logs = self.browser.get_log(LOG_TYPE_PERFORMANCE)
                 elif self.browser_type == BROWSER_TYPE_FIREFOX:
-                    logs = self.browser.get_log("performance")
+                    logs = self.browser.get_log(LOG_TYPE_PERFORMANCE)
 
                 for log in logs:
                     try:

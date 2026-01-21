@@ -9,6 +9,7 @@
 修改历史：
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
+    - 2026-01-21: 重构为继承BrowserDriver抽象基类
 """
 
 import logging
@@ -17,11 +18,12 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import List, Optional
+from .browser_driver import BrowserDriver
 
 logger = logging.getLogger(__name__)
 
 
-class EdgeDriver:
+class EdgeDriver(BrowserDriver):
     """
     Edge 浏览器驱动类。
 

@@ -9,14 +9,20 @@
 修改历史：
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
+    - 2026-01-21: 重构-提取请求头构建逻辑,移除sys.exit调用
 """
 
-import sys
 import logging
 from typing import Dict, Tuple, Any
 from ..browser.browser_factory import BrowserFactory
 
 logger = logging.getLogger(__name__)
+
+
+class CookieError(Exception):
+    """Cookie处理异常"""
+
+    pass
 
 
 class CookieHandler:
@@ -41,9 +47,32 @@ class CookieHandler:
         self.browser = None
         logger.debug(f"Cookie 处理器初始化 - 浏览器类型: {browser_type}")
 
-    def get_cookie(
-        self, url: str
-    ) -> Tuple[Any, Dict[str, str], Dict[str, str], str]:
+    def _build_headers(self, user_agent: str, referer: str) -> Dict[str, str]:
+        """
+        构建请求头。
+
+        Args:
+            user_agent: User-Agent字符串
+            referer: Referer字符串
+
+        Returns:
+            请求头字典
+        """
+        return {
+            "User-Agent": user_agent,
+            "Referer": referer,
+            "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+        }
+
+    def get_cookie(self, url: str) -> Tuple[Any, Dict[str, str], Dict[str, str], str]:
         """
         获取 Cookie 和请求头信息。
 
@@ -60,7 +89,7 @@ class CookieHandler:
                 - live_name: 直播视频名称
 
         Raises:
-            Exception: 获取失败时
+            CookieError: 获取失败时
         """
         logger.info(f"开始获取 Cookie - URL: {url}")
 
@@ -81,19 +110,7 @@ class CookieHandler:
             logger.debug(f"User-Agent: {user_agent}")
             logger.debug(f"Referer: {referer}")
 
-            headers = {
-                "User-Agent": user_agent,
-                "Referer": referer,
-                "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
-                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Connection": "keep-alive",
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "same-origin",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1",
-            }
+            headers = self._build_headers(user_agent, referer)
             logger.info("请求头构建完成")
 
             live_name = self._get_live_name()
@@ -109,7 +126,7 @@ class CookieHandler:
             logger.error(f"获取Cookie时发生错误: {e}", exc_info=True)
             if self.browser:
                 self.browser.close()
-            sys.exit(1)
+            raise CookieError(f"获取Cookie失败: {e}") from e
 
     def repeat_get_cookie(self, url: str) -> Tuple[Dict[str, str], Dict[str, str], str]:
         """
@@ -127,14 +144,15 @@ class CookieHandler:
                 - live_name: 直播视频名称
 
         Raises:
-            Exception: 获取失败时
+            CookieError: 获取失败时
         """
         logger.info("重复获取 Cookie")
 
         try:
             if self.browser is None:
                 logger.warning("浏览器实例不存在，调用 get_cookie")
-                return self.get_cookie(url)
+                browser, cookie_dict, headers, live_name = self.get_cookie(url)
+                return cookie_dict, headers, live_name
 
             self.browser.navigate(url)
             logger.info("导航到指定 URL")
@@ -151,19 +169,7 @@ class CookieHandler:
             logger.debug(f"User-Agent: {user_agent}")
             logger.debug(f"Referer: {referer}")
 
-            headers = {
-                "User-Agent": user_agent,
-                "Referer": referer,
-                "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
-                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Connection": "keep-alive",
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "same-origin",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1",
-            }
+            headers = self._build_headers(user_agent, referer)
             logger.info("请求头构建完成")
 
             live_name = self._get_live_name()
@@ -179,7 +185,7 @@ class CookieHandler:
             logger.error(f"重复获取Cookie时发生错误: {e}", exc_info=True)
             if self.browser:
                 self.browser.close()
-            sys.exit(1)
+            raise CookieError(f"重复获取Cookie失败: {e}") from e
 
     def _get_live_name(self) -> str:
         """
