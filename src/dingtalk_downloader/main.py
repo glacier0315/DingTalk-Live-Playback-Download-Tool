@@ -13,7 +13,6 @@
 
 import sys
 import logging
-from typing import Dict
 from .config.logger_config import LoggerConfig
 from .core.downloader import Downloader
 from .utils.validator import validate_input
@@ -22,7 +21,6 @@ from .config.constants import (
     BROWSER_OPTION_MAP,
     DOWNLOAD_MODE_MAP,
     SAVE_MODE_MAP,
-    BROWSER_TYPE_EDGE,
     DOWNLOAD_MODE_SINGLE,
     DOWNLOAD_MODE_BATCH,
     SAVE_MODE_DEFAULT,

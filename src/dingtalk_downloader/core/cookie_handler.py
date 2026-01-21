@@ -22,7 +22,6 @@ from ..config.constants import (
     BROWSER_TYPE_EDGE,
     BROWSER_TYPE_CHROME,
     BROWSER_TYPE_FIREFOX,
-    DEFAULT_HEADERS,
 )
 
 logger = logging.getLogger(__name__)

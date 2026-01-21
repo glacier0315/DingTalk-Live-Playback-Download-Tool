@@ -13,7 +13,6 @@
 
 import logging
 from typing import Union
-from selenium.webdriver.remote.webdriver import WebDriver
 from .edge_driver import EdgeDriver
 from .chrome_driver import ChromeDriver
 from .firefox_driver import FirefoxDriver
