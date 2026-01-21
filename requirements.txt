@@ -3,3 +3,4 @@ pandas
 openpyxl
 xlrd
 tkintertable
+PyYAML>=6.0

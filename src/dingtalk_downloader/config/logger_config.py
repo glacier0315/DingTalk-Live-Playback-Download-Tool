@@ -8,6 +8,7 @@
 创建日期：2025-01-15
 修改历史：
     - 2025-01-15: 初始版本
+    - 2026-01-21: 改造为从YAML读取配置
 """
 
 import logging
@@ -65,17 +66,24 @@ class LoggerConfig:
         初始化日志系统
 
         Args:
-            log_level: 日志级别，默认从环境变量 LOG_LEVEL 读取
+            log_level: 日志级别，默认从YAML配置文件读取
         """
         if LoggerConfig._initialized:
             return
 
         try:
-            LoggerConfig._log_dir = os.path.join(os.getcwd(), "logs")
+            from .yaml_config import YamlConfig
+
+            yaml_config = YamlConfig()
+
+            LoggerConfig._log_dir = yaml_config.get("logging.dir", "logs")
             os.makedirs(LoggerConfig._log_dir, exist_ok=True)
 
-            log_level_str = log_level or os.getenv("LOG_LEVEL", "INFO")
+            log_level_str = log_level or yaml_config.get("logging.level", "INFO")
             numeric_level = getattr(logging, log_level_str.upper(), logging.INFO)
+
+            max_bytes = yaml_config.get("logging.max_bytes", 10 * 1024 * 1024)
+            backup_count = yaml_config.get("logging.backup_count", 5)
 
             root_logger = logging.getLogger()
             root_logger.setLevel(numeric_level)
@@ -97,7 +105,9 @@ class LoggerConfig:
                 LoggerConfig._log_dir,
                 f"dingtalk_downloader_{datetime.now().strftime('%Y-%m-%d')}.log",
             )
-            file_handler = RotatingFileHandlerWithCleanup(log_filename)
+            file_handler = RotatingFileHandlerWithCleanup(
+                log_filename, max_bytes=max_bytes, backup_count=backup_count
+            )
             file_handler.setLevel(numeric_level)
             file_handler.setFormatter(formatter)
             root_logger.addHandler(file_handler)
@@ -139,12 +149,12 @@ class LoggerConfig:
         return logger
 
     @staticmethod
-    def clean_old_logs(days: int = 30) -> None:
+    def clean_old_logs(days: int = None) -> None:
         """
         清理过期日志文件
 
         Args:
-            days: 保留天数，默认 30 天
+            days: 保留天数，默认从YAML配置文件读取
         """
         if LoggerConfig._log_dir is None:
             LoggerConfig._log_dir = os.path.join(os.getcwd(), "logs")
@@ -153,6 +163,11 @@ class LoggerConfig:
             return
 
         try:
+            from .yaml_config import YamlConfig
+
+            yaml_config = YamlConfig()
+            retention_days = days or yaml_config.get("logging.retention_days", 30)
+
             now = datetime.now()
             logger = LoggerConfig.get_logger(__name__)
 
@@ -164,7 +179,7 @@ class LoggerConfig:
                 file_mtime = datetime.fromtimestamp(os.path.getmtime(filepath))
                 file_age = (now - file_mtime).days
 
-                if file_age > days:
+                if file_age > retention_days:
                     os.remove(filepath)
                     logger.info(f"已删除过期日志文件: {filename}")
 
