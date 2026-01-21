@@ -36,7 +36,7 @@ DingTalk-Live-Playback-Download-Tool 是一个功能强大的钉钉直播回放�
 
 ## 项目目录结构
 
-```
+```plaintext
 DingTalk-Live-Playback-Download-Tool/
 ├── src/                                    # 源代码目录
 │   └── dingtalk_downloader/                # 项目包名
@@ -47,7 +47,7 @@ DingTalk-Live-Playback-Download-Tool/
 │       ├── binary/                         # 二进制程序调用模块
 │       ├── browser/                        # 浏览器自动化模块
 │       └── config/                         # 配置管理模块
-├── tests/                                 # 测试代码目录
+├── tests/                                  # 测试代码目录
 │   ├── unit/                               # 单元测试
 │   ├── integration/                        # 集成测试
 │   └── fixtures/                           # 测试数据
@@ -60,22 +60,22 @@ DingTalk-Live-Playback-Download-Tool/
 │   │   ├── ffmpeg.exe                      # FFmpeg可执行文件(Windows)
 │   │   └── ffmpeg                          # FFmpeg可执行文件(Linux/macOS)
 │   ├── template/                           # 模板文件目录
-│   │   └── 批量下载模板.xlsx               # 批量下载模板文件
+│   │   └── 批量下载模板.xlsx                # 批量下载模板文件
 │   └── ICO/                                # 图标资源目录
 │       ├── icon-512x512.png
 │       ├── icon.ico
 │       └── icon.png
-├── docs/                                  # 文档目录
-│   ├── development_standard.md              # 开发规范文档
+├── docs/                                   # 文档目录
+│   ├── development_standard.md             # 开发规范文档
 │   ├── development_guide.md                # 开发指南文档
-│   └── project_status.md                 # 项目现状记录
+│   └── project_status.md                   # 项目现状记录
 ├── requirements.txt                        # Python依赖包列表
 ├── requirements-dev.txt                    # 开发依赖包列表
-├── .gitignore                             # Git忽略文件配置
-├── .trae/                                 # Trae IDE配置目录
+├── .gitignore                              # Git忽略文件配置
+├── .trae/                                  # Trae IDE配置目录
 │   └── rules/
 │       └── project_rules.md                # 项目规则文档
-└── README.md                              # 项目说明文档
+└── README.md                               # 项目说明文档
 ```
 
 ### 目录说明
@@ -86,40 +86,6 @@ DingTalk-Live-Playback-Download-Tool/
 - **docs/**: 文档目录，包含开发规范、开发指南和项目记录
 - **requirements.txt**: 项目运行所需的 Python 依赖包
 - **requirements-dev.txt**: 开发所需的额外依赖包（测试、代码格式化等）
-
-## 文件路径规范
-
-### 外部二进制文件路径
-
-项目使用的外部二进制程序统一存放在 `assets/bin` 目录下：
-
-- **N_m3u8DL-RE**
-  - Windows: `assets/bin/N_m3u8DL-RE.exe`
-  - Linux/macOS: `assets/bin/N_m3u8DL-RE`
-
-- **FFmpeg**
-  - Windows: `assets/bin/ffmpeg.exe`
-  - Linux/macOS: `assets/bin/ffmpeg`
-
-### 模板文件路径
-
-批量下载模板文件存放在 `assets/template` 目录下：
-
-- **批量下载模板**: `assets/template/批量下载模板.xlsx`
-
-### 图标资源路径
-
-图标资源文件存放在 `assets/ICO` 目录下：
-
-- `assets/ICO/icon-512x512.png`
-- `assets/ICO/icon.ico`
-- `assets/ICO/icon.png`
-
-### 路径使用说明
-
-- 代码中通过 `os.path.join()` 或 `pathlib.Path` 构建跨平台兼容的路径
-- 所有文件路径引用都遵循上述规范
-- 详细路径规范请参考 [development_standard.md](docs/development_standard.md)
 
 ## 快速开始
 
@@ -186,14 +152,6 @@ python -m src.dingtalk_downloader.main
 6. 在浏览器中登录钉钉账号
 7. 等待页面加载完毕后，按回车键开始批量下载
 
-### 使用截图
-
-![主界面](https://github.com/user-attachments/assets/0de8822a-fe81-4726-b8fb-8540b9197908)
-
-![批量下载界面](https://github.com/user-attachments/assets/e7b9d376-0814-4649-a334-422deb8cc2b3)
-
-![下载进度](https://github.com/user-attachments/assets/59b7c2e1-a29b-480f-9377-80fc2b6890c2)
-
 ## 依赖工具
 
 本项目使用了以下第三方工具：
@@ -255,32 +213,40 @@ pytest --cov=src/dingtalk_downloader
 
 1. **Fork 项目**：点击项目页面右上角的 Fork 按钮
 2. **克隆到本地**：
+
    ```bash
    git clone https://github.com/glacier0315/DingTalk-Live-Playback-Download-Tool.git
    cd DingTalk-Live-Playback-Download-Tool
    ```
+
 3. **创建功能分支**：
+
    ```bash
    git checkout -b feature/your-feature-name
    # 或修复分支
    git checkout -b fix/your-bug-fix
    ```
+
 4. **进行开发**：
    - 遵循项目代码规范
    - 编写清晰的注释
    - 添加必要的测试
    - 确保所有测试通过
 5. **提交代码**：
+
    ```bash
    git add .
    git commit -m "feat: 添加新功能描述"
    # 或
    git commit -m "fix: 修复问题描述"
    ```
+
 6. **推送到远程**：
+
    ```bash
    git push origin feature/your-feature-name
    ```
+
 7. **创建 Pull Request**：在 GitHub 上创建 PR，详细描述您的改动
 
 ### 提交规范
