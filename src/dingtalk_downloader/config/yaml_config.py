@@ -259,6 +259,12 @@ class YamlConfig:
                 "accept": "application/vnd.apple.mpegurl, text/plain, */*",
                 "accept_language": "zh-CN,zh;q=0.9,en;q=0.8",
                 "accept_encoding": "gzip, deflate, br",
+                "connection": "keep-alive",
+                "sec_fetch_dest": "document",
+                "sec_fetch_mode": "navigate",
+                "sec_fetch_site": "same-origin",
+                "sec_fetch_user": "?1",
+                "upgrade_insecure_requests": "1",
             },
             "n_m3u8dl_re": {
                 "executable_path": "assets/bin/N_m3u8DL-RE.exe",

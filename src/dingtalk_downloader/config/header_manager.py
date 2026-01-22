@@ -1,0 +1,238 @@
+"""
+钉钉直播回放下载工具 - 请求头管理模块
+
+本模块负责统一管理请求头配置，支持动态覆盖机制。
+
+作者：项目团队
+依赖：typing, logging
+创建日期：2026-01-22
+修改历史：
+    - 2026-01-22: 初始版本，实现请求头配置加载与动态覆盖
+"""
+
+import logging
+from typing import Dict, Optional, Any
+from .yaml_config import YamlConfig
+
+logger = logging.getLogger(__name__)
+
+
+class HeaderManager:
+    """
+    请求头管理器，负责统一管理请求头配置。
+
+    该类提供请求头的加载、获取、覆盖功能，支持动态修改请求头配置。
+
+    Attributes:
+        config (YamlConfig): 配置管理实例
+        _headers_cache (Dict[str, str]): 请求头缓存
+        _override_headers (Dict[str, str]): 覆盖请求头
+    """
+
+    def __init__(self, config_file: Optional[str] = None):
+        """
+        初始化请求头管理器。
+
+        Args:
+            config_file: 配置文件路径，默认为None（使用默认路径）
+        """
+        self.config = YamlConfig(config_file)
+        self.config.load()
+        self._headers_cache: Dict[str, str] = {}
+        self._override_headers: Dict[str, str] = {}
+        
+        # 初始化请求头缓存
+        self._load_headers()
+        
+        logger.debug("请求头管理器初始化完成")
+
+    def _load_headers(self) -> None:
+        """
+        从配置文件加载请求头到缓存。
+        """
+        try:
+            # 配置文件中的请求头字段映射
+            header_mapping = {
+                "user_agent": "User-Agent",
+                "referer": "Referer",
+                "accept": "Accept",
+                "accept_language": "Accept-Language",
+                "accept_encoding": "Accept-Encoding",
+                "connection": "Connection",
+                "sec_fetch_dest": "Sec-Fetch-Dest",
+                "sec_fetch_mode": "Sec-Fetch-Mode",
+                "sec_fetch_site": "Sec-Fetch-Site",
+                "sec_fetch_user": "Sec-Fetch-User",
+                "upgrade_insecure_requests": "Upgrade-Insecure-Requests",
+            }
+
+            headers_config = self.config.get("headers", {})
+            self._headers_cache.clear()
+
+            for config_key, header_name in header_mapping.items():
+                if config_key in headers_config:
+                    self._headers_cache[header_name] = headers_config[config_key]
+                    logger.debug(f"加载请求头: {header_name}")
+
+            logger.info(f"成功加载 {len(self._headers_cache)} 个请求头")
+
+        except Exception as e:
+            logger.error(f"加载请求头配置失败: {e}", exc_info=True)
+            raise
+
+    def get_headers(self, include_overrides: bool = True) -> Dict[str, str]:
+        """
+        获取请求头字典。
+
+        Args:
+            include_overrides: 是否包含覆盖的请求头，默认为True
+
+        Returns:
+            请求头字典
+        """
+        headers = self._headers_cache.copy()
+        
+        if include_overrides:
+            # 应用覆盖的请求头（优先级更高）
+            headers.update(self._override_headers)
+            
+        logger.debug(f"获取请求头字典，共 {len(headers)} 个请求头")
+        return headers
+
+    def get_header(self, name: str, default: Optional[str] = None, include_overrides: bool = True) -> Optional[str]:
+        """
+        获取单个请求头。
+
+        Args:
+            name: 请求头名称
+            default: 默认值
+            include_overrides: 是否包含覆盖的请求头，默认为True
+
+        Returns:
+            请求头值，如果不存在则返回默认值
+        """
+        if include_overrides and name in self._override_headers:
+            return self._override_headers[name]
+        
+        return self._headers_cache.get(name, default)
+
+    def set_header(self, name: str, value: str, is_override: bool = True) -> None:
+        """
+        设置请求头。
+
+        Args:
+            name: 请求头名称
+            value: 请求头值
+            is_override: 是否为覆盖请求头，默认为True
+        """
+        if is_override:
+            self._override_headers[name] = value
+            logger.info(f"设置覆盖请求头: {name} = {value}")
+        else:
+            self._headers_cache[name] = value
+            logger.info(f"设置请求头: {name} = {value}")
+
+    def remove_header(self, name: str, from_overrides: bool = True) -> bool:
+        """
+        移除请求头。
+
+        Args:
+            name: 请求头名称
+            from_overrides: 是否从覆盖请求头中移除，默认为True
+
+        Returns:
+            是否成功移除
+        """
+        removed = False
+        
+        if from_overrides and name in self._override_headers:
+            del self._override_headers[name]
+            logger.info(f"移除覆盖请求头: {name}")
+            removed = True
+        
+        if not from_overrides and name in self._headers_cache:
+            del self._headers_cache[name]
+            logger.info(f"移除请求头: {name}")
+            removed = True
+            
+        return removed
+
+    def clear_overrides(self) -> None:
+        """
+        清除所有覆盖的请求头。
+        """
+        self._override_headers.clear()
+        logger.info("已清除所有覆盖的请求头")
+
+    def get_override_headers(self) -> Dict[str, str]:
+        """
+        获取所有覆盖的请求头。
+
+        Returns:
+            覆盖请求头字典
+        """
+        return self._override_headers.copy()
+
+    def reload_config(self) -> None:
+        """
+        重新加载配置文件。
+
+        清除当前缓存，重新从配置文件加载请求头。
+        保留覆盖的请求头。
+        """
+        logger.info("重新加载请求头配置")
+        self.config.reload()
+        self._load_headers()
+        logger.info("请求头配置重新加载完成")
+
+    def merge_headers(self, additional_headers: Dict[str, str], is_override: bool = True) -> Dict[str, str]:
+        """
+        合并额外的请求头。
+
+        Args:
+            additional_headers: 额外的请求头字典
+            is_override: 是否作为覆盖请求头，默认为True
+
+        Returns:
+            合并后的请求头字典
+        """
+        if is_override:
+            self._override_headers.update(additional_headers)
+            logger.debug(f"合并 {len(additional_headers)} 个覆盖请求头")
+        else:
+            self._headers_cache.update(additional_headers)
+            logger.debug(f"合并 {len(additional_headers)} 个请求头")
+            
+        return self.get_headers()
+
+    def validate_headers(self) -> bool:
+        """
+        验证请求头配置的有效性。
+
+        Returns:
+            验证结果，True表示有效，False表示无效
+        """
+        required_headers = ["User-Agent", "Referer", "Accept"]
+        headers = self.get_headers()
+        
+        for header in required_headers:
+            if header not in headers or not headers[header]:
+                logger.error(f"缺少必需的请求头: {header}")
+                return False
+                
+        logger.info("请求头配置验证通过")
+        return True
+
+    def get_header_info(self) -> Dict[str, Any]:
+        """
+        获取请求头配置信息。
+
+        Returns:
+            包含请求头统计信息的字典
+        """
+        return {
+            "total_headers": len(self._headers_cache),
+            "override_headers": len(self._override_headers),
+            "headers": self.get_headers(include_overrides=False),
+            "overrides": self.get_override_headers(),
+        }

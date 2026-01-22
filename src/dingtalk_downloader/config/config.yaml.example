@@ -98,6 +98,30 @@ headers:
   # Accept-Encoding
   # 说明：指定客户端支持的压缩算法
   accept_encoding: "gzip, deflate, br"
+  
+  # Connection
+  # 说明：控制网络连接的行为
+  connection: "keep-alive"
+  
+  # Sec-Fetch-Dest
+  # 说明：表示请求的目的地
+  sec_fetch_dest: "document"
+  
+  # Sec-Fetch-Mode
+  # 说明：表示请求的模式
+  sec_fetch_mode: "navigate"
+  
+  # Sec-Fetch-Site
+  # 说明：表示请求的来源站点
+  sec_fetch_site: "same-origin"
+  
+  # Sec-Fetch-User
+  # 说明：表示请求是否由用户激活
+  sec_fetch_user: "?1"
+  
+  # Upgrade-Insecure-Requests
+  # 说明：表示客户端是否支持升级到HTTPS
+  upgrade_insecure_requests: "1"
 
 # ========================================
 # N_m3u8DL-RE配置

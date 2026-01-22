@@ -17,6 +17,7 @@ import os
 import logging
 from typing import Dict, Optional, List
 from ..config.yaml_config import YamlConfig
+from ..config.header_manager import HeaderManager
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +32,8 @@ class NM3u8DLRE:
         executable_path (str): 可执行文件路径
         temp_dir (str): 临时文件目录
         log_dir (str): 日志文件目录
+        header_manager (HeaderManager): 请求头管理器
     """
-
-    DEFAULT_HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Referer": "https://n.dingtalk.com/",
-        "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
-    }
 
     def __init__(self, executable_path: Optional[str] = None):
         """
@@ -55,6 +51,7 @@ class NM3u8DLRE:
         config.load()
         self.temp_dir = config.get("n_m3u8dl_re.temp_dir", "temp")
         self.log_dir = config.get("n_m3u8dl_re.log_dir", "logs")
+        self.header_manager = HeaderManager()
 
         self._ensure_directories_exist()
 
@@ -228,7 +225,7 @@ class NM3u8DLRE:
             command.extend(["-H", f"Cookie: {cookie_string}"])
             logger.debug(f"已添加请求头，Cookie: ...")
 
-        merged_headers = self.DEFAULT_HEADERS.copy()
+        merged_headers = self.header_manager.get_headers()
         if headers:
             merged_headers.update(headers)
 

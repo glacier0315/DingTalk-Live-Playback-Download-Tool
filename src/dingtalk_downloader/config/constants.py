@@ -30,21 +30,6 @@ SAVE_MODE_MANUAL = "2"
 # 最大重试次数
 MAX_RETRY_COUNT = 5
 
-# 默认请求头
-DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Referer": "https://n.dingtalk.com/",
-    "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
-    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
-}
-
 # 默认下载目录
 DEFAULT_DOWNLOAD_DIR = "Downloads"
 

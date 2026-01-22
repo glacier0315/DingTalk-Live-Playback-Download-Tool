@@ -17,6 +17,7 @@ import logging
 from typing import Dict, Tuple, Any
 from ..browser.browser_factory import BrowserFactory
 from ..config.constants import LIVE_NAME_SELECTORS
+from ..config.header_manager import HeaderManager
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,7 @@ class CookieHandler:
         """
         self.browser_type = browser_type
         self.browser = None
+        self.header_manager = HeaderManager()
         logger.debug(f"Cookie 处理器初始化 - 浏览器类型: {browser_type}")
 
     def _build_headers(self, user_agent: str, referer: str) -> Dict[str, str]:
@@ -60,19 +62,13 @@ class CookieHandler:
         Returns:
             请求头字典
         """
-        return {
-            "User-Agent": user_agent,
-            "Referer": referer,
-            "Accept": "application/vnd.apple.mpegurl, text/plain, */*",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-User": "?1",
-            "Upgrade-Insecure-Requests": "1",
-        }
+        headers = self.header_manager.get_headers()
+        
+        # 使用浏览器提供的User-Agent和Referer覆盖配置中的值
+        headers["User-Agent"] = user_agent
+        headers["Referer"] = referer
+        
+        return headers
 
     def _collect_browser_data(self) -> Tuple[Dict[str, str], Dict[str, str], str]:
         """

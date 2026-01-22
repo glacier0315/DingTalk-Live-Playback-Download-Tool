@@ -15,6 +15,7 @@
 from .settings import Settings
 from .logger_config import LoggerConfig
 from .yaml_config import YamlConfig
+from .header_manager import HeaderManager
 from .constants import CONFIG_FILE_PATH
 
-__all__ = ["Settings", "LoggerConfig", "YamlConfig", "CONFIG_FILE_PATH"]
+__all__ = ["Settings", "LoggerConfig", "YamlConfig", "HeaderManager", "CONFIG_FILE_PATH"]
