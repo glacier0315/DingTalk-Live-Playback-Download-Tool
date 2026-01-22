@@ -12,10 +12,10 @@ def mock_edge_driver():
     """Mock Edge浏览器驱动"""
     mock_driver = MagicMock()
     mock_driver.get_cookies.return_value = [
-        {'name': 'test_cookie', 'value': 'test_value', 'domain': '.dingtalk.com'}
+        {"name": "test_cookie", "value": "test_value", "domain": ".dingtalk.com"}
     ]
-    mock_driver.current_url = 'https://live.dingtalk.com/test'
-    mock_driver.title = 'Test Live Page'
+    mock_driver.current_url = "https://live.dingtalk.com/test"
+    mock_driver.title = "Test Live Page"
     return mock_driver
 
 
@@ -24,10 +24,10 @@ def mock_chrome_driver():
     """Mock Chrome浏览器驱动"""
     mock_driver = MagicMock()
     mock_driver.get_cookies.return_value = [
-        {'name': 'chrome_cookie', 'value': 'chrome_value', 'domain': '.dingtalk.com'}
+        {"name": "chrome_cookie", "value": "chrome_value", "domain": ".dingtalk.com"}
     ]
-    mock_driver.current_url = 'https://live.dingtalk.com/test'
-    mock_driver.title = 'Test Live Page'
+    mock_driver.current_url = "https://live.dingtalk.com/test"
+    mock_driver.title = "Test Live Page"
     return mock_driver
 
 
@@ -36,10 +36,10 @@ def mock_firefox_driver():
     """Mock Firefox浏览器驱动"""
     mock_driver = MagicMock()
     mock_driver.get_cookies.return_value = [
-        {'name': 'firefox_cookie', 'value': 'firefox_value', 'domain': '.dingtalk.com'}
+        {"name": "firefox_cookie", "value": "firefox_value", "domain": ".dingtalk.com"}
     ]
-    mock_driver.current_url = 'https://live.dingtalk.com/test'
-    mock_driver.title = 'Test Live Page'
+    mock_driver.current_url = "https://live.dingtalk.com/test"
+    mock_driver.title = "Test Live Page"
     return mock_driver
 
 
@@ -49,7 +49,7 @@ def mock_browser_factory():
     mock_factory = MagicMock()
     mock_driver = MagicMock()
     mock_driver.get_cookies.return_value = [
-        {'name': 'factory_cookie', 'value': 'factory_value', 'domain': '.dingtalk.com'}
+        {"name": "factory_cookie", "value": "factory_value", "domain": ".dingtalk.com"}
     ]
     mock_factory.create_driver.return_value = mock_driver
     return mock_factory
@@ -78,22 +78,22 @@ def mock_webdriver(mocker):
 def sample_cookies():
     """示例Cookie数据"""
     return [
-        {'name': 'session_id', 'value': 'abc123', 'domain': '.dingtalk.com', 'path': '/'},
-        {'name': 'user_token', 'value': 'token456', 'domain': '.dingtalk.com', 'path': '/'},
-        {'name': 'csrf_token', 'value': 'csrf789', 'domain': '.dingtalk.com', 'path': '/'}
+        {"name": "session_id", "value": "abc123", "domain": ".dingtalk.com", "path": "/"},
+        {"name": "user_token", "value": "token456", "domain": ".dingtalk.com", "path": "/"},
+        {"name": "csrf_token", "value": "csrf789", "domain": ".dingtalk.com", "path": "/"},
     ]
 
 
 @pytest.fixture
 def sample_live_url():
     """示例直播URL"""
-    return 'https://live.dingtalk.com/123456789'
+    return "https://live.dingtalk.com/123456789"
 
 
 @pytest.fixture
 def sample_live_page_content():
     """示例直播页面内容"""
-    return '''
+    return """
     <!DOCTYPE html>
     <html>
     <head><title>Test Live Page</title></head>
@@ -104,4 +104,4 @@ def sample_live_page_content():
         </div>
     </body>
     </html>
-    '''
+    """

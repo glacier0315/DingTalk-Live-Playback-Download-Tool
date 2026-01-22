@@ -11,9 +11,9 @@ from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
 class TestNM3u8DLREInit:
     """测试 NM3u8DLRE 初始化"""
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_init_default_windows(self, mock_ensure, mock_config, mock_system):
         """测试 Windows 系统默认初始化"""
         mock_system.return_value = "Windows"
@@ -22,13 +22,14 @@ class TestNM3u8DLREInit:
         mock_config.return_value = mock_config_instance
         dl = NM3u8DLRE()
         import os
+
         assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
         assert dl.temp_dir == "temp"
         assert dl.log_dir == "logs"
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_init_default_linux(self, mock_ensure, mock_config, mock_system):
         """测试 Linux 系统默认初始化"""
         mock_system.return_value = "Linux"
@@ -37,13 +38,14 @@ class TestNM3u8DLREInit:
         mock_config.return_value = mock_config_instance
         dl = NM3u8DLRE()
         import os
+
         assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE")
         assert dl.temp_dir == "temp"
         assert dl.log_dir == "logs"
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_init_default_macos(self, mock_ensure, mock_config, mock_system):
         """测试 macOS 系统默认初始化"""
         mock_system.return_value = "Darwin"
@@ -52,12 +54,13 @@ class TestNM3u8DLREInit:
         mock_config.return_value = mock_config_instance
         dl = NM3u8DLRE()
         import os
+
         assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE")
         assert dl.temp_dir == "temp"
         assert dl.log_dir == "logs"
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_init_custom_path(self, mock_ensure, mock_config):
         """测试自定义路径初始化"""
         custom_path = "/path/to/N_m3u8DL-RE"
@@ -69,11 +72,12 @@ class TestNM3u8DLREInit:
         assert dl.temp_dir == "temp"
         assert dl.log_dir == "logs"
 
+
 class TestNM3u8DLREEnsureDirectoriesExist:
     """测试目录创建"""
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_ensure_directories_exist(self, mock_ensure, mock_config):
         """测试目录创建逻辑"""
         mock_config_instance = Mock()
@@ -84,8 +88,8 @@ class TestNM3u8DLREEnsureDirectoriesExist:
         mock_ensure.assert_any_call("temp")
         mock_ensure.assert_any_call("logs")
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_ensure_directories_exist_failure(self, mock_ensure, mock_config):
         """测试目录创建失败"""
         mock_ensure.side_effect = Exception("无法创建目录")
@@ -96,11 +100,12 @@ class TestNM3u8DLREEnsureDirectoriesExist:
             NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
         assert "无法创建目录" in str(exc_info.value)
 
+
 class TestNM3u8DLREGetLogFilePath:
     """测试日志文件路径生成"""
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_get_log_file_path(self, mock_ensure, mock_config):
         """测试日志文件路径生成"""
         mock_config_instance = Mock()
@@ -112,8 +117,8 @@ class TestNM3u8DLREGetLogFilePath:
         assert "n_m3u8dl_re_" in log_path
         assert ".log" in log_path
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_get_log_file_path_unique(self, mock_ensure, mock_config):
         """测试日志文件路径唯一性"""
         mock_config_instance = Mock()
@@ -122,6 +127,7 @@ class TestNM3u8DLREGetLogFilePath:
         dl = NM3u8DLRE(executable_path="N_m3u8DL-RE.exe")
         log_path1 = dl._get_log_file_path()
         import time
+
         time.sleep(1.0)
         log_path2 = dl._get_log_file_path()
         assert log_path1 != log_path2
@@ -130,31 +136,34 @@ class TestNM3u8DLREGetLogFilePath:
 class TestNM3u8DLREGetExecutableName:
     """测试获取可执行文件名"""
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
     def test_get_executable_name_windows(self, mock_system):
         """测试 Windows 系统可执行文件名"""
         mock_system.return_value = "Windows"
         name = NM3u8DLRE.get_executable_name()
         import os
+
         assert name == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
     def test_get_executable_name_linux(self, mock_system):
         """测试 Linux 系统可执行文件名"""
         mock_system.return_value = "Linux"
         name = NM3u8DLRE.get_executable_name()
         import os
+
         assert name == os.path.join("assets", "bin", "N_m3u8DL-RE")
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
     def test_get_executable_name_macos(self, mock_system):
         """测试 macOS 系统可执行文件名"""
         mock_system.return_value = "Darwin"
         name = NM3u8DLRE.get_executable_name()
         import os
+
         assert name == os.path.join("assets", "bin", "N_m3u8DL-RE")
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
     def test_get_executable_name_unsupported(self, mock_system):
         """测试不支持的操作系统"""
         mock_system.return_value = "FreeBSD"
@@ -166,8 +175,8 @@ class TestNM3u8DLREGetExecutableName:
 class TestNM3u8DLREBuildCommand:
     """测试构建命令"""
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_basic(self, mock_ensure, mock_config):
         """测试构建基本命令"""
         mock_config_instance = Mock()
@@ -180,7 +189,7 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert "N_m3u8DL-RE.exe" in command
@@ -194,8 +203,8 @@ class TestNM3u8DLREBuildCommand:
         assert "--tmp-dir" in command
         assert "--log-file-path" in command
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_with_dirs(self, mock_ensure, mock_config):
         """测试构建包含目录参数的命令"""
         mock_config_instance = Mock()
@@ -208,7 +217,7 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert "--tmp-dir" in command
@@ -217,8 +226,8 @@ class TestNM3u8DLREBuildCommand:
         assert any("n_m3u8dl_re_" in arg for arg in command)
         assert any(".log" in arg for arg in command)
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_with_cookies(self, mock_ensure, mock_config):
         """测试构建带 Cookie 的命令"""
         mock_config_instance = Mock()
@@ -232,15 +241,15 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=cookies,
-            headers=None
+            headers=None,
         )
 
         assert any("Cookie:" in arg for arg in command)
         assert any("session=abc123" in arg for arg in command)
         assert any("token=xyz789" in arg for arg in command)
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_with_headers(self, mock_ensure, mock_config):
         """测试构建带请求头的命令"""
         mock_config_instance = Mock()
@@ -252,7 +261,7 @@ class TestNM3u8DLREBuildCommand:
             "Referer": "https://example.com",
             "Accept": "application/json",
             "Accept-Language": "zh-CN",
-            "Accept-Encoding": "gzip"
+            "Accept-Encoding": "gzip",
         }
         command = dl.build_command(
             m3u8_file="test.m3u8",
@@ -260,7 +269,7 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=headers
+            headers=headers,
         )
 
         assert any("User-Agent:" in arg for arg in command)
@@ -269,8 +278,8 @@ class TestNM3u8DLREBuildCommand:
         assert any("Accept-Language:" in arg for arg in command)
         assert any("Accept-Encoding:" in arg for arg in command)
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_headers_no_user_agent(self, mock_ensure, mock_config):
         """测试请求头中缺少 User-Agent"""
         mock_config_instance = Mock()
@@ -284,15 +293,21 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=headers
+            headers=headers,
         )
 
         assert any("Referer:" in arg for arg in command)
-        assert any("User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" in arg for arg in command)
-        assert any("Accept: application/vnd.apple.mpegurl, text/plain, */*" in arg for arg in command)
+        assert any(
+            "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            in arg
+            for arg in command
+        )
+        assert any(
+            "Accept: application/vnd.apple.mpegurl, text/plain, */*" in arg for arg in command
+        )
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_headers_no_referer(self, mock_ensure, mock_config):
         """测试请求头中缺少 Referer（使用默认值）"""
         mock_config_instance = Mock()
@@ -306,14 +321,14 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=headers
+            headers=headers,
         )
 
         assert any("User-Agent:" in arg for arg in command)
         assert any("Referer: https://n.dingtalk.com/" in arg for arg in command)
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_no_headers(self, mock_ensure, mock_config):
         """测试没有请求头（使用默认值）"""
         mock_config_instance = Mock()
@@ -326,15 +341,15 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert any("User-Agent:" in arg for arg in command)
         assert any("Referer:" in arg for arg in command)
         assert any("Accept:" in arg for arg in command)
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_with_all_params(self, mock_ensure, mock_config):
         """测试带所有参数的命令"""
         mock_config_instance = Mock()
@@ -345,7 +360,7 @@ class TestNM3u8DLREBuildCommand:
         headers = {
             "User-Agent": "Mozilla/5.0",
             "Referer": "https://example.com",
-            "Accept": "application/json"
+            "Accept": "application/json",
         }
         command = dl.build_command(
             m3u8_file="test.m3u8",
@@ -353,7 +368,7 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=cookies,
-            headers=headers
+            headers=headers,
         )
 
         assert "test.m3u8" in command
@@ -362,8 +377,8 @@ class TestNM3u8DLREBuildCommand:
         assert any("Referer:" in arg for arg in command)
         assert any("Accept:" in arg for arg in command)
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_build_command_custom_executable(self, mock_ensure, mock_config):
         """测试自定义可执行文件路径"""
         mock_config_instance = Mock()
@@ -376,7 +391,7 @@ class TestNM3u8DLREBuildCommand:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert command[0] == "/custom/path/N_m3u8DL-RE"
@@ -385,9 +400,9 @@ class TestNM3u8DLREBuildCommand:
 class TestNM3u8DLREDownload:
     """测试下载功能"""
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_success(self, mock_ensure, mock_config, mock_run):
         """测试下载成功"""
         mock_config_instance = Mock()
@@ -403,15 +418,15 @@ class TestNM3u8DLREDownload:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is True
         mock_run.assert_called_once()
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_with_cookies(self, mock_ensure, mock_config, mock_run):
         """测试带 Cookie 的下载"""
         mock_config_instance = Mock()
@@ -428,7 +443,7 @@ class TestNM3u8DLREDownload:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=cookies,
-            headers=None
+            headers=None,
         )
 
         assert result is True
@@ -437,9 +452,9 @@ class TestNM3u8DLREDownload:
         call_args = mock_run.call_args[0][0]
         assert any("Cookie:" in arg for arg in call_args)
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_with_headers(self, mock_ensure, mock_config, mock_run):
         """测试带请求头的下载"""
         mock_config_instance = Mock()
@@ -456,7 +471,7 @@ class TestNM3u8DLREDownload:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=headers
+            headers=headers,
         )
 
         assert result is True
@@ -465,9 +480,9 @@ class TestNM3u8DLREDownload:
         call_args = mock_run.call_args[0][0]
         assert any("User-Agent:" in arg for arg in call_args)
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_failure(self, mock_ensure, mock_config, mock_run):
         """测试下载失败"""
         mock_config_instance = Mock()
@@ -481,14 +496,14 @@ class TestNM3u8DLREDownload:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is False
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_command_structure(self, mock_ensure, mock_config, mock_run):
         """测试下载命令结构"""
         mock_config_instance = Mock()
@@ -501,7 +516,7 @@ class TestNM3u8DLREDownload:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         call_args = mock_run.call_args[0][0]
@@ -514,10 +529,10 @@ class TestNM3u8DLREDownload:
 class TestNM3u8DLREIntegration:
     """测试集成场景"""
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.platform.system')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_full_workflow(self, mock_ensure, mock_config, mock_system, mock_run):
         """测试完整工作流程"""
         mock_config_instance = Mock()
@@ -530,6 +545,7 @@ class TestNM3u8DLREIntegration:
         dl = NM3u8DLRE()
 
         import os
+
         assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
 
         command = dl.build_command(
@@ -538,7 +554,7 @@ class TestNM3u8DLREIntegration:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data={"session": "abc123"},
-            headers={"User-Agent": "Mozilla/5.0"}
+            headers={"User-Agent": "Mozilla/5.0"},
         )
 
         assert "test.m3u8" in command
@@ -550,15 +566,15 @@ class TestNM3u8DLREIntegration:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data={"session": "abc123"},
-            headers={"User-Agent": "Mozilla/5.0"}
+            headers={"User-Agent": "Mozilla/5.0"},
         )
 
         assert result is True
         mock_run.assert_called_once()
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_multiple_downloads(self, mock_ensure, mock_config, mock_run):
         """测试多次下载"""
         mock_config_instance = Mock()
@@ -582,9 +598,9 @@ class TestNM3u8DLREIntegration:
 class TestNM3u8DLREDownloadStatus:
     """测试下载状态判断"""
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_success_no_errors(self, mock_ensure, mock_config, mock_run):
         """测试下载成功，无错误"""
         mock_config_instance = Mock()
@@ -600,16 +616,16 @@ class TestNM3u8DLREDownloadStatus:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is True
-        assert mock_run.call_args[1]['capture_output'] is True
-        assert mock_run.call_args[1]['text'] is True
+        assert mock_run.call_args[1]["capture_output"] is True
+        assert mock_run.call_args[1]["text"] is True
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_failure_nonzero_exit_code(self, mock_ensure, mock_config, mock_run):
         """测试下载失败，退出码非0"""
         mock_config_instance = Mock()
@@ -625,14 +641,14 @@ class TestNM3u8DLREDownloadStatus:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is False
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_failure_error_in_output(self, mock_ensure, mock_config, mock_run):
         """测试下载失败，输出包含ERROR:"""
         mock_config_instance = Mock()
@@ -648,14 +664,14 @@ class TestNM3u8DLREDownloadStatus:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is False
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_failure_failed_in_output(self, mock_ensure, mock_config, mock_run):
         """测试下载失败，输出包含Failed"""
         mock_config_instance = Mock()
@@ -671,14 +687,14 @@ class TestNM3u8DLREDownloadStatus:
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is False
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_failure_403_errors(self, mock_ensure, mock_config, mock_run):
         """测试下载失败，403错误"""
         output = """INFO: 开始下载
@@ -698,14 +714,14 @@ ERROR: Failed"""
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is False
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_success_with_warnings(self, mock_ensure, mock_config, mock_run):
         """测试下载成功，有WARN但无ERROR"""
         output = """INFO: 开始下载
@@ -724,14 +740,14 @@ INFO: 下载完成"""
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is True
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_failure_exception(self, mock_ensure, mock_config, mock_run):
         """测试下载失败，抛出异常"""
         mock_config_instance = Mock()
@@ -745,14 +761,14 @@ INFO: 下载完成"""
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert result is False
 
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run')
-    @patch('dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig')
-    @patch('dingtalk_downloader.utils.path_helper.ensure_dir_exists')
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
+    @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
+    @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
     def test_download_capture_output(self, mock_ensure, mock_config, mock_run):
         """测试捕获输出"""
         mock_config_instance = Mock()
@@ -768,12 +784,12 @@ INFO: 下载完成"""
             save_dir="/downloads",
             prefix="https://example.com",
             cookies_data=None,
-            headers=None
+            headers=None,
         )
 
         assert mock_run.called
         call_kwargs = mock_run.call_args[1]
-        assert 'capture_output' in call_kwargs
-        assert call_kwargs['capture_output'] is True
-        assert 'text' in call_kwargs
-        assert call_kwargs['text'] is True
+        assert "capture_output" in call_kwargs
+        assert call_kwargs["capture_output"] is True
+        assert "text" in call_kwargs
+        assert call_kwargs["text"] is True

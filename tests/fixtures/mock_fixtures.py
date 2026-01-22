@@ -14,10 +14,10 @@ def mock_response():
     """Mock HTTP响应对象"""
     mock_resp = MagicMock()
     mock_resp.status_code = 200
-    mock_resp.text = '<html>Mock Response</html>'
-    mock_resp.content = b'Mock Content'
-    mock_resp.json.return_value = {'status': 'success'}
-    mock_resp.headers = {'Content-Type': 'text/html'}
+    mock_resp.text = "<html>Mock Response</html>"
+    mock_resp.content = b"Mock Content"
+    mock_resp.json.return_value = {"status": "success"}
+    mock_resp.headers = {"Content-Type": "text/html"}
     return mock_resp
 
 
@@ -26,8 +26,8 @@ def mock_response_error():
     """Mock HTTP错误响应"""
     mock_resp = MagicMock()
     mock_resp.status_code = 404
-    mock_resp.text = 'Not Found'
-    mock_resp.raise_for_status.side_effect = Exception('404 Not Found')
+    mock_resp.text = "Not Found"
+    mock_resp.raise_for_status.side_effect = Exception("404 Not Found")
     return mock_resp
 
 
@@ -36,8 +36,8 @@ def mock_response_timeout():
     """Mock HTTP超时响应"""
     mock_resp = MagicMock()
     mock_resp.status_code = 408
-    mock_resp.text = 'Request Timeout'
-    mock_resp.raise_for_status.side_effect = Exception('Request Timeout')
+    mock_resp.text = "Request Timeout"
+    mock_resp.raise_for_status.side_effect = Exception("Request Timeout")
     return mock_resp
 
 
@@ -45,8 +45,8 @@ def mock_response_timeout():
 def mock_requests(mocker):
     """Mock requests库"""
     mock_requests = mocker.MagicMock()
-    mock_requests.get.return_value = MagicMock(status_code=200, text='Success')
-    mock_requests.post.return_value = MagicMock(status_code=200, text='Success')
+    mock_requests.get.return_value = MagicMock(status_code=200, text="Success")
+    mock_requests.post.return_value = MagicMock(status_code=200, text="Success")
     mock_requests.Session.return_value = MagicMock()
     return mock_requests
 
@@ -56,15 +56,10 @@ def mock_subprocess(mocker):
     """Mock subprocess模块"""
     mock_subprocess = mocker.MagicMock()
     mock_subprocess.run.return_value = MagicMock(
-        returncode=0,
-        stdout='Success',
-        stderr='',
-        args=['mock_command']
+        returncode=0, stdout="Success", stderr="", args=["mock_command"]
     )
     mock_subprocess.Popen.return_value = MagicMock(
-        poll=lambda: 0,
-        wait=lambda: None,
-        communicate=lambda: ('Success', '')
+        poll=lambda: 0, wait=lambda: None, communicate=lambda: ("Success", "")
     )
     return mock_subprocess
 
@@ -76,7 +71,7 @@ def mock_os(mocker):
     mock_os.path.exists.return_value = True
     mock_os.path.isfile.return_value = True
     mock_os.path.isdir.return_value = True
-    mock_os.path.join.side_effect = lambda *args: '/'.join(args)
+    mock_os.path.join.side_effect = lambda *args: "/".join(args)
     mock_os.makedirs.return_value = None
     mock_os.remove.return_value = None
     mock_os.rmdir.return_value = None
@@ -93,7 +88,7 @@ def mock_pathlib(mocker):
     mock_path.Path.return_value.is_dir.return_value = True
     mock_path.Path.return_value.mkdir.return_value = None
     mock_path.Path.return_value.write_text.return_value = None
-    mock_path.Path.return_value.read_text.return_value = 'Mock Content'
+    mock_path.Path.return_value.read_text.return_value = "Mock Content"
     return mock_path
 
 
@@ -113,12 +108,12 @@ def mock_logger(mocker):
 def mock_config():
     """Mock配置对象"""
     mock_config = MagicMock()
-    mock_config.get.return_value = 'mock_value'
+    mock_config.get.return_value = "mock_value"
     mock_config.get.side_effect = lambda key, default=None: {
-        'output_dir': 'output',
-        'browser': 'edge',
-        'timeout': 30,
-        'retry': 3
+        "output_dir": "output",
+        "browser": "edge",
+        "timeout": 30,
+        "retry": 3,
     }.get(key, default)
     return mock_config
 
@@ -128,14 +123,12 @@ def mock_file_reader():
     """Mock文件读取器"""
     mock_reader = MagicMock()
     mock_reader.read_csv.return_value = [
-        {'url': 'https://live.dingtalk.com/123456789', 'name': 'Test'}
+        {"url": "https://live.dingtalk.com/123456789", "name": "Test"}
     ]
     mock_reader.read_excel.return_value = [
-        {'url': 'https://live.dingtalk.com/987654321', 'name': 'Test'}
+        {"url": "https://live.dingtalk.com/987654321", "name": "Test"}
     ]
-    mock_reader.read_txt.return_value = [
-        'https://live.dingtalk.com/111222333'
-    ]
+    mock_reader.read_txt.return_value = ["https://live.dingtalk.com/111222333"]
     return mock_reader
 
 
@@ -145,11 +138,11 @@ def mock_downloader():
     mock_downloader = MagicMock()
     mock_downloader.download.return_value = True
     mock_downloader.download_batch.return_value = [
-        {'url': 'https://live.dingtalk.com/123456789', 'success': True}
+        {"url": "https://live.dingtalk.com/123456789", "success": True}
     ]
     mock_downloader.parse_link.return_value = {
-        'url': 'https://live.dingtalk.com/123456789',
-        'name': 'Test Live'
+        "url": "https://live.dingtalk.com/123456789",
+        "name": "Test Live",
     }
     return mock_downloader
 
@@ -159,14 +152,12 @@ def mock_m3u8_parser():
     """Mock M3U8解析器"""
     mock_parser = MagicMock()
     mock_parser.parse.return_value = {
-        'segments': ['segment1.ts', 'segment2.ts', 'segment3.ts'],
-        'base_url': 'https://example.com/',
-        'duration': 30
+        "segments": ["segment1.ts", "segment2.ts", "segment3.ts"],
+        "base_url": "https://example.com/",
+        "duration": 30,
     }
-    mock_parser.extract_base_url.return_value = 'https://example.com/'
-    mock_parser.extract_m3u8_links.return_value = [
-        'https://example.com/playlist.m3u8'
-    ]
+    mock_parser.extract_base_url.return_value = "https://example.com/"
+    mock_parser.extract_m3u8_links.return_value = ["https://example.com/playlist.m3u8"]
     return mock_parser
 
 
@@ -186,7 +177,7 @@ def mock_n_m3u8dl_re():
     mock_tool = MagicMock()
     mock_tool.download.return_value = True
     mock_tool.check_available.return_value = True
-    mock_tool.get_version.return_value = '1.0.0'
+    mock_tool.get_version.return_value = "1.0.0"
     return mock_tool
 
 
@@ -194,7 +185,7 @@ def mock_n_m3u8dl_re():
 def mock_settings():
     """Mock设置对象"""
     mock_settings = MagicMock()
-    mock_settings.get.return_value = 'mock_value'
+    mock_settings.get.return_value = "mock_value"
     mock_settings.load.return_value = None
     mock_settings.save.return_value = None
     return mock_settings
@@ -214,8 +205,8 @@ def mock_validator():
 def mock_path_helper():
     """Mock路径助手"""
     mock_helper = MagicMock()
-    mock_helper.get_output_dir.return_value = 'output'
-    mock_helper.get_filename.return_value = 'test.mp4'
+    mock_helper.get_output_dir.return_value = "output"
+    mock_helper.get_filename.return_value = "test.mp4"
     mock_helper.ensure_dir.return_value = None
     return mock_helper
 
@@ -224,8 +215,8 @@ def mock_path_helper():
 def mock_exception():
     """Mock异常对象"""
     mock_exc = MagicMock()
-    mock_exc.__str__ = lambda self: 'Mock Exception'
-    mock_exc.__repr__ = lambda self: 'Mock Exception()'
+    mock_exc.__str__ = lambda self: "Mock Exception"
+    mock_exc.__repr__ = lambda self: "Mock Exception()"
     return mock_exc
 
 
@@ -233,8 +224,8 @@ def mock_exception():
 def mock_network_error():
     """Mock网络错误"""
     mock_error = MagicMock()
-    mock_error.__str__ = lambda self: 'Network Error'
-    mock_error.__repr__ = lambda self: 'Network Error()'
+    mock_error.__str__ = lambda self: "Network Error"
+    mock_error.__repr__ = lambda self: "Network Error()"
     return mock_error
 
 
@@ -242,8 +233,8 @@ def mock_network_error():
 def mock_file_error():
     """Mock文件错误"""
     mock_error = MagicMock()
-    mock_error.__str__ = lambda self: 'File Error'
-    mock_error.__repr__ = lambda self: 'File Error()'
+    mock_error.__str__ = lambda self: "File Error"
+    mock_error.__repr__ = lambda self: "File Error()"
     return mock_error
 
 
@@ -251,18 +242,21 @@ def mock_file_error():
 def mock_timeout_error():
     """Mock超时错误"""
     mock_error = MagicMock()
-    mock_error.__str__ = lambda self: 'Timeout Error'
-    mock_error.__repr__ = lambda self: 'Timeout Error()'
+    mock_error.__str__ = lambda self: "Timeout Error"
+    mock_error.__repr__ = lambda self: "Timeout Error()"
     return mock_error
 
 
 @pytest.fixture
 def mock_retry_decorator():
     """Mock重试装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -319,7 +313,7 @@ def mock_queue():
     """Mock队列"""
     mock_q = MagicMock()
     mock_q.put.return_value = None
-    mock_q.get.return_value = 'mock_item'
+    mock_q.get.return_value = "mock_item"
     mock_q.empty.return_value = False
     mock_q.qsize.return_value = 10
     return mock_q

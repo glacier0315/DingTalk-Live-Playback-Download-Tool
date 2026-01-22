@@ -36,7 +36,7 @@ def test_yaml_config_init_custom_path():
     """测试YamlConfig初始化 - 使用自定义路径"""
     custom_path = "/custom/config.yaml"
     config = YamlConfig(config_file=custom_path)
-    
+
     assert config.config == {}
     assert config.config_file == custom_path
     assert config._loaded is False
@@ -46,16 +46,13 @@ def test_yaml_config_load_existing_file():
     """测试加载配置 - 文件存在"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {
-            "app": {"name": "test"},
-            "download": {"default_dir": "test_dir"}
-        }
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        test_config = {"app": {"name": "test"}, "download": {"default_dir": "test_dir"}}
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
         config.load()
-        
+
         assert config.config["app"]["name"] == "test"
         assert config.config["download"]["default_dir"] == "test_dir"
         assert config._loaded is True
@@ -69,7 +66,7 @@ def test_yaml_config_load_nonexistent_file():
     non_existent_path = "/non/existent/config.yaml"
     config = YamlConfig(config_file=non_existent_path)
     config.load()
-    
+
     assert config._loaded is True
     assert "app" in config.config
     assert "download" in config.config
@@ -79,12 +76,12 @@ def test_yaml_config_load_invalid_yaml():
     """测试加载配置 - 无效的YAML"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write("invalid yaml content: [")
-        
+
         config = YamlConfig(config_file=path)
         config.load()
-        
+
         assert config._loaded is True
         assert "app" in config.config
     finally:
@@ -94,10 +91,10 @@ def test_yaml_config_load_invalid_yaml():
 
 def test_yaml_config_load_io_error():
     """测试加载配置 - IO错误"""
-    with patch('builtins.open', side_effect=IOError("Permission denied")):
+    with patch("builtins.open", side_effect=IOError("Permission denied")):
         config = YamlConfig(config_file="/test/config.yaml")
         config.load()
-        
+
         assert config._loaded is True
         assert "app" in config.config
 
@@ -108,13 +105,13 @@ def test_yaml_config_save():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         config = YamlConfig(config_file=path)
         config.set("app.name", "test_app")
-        
-        with open(path, 'r', encoding='utf-8') as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             saved_config = yaml.safe_load(f)
-        
+
         assert saved_config["app"]["name"] == "test_app"
     finally:
         if os.path.exists(path):
@@ -126,7 +123,7 @@ def test_yaml_config_save():
 
 def test_yaml_config_save_io_error():
     """测试保存配置 - IO错误"""
-    with patch('builtins.open', side_effect=IOError("Permission denied")):
+    with patch("builtins.open", side_effect=IOError("Permission denied")):
         config = YamlConfig(config_file="/test/config.yaml")
         config.set("app.name", "test_app")
 
@@ -136,11 +133,11 @@ def test_yaml_config_get_existing_key():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "test_app"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
-        
+
         assert config.get("app.name") == "test_app"
     finally:
         if os.path.exists(path):
@@ -152,11 +149,11 @@ def test_yaml_config_get_nonexistent_key():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "test_app"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
-        
+
         assert config.get("nonexistent") is None
         assert config.get("nonexistent", "default") == "default"
     finally:
@@ -170,13 +167,13 @@ def test_yaml_config_get_nested():
     try:
         test_config = {
             "app": {"name": "test_app"},
-            "download": {"default_dir": "test_dir", "max_retry_count": 10}
+            "download": {"default_dir": "test_dir", "max_retry_count": 10},
         }
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
-        
+
         assert config.get("download.default_dir") == "test_dir"
         assert config.get("download.max_retry_count") == 10
     finally:
@@ -190,15 +187,15 @@ def test_yaml_config_set():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         config = YamlConfig(config_file=path)
         config.set("app.name", "test_app")
-        
+
         assert config.config["app"]["name"] == "test_app"
-        
-        with open(path, 'r', encoding='utf-8') as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             saved_config = yaml.safe_load(f)
-        
+
         assert saved_config["app"]["name"] == "test_app"
     finally:
         if os.path.exists(path):
@@ -214,11 +211,11 @@ def test_yaml_config_set_nested():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         config = YamlConfig(config_file=path)
         config.set("download.default_dir", "test_dir")
         config.set("download.max_retry_count", 10)
-        
+
         assert config.config["download"]["default_dir"] == "test_dir"
         assert config.config["download"]["max_retry_count"] == 10
     finally:
@@ -234,17 +231,17 @@ def test_yaml_config_set_overwrite():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "old_app"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
         config.set("app.name", "new_app")
-        
+
         assert config.config["app"]["name"] == "new_app"
-        
-        with open(path, 'r', encoding='utf-8') as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             saved_config = yaml.safe_load(f)
-        
+
         assert saved_config["app"]["name"] == "new_app"
     finally:
         if os.path.exists(path):
@@ -255,15 +252,12 @@ def test_yaml_config_get_nested_method():
     """测试get_nested方法"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {
-            "app": {"name": "test_app"},
-            "download": {"default_dir": "test_dir"}
-        }
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        test_config = {"app": {"name": "test_app"}, "download": {"default_dir": "test_dir"}}
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
-        
+
         assert config.get_nested(["app", "name"]) == "test_app"
         assert config.get_nested(["download", "default_dir"]) == "test_dir"
         assert config.get_nested(["nonexistent"], "default") == "default"
@@ -278,11 +272,11 @@ def test_yaml_config_set_nested_method():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         config = YamlConfig(config_file=path)
         config.set_nested(["app", "name"], "test_app")
         config.set_nested(["download", "default_dir"], "test_dir")
-        
+
         assert config.config["app"]["name"] == "test_app"
         assert config.config["download"]["default_dir"] == "test_dir"
     finally:
@@ -298,20 +292,20 @@ def test_yaml_config_reload():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "test_app"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
         config.load()
-        
+
         assert config.config["app"]["name"] == "test_app"
-        
+
         updated_config = {"app": {"name": "updated_app"}}
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             yaml.dump(updated_config, f)
-        
+
         config.reload()
-        
+
         assert config.config["app"]["name"] == "updated_app"
     finally:
         if os.path.exists(path):
@@ -326,14 +320,14 @@ def test_yaml_config_validate():
             "app": {"name": "test"},
             "download": {"default_dir": "test_dir"},
             "browser": {"default_type": "edge"},
-            "logging": {"level": "INFO"}
+            "logging": {"level": "INFO"},
         }
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
         config.load()
-        
+
         assert config.validate() is True
     finally:
         if os.path.exists(path):
@@ -348,14 +342,14 @@ def test_yaml_config_validate_invalid():
             "app": {"name": "test"},
             "download": {"default_dir": "test_dir"},
             "browser": {"default_type": "edge"},
-            "logging": {"level": "INFO"}
+            "logging": {"level": "INFO"},
         }
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
         config.load()
-        
+
         assert config.validate() is True
     finally:
         if os.path.exists(path):
@@ -366,7 +360,7 @@ def test_yaml_config_default_config():
     """测试默认配置"""
     config = YamlConfig()
     config.load()
-    
+
     assert "app" in config.default_config
     assert "download" in config.default_config
     assert "browser" in config.default_config
@@ -379,20 +373,17 @@ def test_yaml_config_default_config():
 def test_yaml_config_merge_configs():
     """测试配置合并"""
     config = YamlConfig()
-    
-    user_config = {
-        "app": {"name": "user_app"},
-        "download": {"max_retry_count": 10}
-    }
-    
+
+    user_config = {"app": {"name": "user_app"}, "download": {"max_retry_count": 10}}
+
     default_config = {
         "app": {"name": "default_app", "version": "1.0"},
         "download": {"default_dir": "Downloads", "max_retry_count": 5},
-        "browser": {"default_type": "edge"}
+        "browser": {"default_type": "edge"},
     }
-    
+
     merged = config._merge_configs(user_config, default_config)
-    
+
     assert merged["app"]["name"] == "user_app"
     assert merged["app"]["version"] == "1.0"
     assert merged["download"]["default_dir"] == "Downloads"
@@ -405,15 +396,15 @@ def test_yaml_config_lazy_loading():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "test_app"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         config = YamlConfig(config_file=path)
-        
+
         assert config._loaded is False
-        
+
         value = config.get("app.name")
-        
+
         assert config._loaded is True
         assert value == "test_app"
     finally:

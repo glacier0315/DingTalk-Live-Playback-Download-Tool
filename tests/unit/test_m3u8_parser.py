@@ -19,7 +19,11 @@ import tempfile
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from dingtalk_downloader.core.m3u8_parser import M3u8Parser
-from dingtalk_downloader.config.constants import BROWSER_TYPE_EDGE, BROWSER_TYPE_CHROME, BROWSER_TYPE_FIREFOX
+from dingtalk_downloader.config.constants import (
+    BROWSER_TYPE_EDGE,
+    BROWSER_TYPE_CHROME,
+    BROWSER_TYPE_FIREFOX,
+)
 
 
 @pytest.fixture
@@ -48,7 +52,7 @@ def test_m3u8_parser_fetch_m3u8_links_edge(mock_browser_with_logs):
     mock_browser_with_logs.get_log.return_value = [
         {"message": '{"url":"https://test.com/live_hp/123/test.m3u8?liveUuid=abc"}'}
     ]
-    
+
     parser = M3u8Parser(mock_browser_with_logs, BROWSER_TYPE_EDGE)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=abc")
 
@@ -61,7 +65,7 @@ def test_m3u8_parser_fetch_m3u8_links_chrome(mock_browser_with_logs):
     mock_browser_with_logs.get_log.return_value = [
         {"message": '{"url":"https://test.com/live_hp/456/test.m3u8?liveUuid=def"}'}
     ]
-    
+
     parser = M3u8Parser(mock_browser_with_logs, BROWSER_TYPE_CHROME)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=def")
 
@@ -74,7 +78,7 @@ def test_m3u8_parser_fetch_m3u8_links_firefox(mock_browser_with_logs):
     mock_browser_with_logs.get_log.return_value = [
         "https://test.com/live_hp/789/test.m3u8?liveUuid=ghi"
     ]
-    
+
     parser = M3u8Parser(mock_browser_with_logs, BROWSER_TYPE_FIREFOX)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=ghi")
 
@@ -92,10 +96,8 @@ def test_m3u8_parser_fetch_m3u8_links_no_live_uuid(mock_browser):
 
 def test_m3u8_parser_fetch_m3u8_links_not_found(mock_browser):
     """测试未找到 m3u8 链接的情况"""
-    mock_browser.get_log.return_value = [
-        {"message": '{"url":"https://test.com/other/file.txt"}'}
-    ]
-    
+    mock_browser.get_log.return_value = [{"message": '{"url":"https://test.com/other/file.txt"}'}]
+
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=abc")
 
@@ -107,9 +109,9 @@ def test_m3u8_parser_fetch_m3u8_links_retry(mock_browser):
     mock_browser.get_log.side_effect = [
         [{"message": '{"url":"https://test.com/other/file.txt"}'}],
         [{"message": '{"url":"https://test.com/other/file.txt"}'}],
-        [{"message": '{"url":"https://test.com/live_hp/123/test.m3u8?liveUuid=abc"}'}]
+        [{"message": '{"url":"https://test.com/live_hp/123/test.m3u8?liveUuid=abc"}'}],
     ]
-    
+
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE, max_retries=3)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=abc")
 
@@ -139,7 +141,7 @@ def test_m3u8_parser_extract_prefix_no_match():
 def test_m3u8_parser_download_m3u8_file(mock_browser, tmp_path):
     """测试下载 m3u8 文件"""
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
-    
+
     temp_file = tmp_path / "test.m3u8"
     mock_browser.driver.execute_script.return_value = "#EXTM3U\n#EXT-X-VERSION:3\n"
 
@@ -153,7 +155,7 @@ def test_m3u8_parser_download_m3u8_file(mock_browser, tmp_path):
 def test_m3u8_parser_download_m3u8_file_with_headers(mock_browser, tmp_path):
     """测试下载 m3u8 文件 - 带请求头（headers 参数保留但不使用）"""
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
-    
+
     temp_file = tmp_path / "test.m3u8"
     mock_browser.driver.execute_script.return_value = "#EXTM3U\n"
     headers = {"User-Agent": "test", "Referer": "https://test.com"}
@@ -165,7 +167,10 @@ def test_m3u8_parser_download_m3u8_file_with_headers(mock_browser, tmp_path):
     mock_browser.driver.execute_script.assert_called_once()
     # 验证调用时不包含 headers 参数
     call_args = mock_browser.driver.execute_script.call_args
-    assert call_args[0][0] == "return fetch(arguments[0], { method: 'GET' }).then(response => response.text())"
+    assert (
+        call_args[0][0]
+        == "return fetch(arguments[0], { method: 'GET' }).then(response => response.text())"
+    )
     assert call_args[0][1] == "https://test.com/test.m3u8"
     assert len(call_args[0]) == 2  # 只有 script 和 url 两个参数
 
@@ -173,7 +178,7 @@ def test_m3u8_parser_download_m3u8_file_with_headers(mock_browser, tmp_path):
 def test_m3u8_parser_refresh_page(mock_browser):
     """测试刷新页面"""
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
-    
+
     parser._refresh_page()
 
     mock_browser.driver.execute_script.assert_called_once_with("location.reload();")
@@ -182,7 +187,7 @@ def test_m3u8_parser_refresh_page(mock_browser):
 def test_m3u8_parser_fetch_m3u8_links_exception_handling(mock_browser):
     """测试异常处理"""
     mock_browser.get_log.side_effect = Exception("Network error")
-    
+
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=abc")
 
@@ -191,10 +196,8 @@ def test_m3u8_parser_fetch_m3u8_links_exception_handling(mock_browser):
 
 def test_m3u8_parser_fetch_m3u8_links_log_exception_handling(mock_browser):
     """测试日志处理异常处理"""
-    mock_browser.get_log.return_value = [
-        {"message": "invalid json"}
-    ]
-    
+    mock_browser.get_log.return_value = [{"message": "invalid json"}]
+
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=abc")
 
@@ -204,14 +207,14 @@ def test_m3u8_parser_fetch_m3u8_links_log_exception_handling(mock_browser):
 def test_m3u8_parser_download_m3u8_file_exception_handling(mock_browser, tmp_path):
     """测试下载 m3u8 文件异常处理"""
     from dingtalk_downloader.core.m3u8_parser import M3u8ParseError
-    
+
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
     temp_file = tmp_path / "test.m3u8"
     mock_browser.driver.execute_script.side_effect = Exception("Download error")
-    
+
     with pytest.raises(M3u8ParseError) as exc_info:
         parser.download_m3u8_file("https://test.com/test.m3u8", str(temp_file), {})
-    
+
     assert "下载m3u8文件失败" in str(exc_info.value)
     assert "Download error" in str(exc_info.value)
 
@@ -228,9 +231,7 @@ def test_m3u8_parser_fetch_m3u8_links_empty_logs(mock_browser):
 
 def test_m3u8_parser_fetch_m3u8_links_max_retries_exceeded(mock_browser):
     """测试超过最大重试次数的情况"""
-    mock_browser.get_log.return_value = [
-        {"message": '{"url":"https://test.com/other/file.txt"}'}
-    ]
+    mock_browser.get_log.return_value = [{"message": '{"url":"https://test.com/other/file.txt"}'}]
 
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE, max_retries=2)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=abc")
@@ -243,7 +244,7 @@ def test_m3u8_parser_fetch_m3u8_links_multiple_m3u8_links(mock_browser_with_logs
     """测试多个m3u8链接的情况"""
     mock_browser_with_logs.get_log.return_value = [
         {"message": '{"url":"https://test.com/live_hp/123/test.m3u8?liveUuid=abc"}'},
-        {"message": '{"url":"https://test.com/live_hp/456/test.m3u8?liveUuid=def"}'}
+        {"message": '{"url":"https://test.com/live_hp/456/test.m3u8?liveUuid=def"}'},
     ]
 
     parser = M3u8Parser(mock_browser_with_logs, BROWSER_TYPE_EDGE)
@@ -286,26 +287,24 @@ def test_m3u8_parser_download_m3u8_file_write_error(mock_browser, tmp_path):
     """测试下载 m3u8 文件写入错误"""
     from dingtalk_downloader.core.m3u8_parser import M3u8ParseError
     from unittest.mock import patch, MagicMock
-    
+
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
-    
+
     temp_file = tmp_path / "test.m3u8"
     mock_browser.driver.execute_script.return_value = "#EXTM3U\n"
-    
+
     # 模拟文件写入失败
-    with patch('builtins.open', MagicMock(side_effect=IOError("Write error"))):
+    with patch("builtins.open", MagicMock(side_effect=IOError("Write error"))):
         with pytest.raises(M3u8ParseError) as exc_info:
             parser.download_m3u8_file("https://test.com/test.m3u8", str(temp_file), {})
-        
+
         assert "下载m3u8文件失败" in str(exc_info.value)
         assert "Write error" in str(exc_info.value)
 
 
 def test_m3u8_parser_fetch_m3u8_links_json_parse_error(mock_browser):
     """测试JSON解析错误"""
-    mock_browser.get_log.return_value = [
-        {"message": "invalid json without quotes"}
-    ]
+    mock_browser.get_log.return_value = [{"message": "invalid json without quotes"}]
 
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=abc")
@@ -315,9 +314,7 @@ def test_m3u8_parser_fetch_m3u8_links_json_parse_error(mock_browser):
 
 def test_m3u8_parser_fetch_m3u8_links_empty_json_url(mock_browser):
     """测试JSON中URL为空的情况"""
-    mock_browser.get_log.return_value = [
-        {"message": '{"url":""}'}
-    ]
+    mock_browser.get_log.return_value = [{"message": '{"url":""}'}]
 
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
     links = parser.fetch_m3u8_links("https://n.dingtalk.com/test?liveUuid=abc")
@@ -330,7 +327,7 @@ def test_m3u8_parser_fetch_m3u8_links_mixed_content(mock_browser):
     mock_browser.get_log.return_value = [
         {"message": "some other content"},
         {"message": '{"url":"https://test.com/live_hp/123/test.m3u8?liveUuid=abc"}'},
-        {"message": "more content"}
+        {"message": "more content"},
     ]
 
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)

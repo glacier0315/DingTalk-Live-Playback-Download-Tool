@@ -212,7 +212,7 @@ class NM3u8DLRE:
         self,
         command: List[str],
         headers: Optional[Dict[str, str]],
-        cookies_data: Optional[Dict[str, str]]
+        cookies_data: Optional[Dict[str, str]],
     ) -> None:
         """
         添加请求头到命令。

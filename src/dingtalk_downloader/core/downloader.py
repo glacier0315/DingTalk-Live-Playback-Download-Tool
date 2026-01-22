@@ -95,9 +95,7 @@ class Downloader:
 
         logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
 
-        m3u8_file = self.m3u8_parser.download_m3u8_file(
-            m3u8_links[0], TEMP_M3U8_FILE, m3u8_headers
-        )
+        m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_links[0], TEMP_M3U8_FILE, m3u8_headers)
         logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
         prefix = self.m3u8_parser.extract_prefix(m3u8_links[0])

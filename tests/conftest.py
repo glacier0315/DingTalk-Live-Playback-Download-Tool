@@ -112,15 +112,17 @@ def mock_settings(mocker) -> MagicMock:
     settings.set = mocker.MagicMock()
     settings.save = mocker.MagicMock()
     settings.load = mocker.MagicMock()
-    settings.__getitem__ = mocker.MagicMock(side_effect=lambda key: {
-        "output_dir": "output",
-        "browser": "edge",
-        "timeout": 30,
-        "retry": 3,
-        "max_workers": 4,
-        "download_dir": "downloads",
-        "log_level": "INFO",
-    }.get(key))
+    settings.__getitem__ = mocker.MagicMock(
+        side_effect=lambda key: {
+            "output_dir": "output",
+            "browser": "edge",
+            "timeout": 30,
+            "retry": 3,
+            "max_workers": 4,
+            "download_dir": "downloads",
+            "log_level": "INFO",
+        }.get(key)
+    )
     settings.__setitem__ = mocker.MagicMock()
     return settings
 
@@ -129,15 +131,13 @@ def mock_settings(mocker) -> MagicMock:
 def mock_file_reader(mocker) -> MagicMock:
     """Mock文件读取器"""
     reader = mocker.MagicMock()
-    reader.read_csv = mocker.MagicMock(return_value=[
-        {"url": "https://live.dingtalk.com/123456789", "name": "Test"}
-    ])
-    reader.read_excel = mocker.MagicMock(return_value=[
-        {"url": "https://live.dingtalk.com/987654321", "name": "Test"}
-    ])
-    reader.read_txt = mocker.MagicMock(return_value=[
-        "https://live.dingtalk.com/111222333"
-    ])
+    reader.read_csv = mocker.MagicMock(
+        return_value=[{"url": "https://live.dingtalk.com/123456789", "name": "Test"}]
+    )
+    reader.read_excel = mocker.MagicMock(
+        return_value=[{"url": "https://live.dingtalk.com/987654321", "name": "Test"}]
+    )
+    reader.read_txt = mocker.MagicMock(return_value=["https://live.dingtalk.com/111222333"])
     return reader
 
 
@@ -267,16 +267,10 @@ def mock_subprocess(mocker) -> MagicMock:
     """Mock subprocess模块"""
     mock_subprocess = mocker.MagicMock()
     mock_subprocess.run.return_value = MagicMock(
-        returncode=0,
-        stdout="Success",
-        stderr="",
-        args=["mock_command"]
+        returncode=0, stdout="Success", stderr="", args=["mock_command"]
     )
     mock_subprocess.Popen.return_value = MagicMock(
-        poll=lambda: 0,
-        wait=lambda: None,
-        communicate=lambda: ("Success", ""),
-        returncode=0
+        poll=lambda: 0, wait=lambda: None, communicate=lambda: ("Success", ""), returncode=0
     )
     mock_subprocess.PIPE = mocker.MagicMock()
     mock_subprocess.DEVNULL = mocker.MagicMock()
@@ -383,42 +377,18 @@ def mock_process(mocker) -> MagicMock:
 
 def pytest_configure(config):
     """pytest配置钩子"""
-    config.addinivalue_line(
-        "markers", "unit: 单元测试"
-    )
-    config.addinivalue_line(
-        "markers", "integration: 集成测试"
-    )
-    config.addinivalue_line(
-        "markers", "slow: 慢速测试"
-    )
-    config.addinivalue_line(
-        "markers", "browser: 浏览器相关测试"
-    )
-    config.addinivalue_line(
-        "markers", "network: 网络相关测试"
-    )
-    config.addinivalue_line(
-        "markers", "file: 文件相关测试"
-    )
-    config.addinivalue_line(
-        "markers", "cookie: Cookie相关测试"
-    )
-    config.addinivalue_line(
-        "markers", "m3u8: M3U8相关测试"
-    )
-    config.addinivalue_line(
-        "markers", "downloader: 下载器相关测试"
-    )
-    config.addinivalue_line(
-        "markers", "binary: 二进制工具相关测试"
-    )
-    config.addinivalue_line(
-        "markers", "settings: 设置相关测试"
-    )
-    config.addinivalue_line(
-        "markers", "main: 主程序相关测试"
-    )
+    config.addinivalue_line("markers", "unit: 单元测试")
+    config.addinivalue_line("markers", "integration: 集成测试")
+    config.addinivalue_line("markers", "slow: 慢速测试")
+    config.addinivalue_line("markers", "browser: 浏览器相关测试")
+    config.addinivalue_line("markers", "network: 网络相关测试")
+    config.addinivalue_line("markers", "file: 文件相关测试")
+    config.addinivalue_line("markers", "cookie: Cookie相关测试")
+    config.addinivalue_line("markers", "m3u8: M3U8相关测试")
+    config.addinivalue_line("markers", "downloader: 下载器相关测试")
+    config.addinivalue_line("markers", "binary: 二进制工具相关测试")
+    config.addinivalue_line("markers", "settings: 设置相关测试")
+    config.addinivalue_line("markers", "main: 主程序相关测试")
 
 
 def pytest_collection_modifyitems(config, items):

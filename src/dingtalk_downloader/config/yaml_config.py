@@ -95,7 +95,7 @@ class YamlConfig:
                 logger.info(f"创建配置文件目录: {config_dir}")
                 os.makedirs(config_dir, exist_ok=True)
                 logger.info(f"配置文件目录创建成功")
-            
+
             with open(self.config_file, "w", encoding="utf-8") as f:
                 yaml.dump(
                     self.config, f, allow_unicode=True, default_flow_style=False, sort_keys=False

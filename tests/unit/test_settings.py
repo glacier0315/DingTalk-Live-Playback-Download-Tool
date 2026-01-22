@@ -26,7 +26,7 @@ from dingtalk_downloader.config.settings import Settings
 def test_settings_init_default_path():
     """测试Settings初始化 - 使用默认路径"""
     settings = Settings()
-    
+
     assert "config" in settings.yaml_config.config_file
     assert "app.yaml" in settings.yaml_config.config_file
     # Settings在初始化时会调用load()，所以_loaded应该为True
@@ -37,7 +37,7 @@ def test_settings_init_custom_path():
     """测试Settings初始化 - 使用自定义路径"""
     custom_path = "/custom/config.yaml"
     settings = Settings(config_file=custom_path)
-    
+
     assert settings.yaml_config.config_file == custom_path
 
 
@@ -46,11 +46,11 @@ def test_settings_load_existing_file():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "test_app"}, "download": {"default_dir": "test_dir"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         settings = Settings(config_file=path)
-        
+
         assert settings.yaml_config.config["app"]["name"] == "test_app"
         assert settings.yaml_config.config["download"]["default_dir"] == "test_dir"
     finally:
@@ -62,7 +62,7 @@ def test_settings_load_nonexistent_file():
     """测试加载配置 - 文件不存在"""
     non_existent_path = "/non/existent/config.yaml"
     settings = Settings(config_file=non_existent_path)
-    
+
     assert "app" in settings.yaml_config.config
     assert "download" in settings.yaml_config.config
 
@@ -71,11 +71,11 @@ def test_settings_load_invalid_yaml():
     """测试加载配置 - 无效的YAML"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write("invalid yaml content: [")
-        
+
         settings = Settings(config_file=path)
-        
+
         assert "app" in settings.yaml_config.config
         assert "download" in settings.yaml_config.config
     finally:
@@ -85,9 +85,9 @@ def test_settings_load_invalid_yaml():
 
 def test_settings_load_io_error():
     """测试加载配置 - IO错误"""
-    with patch('builtins.open', side_effect=IOError("Permission denied")):
+    with patch("builtins.open", side_effect=IOError("Permission denied")):
         settings = Settings(config_file="/test/config.yaml")
-        
+
         assert "app" in settings.yaml_config.config
         assert "download" in settings.yaml_config.config
 
@@ -98,13 +98,13 @@ def test_settings_save():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         settings = Settings(config_file=path)
         settings.set("app.name", "test_app")
-        
-        with open(path, 'r', encoding='utf-8') as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             saved_config = yaml.safe_load(f)
-        
+
         assert saved_config["app"]["name"] == "test_app"
     finally:
         if os.path.exists(path):
@@ -116,7 +116,7 @@ def test_settings_save():
 
 def test_settings_save_io_error():
     """测试保存配置 - IO错误"""
-    with patch('builtins.open', side_effect=IOError("Permission denied")):
+    with patch("builtins.open", side_effect=IOError("Permission denied")):
         settings = Settings(config_file="/test/config.yaml")
         settings.set("app.name", "test_app")
 
@@ -126,11 +126,11 @@ def test_settings_get_existing_key():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "test_app"}, "download": {"default_dir": "test_dir"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         settings = Settings(config_file=path)
-        
+
         assert settings.get("app.name") == "test_app"
         assert settings.get("download.default_dir") == "test_dir"
     finally:
@@ -143,11 +143,11 @@ def test_settings_get_nonexistent_key():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "test_app"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         settings = Settings(config_file=path)
-        
+
         assert settings.get("nonexistent") is None
         assert settings.get("nonexistent", "default") == "default"
     finally:
@@ -161,9 +161,9 @@ def test_settings_get_empty_config():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         settings = Settings(config_file=path)
-        
+
         assert settings.get("any_key") is None
         assert settings.get("any_key", "default") == "default"
     finally:
@@ -180,15 +180,15 @@ def test_settings_set():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         settings = Settings(config_file=path)
         settings.set("app.name", "test_app")
-        
+
         assert settings.yaml_config.config["app"]["name"] == "test_app"
-        
-        with open(path, 'r', encoding='utf-8') as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             saved_config = yaml.safe_load(f)
-        
+
         assert saved_config["app"]["name"] == "test_app"
     finally:
         if os.path.exists(path):
@@ -204,19 +204,19 @@ def test_settings_set_multiple():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         settings = Settings(config_file=path)
         settings.set("app.name", "test_app")
         settings.set("download.default_dir", "test_dir")
         settings.set("download.max_retry_count", 10)
-        
+
         assert settings.yaml_config.config["app"]["name"] == "test_app"
         assert settings.yaml_config.config["download"]["default_dir"] == "test_dir"
         assert settings.yaml_config.config["download"]["max_retry_count"] == 10
-        
-        with open(path, 'r', encoding='utf-8') as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             saved_config = yaml.safe_load(f)
-        
+
         assert saved_config["app"]["name"] == "test_app"
         assert saved_config["download"]["default_dir"] == "test_dir"
         assert saved_config["download"]["max_retry_count"] == 10
@@ -233,17 +233,17 @@ def test_settings_set_overwrite():
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "old_app"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
-        
+
         settings = Settings(config_file=path)
         settings.set("app.name", "new_app")
-        
+
         assert settings.yaml_config.config["app"]["name"] == "new_app"
-        
-        with open(path, 'r', encoding='utf-8') as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             saved_config = yaml.safe_load(f)
-        
+
         assert saved_config["app"]["name"] == "new_app"
     finally:
         if os.path.exists(path):
@@ -252,10 +252,10 @@ def test_settings_set_overwrite():
 
 def test_settings_set_save_error():
     """测试设置配置项 - 保存失败"""
-    with patch('builtins.open', side_effect=IOError("Permission denied")):
+    with patch("builtins.open", side_effect=IOError("Permission denied")):
         settings = Settings(config_file="/test/config.yaml")
         settings.set("app.name", "test_app")
-        
+
         assert settings.yaml_config.config["app"]["name"] == "test_app"
 
 
@@ -265,13 +265,13 @@ def test_settings_load_save_cycle():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         settings1 = Settings(config_file=path)
         settings1.set("app.name", "test_app")
         settings1.set("download.default_dir", "test_dir")
-        
+
         settings2 = Settings(config_file=path)
-        
+
         assert settings2.get("app.name") == "test_app"
         assert settings2.get("download.default_dir") == "test_dir"
     finally:
@@ -288,13 +288,13 @@ def test_settings_complex_values():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         settings = Settings(config_file=path)
         settings.set("test.list_value", [1, 2, 3])
         settings.set("test.dict_value", {"nested": "value"})
         settings.set("test.number_value", 42)
         settings.set("test.bool_value", True)
-        
+
         assert settings.get("test.list_value") == [1, 2, 3]
         assert settings.get("test.dict_value") == {"nested": "value"}
         assert settings.get("test.number_value") == 42
@@ -310,26 +310,26 @@ def test_settings_complex_values():
 def test_settings_migrate_from_json():
     """测试从JSON迁移配置"""
     import json
-    
+
     fd, json_path = tempfile.mkstemp(suffix=".json")
     fd2, yaml_path = tempfile.mkstemp(suffix=".yaml")
     try:
         test_config = {"app": {"name": "test_app"}, "download": {"default_dir": "test_dir"}}
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(test_config, f)
-        
+
         os.close(fd2)
         os.unlink(yaml_path)
-        
+
         settings = Settings(config_file=yaml_path)
         settings.migrate_from_json(json_path)
-        
+
         assert settings.get("app.name") == "test_app"
         assert settings.get("download.default_dir") == "test_dir"
-        
-        with open(yaml_path, 'r', encoding='utf-8') as f:
+
+        with open(yaml_path, "r", encoding="utf-8") as f:
             saved_config = yaml.safe_load(f)
-        
+
         assert saved_config["app"]["name"] == "test_app"
         assert saved_config["download"]["default_dir"] == "test_dir"
     finally:
@@ -351,16 +351,16 @@ def test_settings_migrate_from_json_nonexistent():
 def test_settings_migrate_from_json_invalid():
     """测试从JSON迁移配置 - 无效JSON"""
     import json
-    
+
     fd, json_path = tempfile.mkstemp(suffix=".json")
     fd2, yaml_path = tempfile.mkstemp(suffix=".yaml")
     try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write("invalid json content")
-        
+
         os.close(fd2)
         os.unlink(yaml_path)
-        
+
         settings = Settings(config_file=yaml_path)
         settings.migrate_from_json(json_path)
     finally:
@@ -379,14 +379,14 @@ def test_settings_backward_compatibility():
     try:
         os.close(fd)
         os.unlink(path)
-        
+
         settings = Settings(config_file=path)
-        
+
         settings.load()
         settings.save()
         value = settings.get("nonexistent.key", "default")
         settings.set("app.name", "test")
-        
+
         assert value == "default"
         assert settings.get("app.name") == "test"
     finally:

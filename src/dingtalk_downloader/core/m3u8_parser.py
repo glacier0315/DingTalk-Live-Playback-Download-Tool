@@ -35,6 +35,7 @@ LOG_TYPE_PERFORMANCE = "performance"
 
 class M3u8ParseError(Exception):
     """m3u8解析异常"""
+
     pass
 
 

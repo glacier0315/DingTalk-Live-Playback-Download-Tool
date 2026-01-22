@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class FileReaderError(Exception):
     """文件读取异常"""
+
     pass
 
 
@@ -68,9 +69,7 @@ class FileReader:
         valid_extensions = [".csv", ".xlsx", ".xls"]
 
         if not self.file_path.lower().endswith(tuple(valid_extensions)):
-            raise ValueError(
-                f"文件格式不支持: {self.file_path}. 请使用CSV或Excel文件。"
-            )
+            raise ValueError(f"文件格式不支持: {self.file_path}. 请使用CSV或Excel文件。")
 
         if not os.path.exists(self.file_path):
             raise FileNotFoundError(f"文件不存在: {self.file_path}")

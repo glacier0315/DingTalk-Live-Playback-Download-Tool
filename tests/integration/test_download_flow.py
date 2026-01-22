@@ -50,9 +50,7 @@ def test_single_download_flow(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_ha
 @patch("dingtalk_downloader.core.downloader.CookieHandler")
 @patch("dingtalk_downloader.core.downloader.M3u8Parser")
 @patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_batch_download_flow(
-    mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
-):
+def test_batch_download_flow(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
     """测试批量下载流程"""
     mock_cookie_handler.return_value.get_cookie.return_value = (
         Mock(),

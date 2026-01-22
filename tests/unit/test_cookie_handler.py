@@ -54,12 +54,12 @@ def test_cookie_handler_get_cookie_with_multiple_cookies(mock_browser_factory):
     mock_browser = Mock()
     mock_browser.get_cookies.return_value = [
         {"name": "cookie1", "value": "value1"},
-        {"name": "cookie2", "value": "value2"}
+        {"name": "cookie2", "value": "value2"},
     ]
     mock_browser.get_user_agent.return_value = "Mozilla/5.0"
     mock_browser.get_referer.return_value = "https://n.dingtalk.com/"
     mock_browser.get_element_by_xpath.return_value.text = "测试直播"
-    
+
     mock_browser_factory.create_browser.return_value = mock_browser
     handler = CookieHandler(BROWSER_TYPE_EDGE)
 
@@ -78,7 +78,7 @@ def test_cookie_handler_close(mock_browser_factory, mock_browser):
     """测试关闭浏览器"""
     mock_browser_factory.create_browser.return_value = mock_browser
     handler = CookieHandler(BROWSER_TYPE_EDGE)
-    
+
     with patch("builtins.input", return_value=""):
         handler.get_cookie("https://n.dingtalk.com/test")
 
@@ -91,7 +91,7 @@ def test_cookie_handler_repeat_get_cookie(mock_browser_factory, mock_browser):
     """测试重复获取 Cookie"""
     mock_browser_factory.create_browser.return_value = mock_browser
     handler = CookieHandler(BROWSER_TYPE_EDGE)
-    
+
     with patch("builtins.input", return_value=""):
         handler.get_cookie("https://n.dingtalk.com/test")
 
@@ -111,7 +111,7 @@ def test_cookie_handler_get_live_name_xpath(mock_browser_factory, mock_browser):
     mock_browser.get_user_agent.return_value = "Mozilla/5.0"
     mock_browser.get_referer.return_value = "https://n.dingtalk.com/"
     mock_browser.get_element_by_xpath.return_value.text = "XPath直播名称"
-    
+
     mock_browser_factory.create_browser.return_value = mock_browser
     handler = CookieHandler(BROWSER_TYPE_EDGE)
 
@@ -127,18 +127,18 @@ def test_cookie_handler_get_live_name_css(mock_browser_factory, mock_browser):
     mock_browser.get_cookies.return_value = [{"name": "test", "value": "value"}]
     mock_browser.get_user_agent.return_value = "Mozilla/5.0"
     mock_browser.get_referer.return_value = "https://n.dingtalk.com/"
-    
+
     def get_element_by_xpath_side_effect(xpath):
         raise Exception("XPath failed")
-    
+
     def get_element_by_class_name_side_effect(class_name):
         mock_element = Mock()
         mock_element.text = "CSS直播名称"
         return mock_element
-    
+
     mock_browser.get_element_by_xpath.side_effect = get_element_by_xpath_side_effect
     mock_browser.get_element_by_class_name.side_effect = get_element_by_class_name_side_effect
-    
+
     mock_browser_factory.create_browser.return_value = mock_browser
     handler = CookieHandler(BROWSER_TYPE_EDGE)
 
@@ -154,16 +154,16 @@ def test_cookie_handler_get_live_name_fallback(mock_browser_factory, mock_browse
     mock_browser.get_cookies.return_value = [{"name": "test", "value": "value"}]
     mock_browser.get_user_agent.return_value = "Mozilla/5.0"
     mock_browser.get_referer.return_value = "https://n.dingtalk.com/"
-    
+
     def get_element_by_xpath_side_effect(xpath):
         raise Exception("XPath failed")
-    
+
     def get_element_by_class_name_side_effect(class_name):
         raise Exception("CSS failed")
-    
+
     mock_browser.get_element_by_xpath.side_effect = get_element_by_xpath_side_effect
     mock_browser.get_element_by_class_name.side_effect = get_element_by_class_name_side_effect
-    
+
     mock_browser_factory.create_browser.return_value = mock_browser
     handler = CookieHandler(BROWSER_TYPE_EDGE)
 
