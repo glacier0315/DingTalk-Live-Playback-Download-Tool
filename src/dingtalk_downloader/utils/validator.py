@@ -117,9 +117,14 @@ def validate_required_input(
                 continue
             
             # 自定义验证
-            if validation_func is not None and not validation_func(user_input):
-                print(error_message or f"{input_name}格式不正确，请重新输入。")
-                continue
+            if validation_func is not None:
+                try:
+                    if not validation_func(user_input):
+                        print(error_message or f"{input_name}格式不正确，请重新输入。")
+                        continue
+                except ValueError as e:
+                    print(error_message or str(e))
+                    continue
             
             return user_input
             
