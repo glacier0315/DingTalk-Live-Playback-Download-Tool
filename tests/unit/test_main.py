@@ -36,7 +36,7 @@ def test_single_mode_with_default_options():
     ) as mock_downloader_class:
 
         mock_input.side_effect = [
-            "https://n.dingtalk.com/test",  # 钉钉链接
+            "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab",  # 钉钉链接
             "",  # 保存模式（默认1）
             "",  # 浏览器类型（默认1）
         ]
@@ -46,7 +46,7 @@ def test_single_mode_with_default_options():
 
         single_mode()
 
-        mock_downloader.download_single_video.assert_called_once_with("https://n.dingtalk.com/test")
+        mock_downloader.download_single_video.assert_called_once_with("https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab")
         assert mock_downloader_class.call_count == 1
 
 
@@ -57,7 +57,7 @@ def test_single_mode_with_manual_options():
     ) as mock_downloader_class:
 
         mock_input.side_effect = [
-            "https://n.dingtalk.com/test",  # 钉钉链接
+            "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab",  # 钉钉链接
             "2",  # 保存模式（手动选择）
             "3",  # 浏览器类型（Firefox）
         ]
@@ -67,7 +67,7 @@ def test_single_mode_with_manual_options():
 
         single_mode()
 
-        mock_downloader.download_single_video.assert_called_once_with("https://n.dingtalk.com/test")
+        mock_downloader.download_single_video.assert_called_once_with("https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab")
         assert mock_downloader_class.call_count == 1
 
 
@@ -88,7 +88,7 @@ def test_single_mode_exception():
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
 
-        mock_input.side_effect = ["https://n.dingtalk.com/test", "", ""]
+        mock_input.side_effect = ["https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab", "", ""]
         mock_downloader_class.side_effect = Exception("下载失败")
 
         with pytest.raises(SystemExit) as exc_info:
@@ -99,58 +99,82 @@ def test_single_mode_exception():
 
 def test_batch_mode_with_default_options():
     """测试批量下载模式 - 使用默认选项"""
-    with patch("builtins.input") as mock_input, patch(
-        "dingtalk_downloader.main.FileReader"
-    ) as mock_file_reader_class, patch(
-        "dingtalk_downloader.main.Downloader"
-    ) as mock_downloader_class:
+    import tempfile
+    import os
+    
+    # 创建临时CSV文件
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as temp_file:
+        temp_file.write("link\n")
+        temp_file_path = temp_file.name
+    
+    try:
+        with patch("builtins.input") as mock_input, patch(
+            "dingtalk_downloader.main.FileReader"
+        ) as mock_file_reader_class, patch(
+            "dingtalk_downloader.main.Downloader"
+        ) as mock_downloader_class:
 
-        mock_input.side_effect = [
-            "test.csv",  # 文件路径
-            "",  # 保存模式（默认1）
-            "",  # 浏览器类型（默认1）
-        ]
+            mock_input.side_effect = [
+                temp_file_path,  # 文件路径
+                "",  # 保存模式（默认1）
+                "",  # 浏览器类型（默认1）
+            ]
 
-        mock_file_reader = Mock()
-        mock_file_reader.read_links.return_value = {
-            "Sheet1": ["https://n.dingtalk.com/test1", "https://n.dingtalk.com/test2"]
-        }
-        mock_file_reader_class.return_value = mock_file_reader
+            mock_file_reader = Mock()
+            mock_file_reader.read_links.return_value = {
+                "Sheet1": ["https://n.dingtalk.com/test1?liveUuid=12345678-1234-1234-1234-1234567890ab", "https://n.dingtalk.com/test2?liveUuid=12345678-1234-1234-1234-1234567890ab"]
+            }
+            mock_file_reader_class.return_value = mock_file_reader
 
-        mock_downloader = Mock()
-        mock_downloader_class.return_value = mock_downloader
+            mock_downloader = Mock()
+            mock_downloader_class.return_value = mock_downloader
 
-        batch_mode()
+            batch_mode()
 
-        mock_downloader.download_batch_videos.assert_called_once()
-        assert mock_downloader_class.call_count == 1
+            mock_downloader.download_batch_videos.assert_called_once()
+            assert mock_downloader_class.call_count == 1
+    finally:
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
 
 
 def test_batch_mode_with_manual_options():
     """测试批量下载模式 - 手动选择选项"""
-    with patch("builtins.input") as mock_input, patch(
-        "dingtalk_downloader.main.FileReader"
-    ) as mock_file_reader_class, patch(
-        "dingtalk_downloader.main.Downloader"
-    ) as mock_downloader_class:
+    import tempfile
+    import os
+    
+    # 创建临时Excel文件
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.xlsx', delete=False) as temp_file:
+        temp_file.write("link\n")
+        temp_file_path = temp_file.name
+    
+    try:
+        with patch("builtins.input") as mock_input, patch(
+            "dingtalk_downloader.main.FileReader"
+        ) as mock_file_reader_class, patch(
+            "dingtalk_downloader.main.Downloader"
+        ) as mock_downloader_class:
 
-        mock_input.side_effect = [
-            "test.xlsx",  # 文件路径
-            "2",  # 保存模式（手动选择）
-            "2",  # 浏览器类型（Chrome）
-        ]
+            mock_input.side_effect = [
+                temp_file_path,  # 文件路径
+                "2",  # 保存模式（手动选择）
+                "2",  # 浏览器类型（Chrome）
+            ]
 
-        mock_file_reader = Mock()
-        mock_file_reader.read_links.return_value = {"Sheet1": ["https://n.dingtalk.com/test1"]}
-        mock_file_reader_class.return_value = mock_file_reader
+            mock_file_reader = Mock()
+            mock_file_reader.read_links.return_value = {"Sheet1": ["https://n.dingtalk.com/test1?liveUuid=12345678-1234-1234-1234-1234567890ab"]}
+            mock_file_reader_class.return_value = mock_file_reader
 
-        mock_downloader = Mock()
-        mock_downloader_class.return_value = mock_downloader
+            mock_downloader = Mock()
+            mock_downloader_class.return_value = mock_downloader
 
-        batch_mode()
+            batch_mode()
 
-        mock_downloader.download_batch_videos.assert_called_once()
-        assert mock_downloader_class.call_count == 1
+            mock_downloader.download_batch_videos.assert_called_once()
+            assert mock_downloader_class.call_count == 1
+    finally:
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
 
 
 def test_batch_mode_keyboard_interrupt():
@@ -166,17 +190,29 @@ def test_batch_mode_keyboard_interrupt():
 
 def test_batch_mode_exception():
     """测试批量下载模式 - 异常处理"""
-    with patch("builtins.input") as mock_input, patch(
-        "dingtalk_downloader.main.FileReader"
-    ) as mock_file_reader_class:
+    import tempfile
+    import os
+    
+    # 创建临时CSV文件
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as temp_file:
+        temp_file.write("link\n")
+        temp_file_path = temp_file.name
+    
+    try:
+        with patch("builtins.input") as mock_input, patch(
+            "dingtalk_downloader.main.FileReader"
+        ) as mock_file_reader_class:
 
-        mock_input.side_effect = ["test.csv", "", ""]
-        mock_file_reader_class.side_effect = Exception("文件读取失败")
+            mock_input.side_effect = [temp_file_path, "", ""]
+            mock_file_reader_class.side_effect = Exception("文件读取失败")
 
-        with pytest.raises(SystemExit) as exc_info:
-            batch_mode()
+            with pytest.raises(SystemExit) as exc_info:
+                batch_mode()
 
-        assert exc_info.value.code == 1
+            assert exc_info.value.code == 1
+    finally:
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
 
 
 def test_main_single_mode():
@@ -246,7 +282,7 @@ def test_single_mode_edge_browser():
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
 
-        mock_input.side_effect = ["https://n.dingtalk.com/test", "", "1"]  # Edge
+        mock_input.side_effect = ["https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab", "", "1"]  # Edge
 
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
@@ -263,7 +299,7 @@ def test_single_mode_chrome_browser():
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
 
-        mock_input.side_effect = ["https://n.dingtalk.com/test", "", "2"]  # Chrome
+        mock_input.side_effect = ["https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab", "", "2"]  # Chrome
 
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
@@ -280,7 +316,7 @@ def test_single_mode_firefox_browser():
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
 
-        mock_input.side_effect = ["https://n.dingtalk.com/test", "", "3"]  # Firefox
+        mock_input.side_effect = ["https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab", "", "3"]  # Firefox
 
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
@@ -297,7 +333,7 @@ def test_single_mode_default_save_mode():
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
 
-        mock_input.side_effect = ["https://n.dingtalk.com/test", "", ""]  # 默认保存模式
+        mock_input.side_effect = ["https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab", "", ""]  # 默认保存模式
 
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
@@ -314,7 +350,7 @@ def test_single_mode_manual_save_mode():
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
 
-        mock_input.side_effect = ["https://n.dingtalk.com/test", "2", ""]  # 手动保存模式
+        mock_input.side_effect = ["https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab", "2", ""]  # 手动保存模式
 
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader

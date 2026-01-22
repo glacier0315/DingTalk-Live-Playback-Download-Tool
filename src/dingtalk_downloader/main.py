@@ -10,6 +10,7 @@
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
     - 2026-01-22: 重构-完善异常处理,捕获FileReaderError和M3u8ParseError
+    - 2026-01-22: 完善用户输入校验机制
 """
 
 import sys
@@ -18,7 +19,12 @@ from .config.logger_config import LoggerConfig
 from .core.downloader import Downloader
 from .core.cookie_handler import CookieError
 from .core.m3u8_parser import M3u8ParseError
-from .utils.validator import validate_input
+from .utils.validator import (
+    validate_input,
+    validate_required_input,
+    validate_dingtalk_url,
+    validate_file_path,
+)
 from .utils.file_reader import FileReader, FileReaderError
 from .config.constants import (
     BROWSER_OPTION_MAP,
@@ -53,7 +59,12 @@ def single_mode() -> None:
     logger.info("进入单个视频下载模式")
 
     try:
-        dingtalk_url = input("请输入钉钉直播回放分享链接: ")
+        dingtalk_url = validate_required_input(
+            "请输入钉钉直播回放分享链接（格式：https://n.dingtalk.com/...?liveUuid=...）: ",
+            validation_func=validate_dingtalk_url,
+            error_message="链接格式不正确。请确保链接以 https://n.dingtalk.com 开头，并包含 liveUuid 参数。",
+            input_name="钉钉直播链接",
+        )
         logger.info(f"用户输入链接: {dingtalk_url}")
 
         save_mode = validate_input(
@@ -118,8 +129,11 @@ def batch_mode() -> None:
     logger.info("进入批量下载模式")
 
     try:
-        file_path = input(
-            "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: "
+        file_path = validate_required_input(
+            "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: ",
+            validation_func=validate_file_path,
+            error_message="文件路径不正确。请确保文件存在、可读，且格式为CSV或Excel（.csv, .xlsx, .xls）。",
+            input_name="文件路径",
         )
         logger.info("用户已输入文件路径")
 
