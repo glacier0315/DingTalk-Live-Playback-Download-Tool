@@ -234,7 +234,7 @@ class YamlConfig:
             },
             "download": {
                 "default_dir": "Downloads",
-                "temp_m3u8_file": "output.m3u8",
+                "temp_dir": "temp",
                 "max_retry_count": 5,
             },
             "browser": {

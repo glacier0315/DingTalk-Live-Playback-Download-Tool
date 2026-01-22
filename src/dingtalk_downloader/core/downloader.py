@@ -22,11 +22,11 @@ from ..core.m3u8_parser import M3u8Parser
 from ..binary.n_m3u8dl_re import NM3u8DLRE
 from ..utils.path_helper import ensure_dir_exists
 from ..utils.validator import validate_required_input, validate_dingtalk_url
+from ..utils.m3u8_file_manager import M3u8FileManager
 from ..config.constants import (
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
     DEFAULT_DOWNLOAD_DIR,
-    TEMP_M3U8_FILE,
 )
 
 logger = logging.getLogger(__name__)
@@ -66,6 +66,7 @@ class Downloader:
         self.cookie_handler = CookieHandler(browser_type)
         self.m3u8_parser = None
         self.n_m3u8dl_re = NM3u8DLRE()
+        self.m3u8_file_manager = M3u8FileManager()
         self.saved_path = None
 
         logger.info(f"下载器初始化完成 - 浏览器类型: {browser_type}, 保存模式: {save_mode}")
@@ -96,7 +97,8 @@ class Downloader:
 
         logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
 
-        m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_links[0], TEMP_M3U8_FILE, m3u8_headers)
+        m3u8_file = self.m3u8_file_manager.get_temp_file_path()
+        m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_links[0], m3u8_file, m3u8_headers)
         logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
         prefix = self.m3u8_parser.extract_prefix(m3u8_links[0])

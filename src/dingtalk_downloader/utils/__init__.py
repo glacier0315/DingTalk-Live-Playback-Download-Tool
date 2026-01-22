@@ -13,5 +13,6 @@
 from .file_reader import FileReader
 from .validator import validate_input
 from .path_helper import clean_file_path, join_paths
+from .m3u8_file_manager import M3u8FileManager
 
-__all__ = ["FileReader", "validate_input", "clean_file_path", "join_paths"]
+__all__ = ["FileReader", "validate_input", "clean_file_path", "join_paths", "M3u8FileManager"]
