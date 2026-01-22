@@ -99,7 +99,7 @@ def validate_dingtalk_url(url: str) -> str:
         if not live_uuid:
             raise ValueError("liveUuid 参数为空")
 
-        if not re.match(r"^[a-f0-9-]{36}$", live_uuid):
+        if not re.match(r"^[a-f0-9\-]{36}$", live_uuid):
             raise ValueError("liveUuid 格式无效")
 
         return url

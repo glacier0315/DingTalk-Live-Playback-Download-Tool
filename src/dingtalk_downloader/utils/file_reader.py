@@ -163,11 +163,18 @@ class FileReader:
 
         Args:
             links: 链接字典（用于存储提取的链接）
+
+        Raises:
+            FileReaderError: 读取失败时
         """
-        xls = pd.ExcelFile(self.file_path)
-        for sheet_name in xls.sheet_names:
-            df = pd.read_excel(xls, sheet_name=sheet_name)
-            self._extract_links_from_dataframe(df, links)
+        try:
+            xls = pd.ExcelFile(self.file_path)
+            for sheet_name in xls.sheet_names:
+                df = pd.read_excel(xls, sheet_name=sheet_name)
+                self._extract_links_from_dataframe(df, links)
+        except Exception as e:
+            logger.error(f"读取 Excel 文件时发生错误: {e}", exc_info=True)
+            raise FileReaderError(f"读取Excel文件失败: {e}") from e
 
     def _extract_links_from_dataframe(self, df: pd.DataFrame, links: Dict[int, str]) -> None:
         """

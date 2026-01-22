@@ -74,6 +74,39 @@ class CookieHandler:
             "Upgrade-Insecure-Requests": "1",
         }
 
+    def _collect_browser_data(self) -> Tuple[Dict[str, str], Dict[str, str], str]:
+        """
+        从浏览器收集数据（请求头、Cookie、直播名称）。
+
+        该方法提取了重复的数据收集逻辑，包括：
+        - 获取User-Agent和Referer
+        - 构建请求头
+        - 获取直播名称
+        - 获取Cookie字典
+
+        Returns:
+            tuple: 包含三个元素的元组
+                - cookie_dict: Cookie字典，格式为{cookie_name: cookie_value}
+                - headers: 请求头字典，包含User-Agent、Referer等
+                - live_name: 直播视频名称
+        """
+        user_agent = self.browser.get_user_agent()
+        referer = self.browser.get_referer()
+        logger.debug(f"User-Agent: {user_agent}")
+        logger.debug(f"Referer: {referer}")
+
+        headers = self._build_headers(user_agent, referer)
+        logger.info("请求头构建完成")
+
+        live_name = self._get_live_name()
+        logger.info(f"直播名称: {live_name}")
+
+        cookies = self.browser.get_cookies()
+        cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
+        logger.info(f"获取到 {len(cookie_dict)} 个 Cookie")
+
+        return cookie_dict, headers, live_name
+
     def get_cookie(self, url: str) -> Tuple[Any, Dict[str, str], Dict[str, str], str]:
         """
         获取 Cookie 和请求头信息。
@@ -107,20 +140,7 @@ class CookieHandler:
 
             input("请在浏览器中登录钉钉账户后，按Enter键继续...")
 
-            user_agent = self.browser.get_user_agent()
-            referer = self.browser.get_referer()
-            logger.debug(f"User-Agent: {user_agent}")
-            logger.debug(f"Referer: {referer}")
-
-            headers = self._build_headers(user_agent, referer)
-            logger.info("请求头构建完成")
-
-            live_name = self._get_live_name()
-            logger.info(f"直播名称: {live_name}")
-
-            cookies = self.browser.get_cookies()
-            cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
-            logger.info(f"获取到 {len(cookie_dict)} 个 Cookie")
+            cookie_dict, headers, live_name = self._collect_browser_data()
 
             return self.browser, cookie_dict, headers, live_name
 
@@ -166,20 +186,7 @@ class CookieHandler:
                 logger.warning(f"等待视频加载时发生错误: {e}")
                 input("未能确定页面是否成功加载。请在页面加载后，按Enter键继续...")
 
-            user_agent = self.browser.get_user_agent()
-            referer = self.browser.get_referer()
-            logger.debug(f"User-Agent: {user_agent}")
-            logger.debug(f"Referer: {referer}")
-
-            headers = self._build_headers(user_agent, referer)
-            logger.info("请求头构建完成")
-
-            live_name = self._get_live_name()
-            logger.info(f"直播名称: {live_name}")
-
-            cookies = self.browser.get_cookies()
-            cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
-            logger.info(f"获取到 {len(cookie_dict)} 个 Cookie")
+            cookie_dict, headers, live_name = self._collect_browser_data()
 
             return cookie_dict, headers, live_name
 
