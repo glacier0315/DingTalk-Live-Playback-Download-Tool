@@ -21,6 +21,7 @@ from ..core.cookie_handler import CookieHandler
 from ..core.m3u8_parser import M3u8Parser
 from ..binary.n_m3u8dl_re import NM3u8DLRE
 from ..utils.path_helper import ensure_dir_exists
+from ..utils.validator import validate_required_input, validate_dingtalk_url
 from ..config.constants import (
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
@@ -167,8 +168,13 @@ class Downloader:
                 except DownloadError as e:
                     logger.error(f"视频下载失败: {e}")
                     print(f"下载失败: {e}")
-
-                url = input("请继续输入钉钉直播分享链接，或输入q退出程序: ")
+                
+                url = validate_required_input(
+                    "请继续输入钉钉直播分享链接，或输入q退出程序: ",
+                    validation_func=lambda x: x.lower() == "q" or validate_dingtalk_url(x),
+                    error_message="输入不正确，请重新输入。",
+                    input_name="钉钉直播分享链接",
+                )
                 if url.lower() == "q":
                     logger.info("用户选择退出程序")
                     self.close()
