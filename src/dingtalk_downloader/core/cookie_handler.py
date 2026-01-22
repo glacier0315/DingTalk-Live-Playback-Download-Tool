@@ -10,11 +10,13 @@
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
     - 2026-01-21: 重构-提取请求头构建逻辑,移除sys.exit调用
+    - 2026-01-22: 重构-使用配置中的直播名称选择器
 """
 
 import logging
 from typing import Dict, Tuple, Any
 from ..browser.browser_factory import BrowserFactory
+from ..config.constants import LIVE_NAME_SELECTORS
 
 logger = logging.getLogger(__name__)
 
@@ -191,26 +193,28 @@ class CookieHandler:
         """
         获取直播视频名称。
 
-        尝试通过 XPath 和 CSS 选择器获取直播视频名称。
+        尝试通过配置中的多个选择器获取直播视频名称。
 
         Returns:
             直播视频名称
         """
-        try:
-            live_name = self.browser.get_element_by_xpath(
-                '//*[@id="live-room"]/div[1]/div[1]/h3'
-            ).text
-            logger.debug(f"通过 XPath 获取直播名称: {live_name}")
-            return live_name
-        except Exception as e:
-            logger.debug(f"XPath 获取失败: {e}")
+        for selector_type, selector_value in LIVE_NAME_SELECTORS:
             try:
-                live_name = self.browser.get_element_by_class_name("vwi5-oG8").text
-                logger.debug(f"通过 CSS Selector 获取直播名称: {live_name}")
+                if selector_type == "xpath":
+                    live_name = self.browser.get_element_by_xpath(selector_value).text
+                elif selector_type == "css":
+                    live_name = self.browser.get_element_by_class_name(selector_value).text
+                else:
+                    continue
+
+                logger.debug(f"通过 {selector_type} 获取直播名称: {live_name}")
                 return live_name
             except Exception as e:
-                logger.warning(f"CSS Selector 获取失败: {e}")
-                return "直播视频名称不可获取"
+                logger.debug(f"{selector_type} 获取失败: {e}")
+                continue
+
+        logger.warning("所有选择器均获取失败")
+        return "直播视频名称不可获取"
 
     def close(self) -> None:
         """

@@ -8,6 +8,7 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2026-01-22: 新增直播名称选择器配置
 """
 
 # 配置文件路径
@@ -58,3 +59,11 @@ DOWNLOAD_MODE_MAP = {"1": DOWNLOAD_MODE_SINGLE, "2": DOWNLOAD_MODE_BATCH}
 
 # 保存模式映射
 SAVE_MODE_MAP = {"1": SAVE_MODE_DEFAULT, "2": SAVE_MODE_MANUAL}
+
+# 直播名称选择器配置
+LIVE_NAME_SELECTORS = [
+    ("xpath", '//*[@id="live-room"]/div[1]/div[1]/h3'),
+    ("css", "vwi5-oG8"),
+    ("xpath", '//h3[contains(@class, "live-title")]'),
+    ("css", ".live-title"),
+]

@@ -26,10 +26,11 @@ from dingtalk_downloader.config.settings import Settings
 def test_settings_init_default_path():
     """测试Settings初始化 - 使用默认路径"""
     settings = Settings()
-
+    
     assert "config" in settings.yaml_config.config_file
     assert "app.yaml" in settings.yaml_config.config_file
-    assert settings.yaml_config._loaded is False
+    # Settings在初始化时会调用load()，所以_loaded应该为True
+    assert settings.yaml_config._loaded is True
 
 
 def test_settings_init_custom_path():

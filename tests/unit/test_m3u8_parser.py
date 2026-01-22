@@ -203,14 +203,17 @@ def test_m3u8_parser_fetch_m3u8_links_log_exception_handling(mock_browser):
 
 def test_m3u8_parser_download_m3u8_file_exception_handling(mock_browser, tmp_path):
     """测试下载 m3u8 文件异常处理"""
+    from dingtalk_downloader.core.m3u8_parser import M3u8ParseError
+    
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
-
     temp_file = tmp_path / "test.m3u8"
     mock_browser.driver.execute_script.side_effect = Exception("Download error")
-
-    with patch('sys.exit') as mock_exit:
+    
+    with pytest.raises(M3u8ParseError) as exc_info:
         parser.download_m3u8_file("https://test.com/test.m3u8", str(temp_file), {})
-        mock_exit.assert_called_once_with(1)
+    
+    assert "下载m3u8文件失败" in str(exc_info.value)
+    assert "Download error" in str(exc_info.value)
 
 
 def test_m3u8_parser_fetch_m3u8_links_empty_logs(mock_browser):
@@ -281,15 +284,21 @@ def test_m3u8_parser_extract_prefix_different_path():
 
 def test_m3u8_parser_download_m3u8_file_write_error(mock_browser, tmp_path):
     """测试下载 m3u8 文件写入错误"""
+    from dingtalk_downloader.core.m3u8_parser import M3u8ParseError
+    from unittest.mock import patch, MagicMock
+    
     parser = M3u8Parser(mock_browser, BROWSER_TYPE_EDGE)
-
+    
     temp_file = tmp_path / "test.m3u8"
     mock_browser.driver.execute_script.return_value = "#EXTM3U\n"
-
-    with patch('builtins.open', side_effect=IOError("Write error")):
-        with patch('sys.exit') as mock_exit:
+    
+    # 模拟文件写入失败
+    with patch('builtins.open', MagicMock(side_effect=IOError("Write error"))):
+        with pytest.raises(M3u8ParseError) as exc_info:
             parser.download_m3u8_file("https://test.com/test.m3u8", str(temp_file), {})
-            mock_exit.assert_called_once_with(1)
+        
+        assert "下载m3u8文件失败" in str(exc_info.value)
+        assert "Write error" in str(exc_info.value)
 
 
 def test_m3u8_parser_fetch_m3u8_links_json_parse_error(mock_browser):

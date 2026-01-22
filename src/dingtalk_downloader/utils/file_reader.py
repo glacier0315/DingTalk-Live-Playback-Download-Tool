@@ -9,15 +9,21 @@
 修改历史：
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
+    - 2026-01-22: 重构-移除sys.exit调用,改为抛出FileReaderError,增强输入验证
 """
 
-import sys
+import os
 import logging
 import pandas as pd
 from typing import Dict
 from .path_helper import clean_file_path
 
 logger = logging.getLogger(__name__)
+
+
+class FileReaderError(Exception):
+    """文件读取异常"""
+    pass
 
 
 class FileReader:
@@ -39,14 +45,54 @@ class FileReader:
 
         Raises:
             FileNotFoundError: 文件不存在时
-            ValueError: 文件格式不支持时
+            PermissionError: 文件不可读时
+            ValueError: 文件格式不支持或文件过大时
+            FileReaderError: 其他错误时
         """
         self.file_path = clean_file_path(file_path)
         logger.debug(f"文件读取器初始化 - 文件路径: {self.file_path}")
 
-        if not self.file_path.lower().endswith((".csv", ".xlsx", ".xls")):
-            logger.error(f"文件格式不支持: {self.file_path}")
-            raise ValueError(f"文件格式不支持: {self.file_path}. 请使用CSV或Excel文件。")
+        self._validate_file_path()
+
+    def _validate_file_path(self) -> None:
+        """
+        验证文件路径。
+
+        检查文件扩展名、文件是否存在、文件是否可读、文件大小是否合理。
+
+        Raises:
+            FileNotFoundError: 文件不存在时
+            PermissionError: 文件不可读时
+            ValueError: 文件格式不支持或文件过大时
+        """
+        valid_extensions = [".csv", ".xlsx", ".xls"]
+
+        if not self.file_path.lower().endswith(tuple(valid_extensions)):
+            raise ValueError(
+                f"文件格式不支持: {self.file_path}. 请使用CSV或Excel文件。"
+            )
+
+        if not os.path.exists(self.file_path):
+            raise FileNotFoundError(f"文件不存在: {self.file_path}")
+
+        if not os.path.isfile(self.file_path):
+            raise ValueError(f"路径不是文件: {self.file_path}")
+
+        if not os.access(self.file_path, os.R_OK):
+            raise PermissionError(f"文件不可读: {self.file_path}")
+
+        file_size = os.path.getsize(self.file_path)
+        max_size = 100 * 1024 * 1024
+
+        if file_size > max_size:
+            raise ValueError(
+                f"文件过大: {self.file_path} ({file_size} bytes, 最大允许 {max_size} bytes)"
+            )
+
+        if file_size == 0:
+            raise ValueError(f"文件为空: {self.file_path}")
+
+        logger.debug(f"文件验证通过: {self.file_path}, 大小: {file_size} bytes")
 
     def read_links(self) -> Dict[int, str]:
         """
@@ -58,7 +104,7 @@ class FileReader:
             链接字典 {index: url}
 
         Raises:
-            Exception: 读取失败时
+            FileReaderError: 读取失败时
         """
         logger.info(f"开始读取文件链接: {self.file_path}")
 
@@ -72,14 +118,16 @@ class FileReader:
 
             if not links:
                 logger.error("未找到有效的钉钉直播链接")
-                raise ValueError("未找到有效的钉钉直播链接。")
+                raise FileReaderError("未找到有效的钉钉直播链接。")
 
             logger.info(f"从文件中读取到 {len(links)} 个链接")
             return links
 
+        except FileReaderError:
+            raise
         except Exception as e:
             logger.error(f"读取文件时发生错误: {e}", exc_info=True)
-            sys.exit(1)
+            raise FileReaderError(f"读取文件失败: {e}") from e
 
     def _read_csv(self, links: Dict[int, str]) -> None:
         """
@@ -87,17 +135,28 @@ class FileReader:
 
         Args:
             links: 链接字典（用于存储提取的链接）
-        """
-        try:
-            df = pd.read_csv(self.file_path, encoding="utf-8")
-        except UnicodeDecodeError:
-            try:
-                df = pd.read_csv(self.file_path, encoding="gbk")
-            except UnicodeDecodeError:
-                logger.warning(f"文件 {self.file_path} 使用的编码无法识别，请尝试其他编码格式")
-                sys.exit(1)
 
-        self._extract_links_from_dataframe(df, links)
+        Raises:
+            FileReaderError: 读取失败时
+        """
+        encodings = ["utf-8", "gbk", "gb18030"]
+        last_error = None
+
+        for encoding in encodings:
+            try:
+                df = pd.read_csv(self.file_path, encoding=encoding)
+                self._extract_links_from_dataframe(df, links)
+                logger.info(f"CSV 文件读取成功，编码: {encoding}")
+                return
+            except UnicodeDecodeError as e:
+                last_error = e
+                continue
+            except Exception as e:
+                logger.error(f"读取 CSV 文件时发生错误: {e}", exc_info=True)
+                raise FileReaderError(f"读取CSV文件失败: {e}") from e
+
+        logger.error(f"文件 {self.file_path} 使用的编码无法识别，请尝试其他编码格式")
+        raise FileReaderError(f"文件编码无法识别: {last_error}") from last_error
 
     def _read_excel(self, links: Dict[int, str]) -> None:
         """

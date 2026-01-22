@@ -108,6 +108,8 @@ def test_file_reader_csv_with_different_encoding(sample_csv_file):
 
 def test_file_reader_csv_no_links():
     """测试读取没有有效链接的 CSV 文件"""
+    from dingtalk_downloader.utils.file_reader import FileReaderError
+    
     fd, path = tempfile.mkstemp(suffix=".csv")
     try:
         with os.fdopen(fd, 'w', encoding='utf-8') as f:
@@ -115,10 +117,12 @@ def test_file_reader_csv_no_links():
             f.write("https://example.com/test1\n")
             f.write("https://example.com/test2\n")
         
-        with patch('sys.exit') as mock_exit:
-            reader = FileReader(path)
+        reader = FileReader(path)
+        
+        with pytest.raises(FileReaderError) as exc_info:
             reader.read_links()
-            mock_exit.assert_called_once_with(1)
+        
+        assert "未找到有效的钉钉直播链接" in str(exc_info.value)
     finally:
         if os.path.exists(path):
             os.unlink(path)

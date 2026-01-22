@@ -8,6 +8,7 @@
 创建日期：2025-01-15
 修改历史：
     - 2025-01-15: 初始版本，验证 m3u8 下载修复
+    - 2026-01-22: 更新测试以适配新的异常处理机制
 """
 
 import sys
@@ -17,7 +18,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.core.m3u8_parser import M3u8Parser
+from dingtalk_downloader.core.m3u8_parser import M3u8Parser, M3u8ParseError
 from dingtalk_downloader.config.constants import BROWSER_TYPE_EDGE
 
 
@@ -151,7 +152,7 @@ def test_m3u8_download_error_handling():
     
     测试场景：
     1. 模拟 fetch 请求失败
-    2. 验证错误被正确捕获和处理
+    2. 验证 M3u8ParseError 异常被正确抛出
     """
     mock_browser = Mock()
     mock_browser.driver = Mock()
@@ -165,16 +166,19 @@ def test_m3u8_download_error_handling():
         temp_path = temp_file.name
     
     try:
-        # 验证异常被正确处理
-        with patch('sys.exit') as mock_exit:
+        # 验证异常被正确抛出
+        from dingtalk_downloader.core.m3u8_parser import M3u8ParseError
+        
+        try:
             parser.download_m3u8_file(
                 "https://dtliving-sz.dingtalk.com/live/test.m3u8",
                 temp_path,
                 {}
             )
-            
-            # 验证程序以错误码 1 退出
-            mock_exit.assert_called_once_with(1)
+            assert False, "应该抛出 M3u8ParseError 异常"
+        except M3u8ParseError as e:
+            assert "下载m3u8文件失败" in str(e)
+            assert "Failed to fetch" in str(e)
         
         print("✓ 功能测试通过：错误处理机制正常")
         

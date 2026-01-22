@@ -9,14 +9,17 @@
 修改历史：
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
+    - 2026-01-22: 重构-完善异常处理,捕获FileReaderError和M3u8ParseError
 """
 
 import sys
 import logging
 from .config.logger_config import LoggerConfig
 from .core.downloader import Downloader
+from .core.cookie_handler import CookieError
+from .core.m3u8_parser import M3u8ParseError
 from .utils.validator import validate_input
-from .utils.file_reader import FileReader
+from .utils.file_reader import FileReader, FileReaderError
 from .config.constants import (
     BROWSER_OPTION_MAP,
     DOWNLOAD_MODE_SINGLE,
@@ -79,8 +82,14 @@ def single_mode() -> None:
         print("\n程序已被用户终止。")
         sys.exit(0)
 
-    except Exception as e:
+    except (CookieError, M3u8ParseError, FileReaderError) as e:
         logger.error(f"发生错误: {e}", exc_info=True)
+        print(f"发生错误: {e}")
+        sys.exit(1)
+
+    except Exception as e:
+        logger.error(f"发生未知错误: {e}", exc_info=True)
+        print(f"发生未知错误: {e}")
         sys.exit(1)
 
 
@@ -144,8 +153,14 @@ def batch_mode() -> None:
         print("\n程序已被用户终止。")
         sys.exit(0)
 
-    except Exception as e:
+    except (CookieError, M3u8ParseError, FileReaderError) as e:
         logger.error(f"发生错误: {e}", exc_info=True)
+        print(f"发生错误: {e}")
+        sys.exit(1)
+
+    except Exception as e:
+        logger.error(f"发生未知错误: {e}", exc_info=True)
+        print(f"发生未知错误: {e}")
         sys.exit(1)
 
 
@@ -182,9 +197,14 @@ def main() -> None:
         print("\n程序已被用户终止。")
         sys.exit(0)
 
-    except Exception as e:
+    except (CookieError, M3u8ParseError, FileReaderError) as e:
         logger.error(f"发生错误: {e}", exc_info=True)
         print(f"发生错误: {e}")
+        sys.exit(1)
+
+    except Exception as e:
+        logger.error(f"发生未知错误: {e}", exc_info=True)
+        print(f"发生未知错误: {e}")
         sys.exit(1)
 
     logger.info("程序退出")

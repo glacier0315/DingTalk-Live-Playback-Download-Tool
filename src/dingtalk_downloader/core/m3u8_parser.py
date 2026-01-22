@@ -10,10 +10,10 @@
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
     - 2026-01-21: 重构-消除魔法数字,优化日志处理
+    - 2026-01-22: 重构-移除sys.exit调用,改为抛出M3u8ParseError
 """
 
 import re
-import sys
 import logging
 from urllib.parse import urlparse, parse_qs
 from typing import List, Optional, Union
@@ -31,6 +31,11 @@ logger = logging.getLogger(__name__)
 
 FIRST_ELEMENT_INDEX = 0
 LOG_TYPE_PERFORMANCE = "performance"
+
+
+class M3u8ParseError(Exception):
+    """m3u8解析异常"""
+    pass
 
 
 class M3u8Parser:
@@ -152,7 +157,7 @@ class M3u8Parser:
             m3u8 文件路径
 
         Raises:
-            Exception: 下载失败时
+            M3u8ParseError: 下载失败时
         """
         try:
             m3u8_content = self.browser.driver.execute_script(
@@ -167,7 +172,7 @@ class M3u8Parser:
 
         except Exception as e:
             logger.error(f"下载 m3u8 文件时发生错误: {e}", exc_info=True)
-            sys.exit(1)
+            raise M3u8ParseError(f"下载m3u8文件失败: {e}") from e
 
     def extract_prefix(self, url: str) -> str:
         """
