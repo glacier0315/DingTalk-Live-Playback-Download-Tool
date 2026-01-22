@@ -23,10 +23,10 @@ from ..binary.n_m3u8dl_re import NM3u8DLRE
 from ..utils.path_helper import ensure_dir_exists
 from ..utils.validator import validate_required_input, validate_dingtalk_url
 from ..utils.m3u8_file_manager import M3u8FileManager
+from ..config.yaml_config import YamlConfig
 from ..config.constants import (
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
-    DEFAULT_DOWNLOAD_DIR,
 )
 
 logger = logging.getLogger(__name__)
@@ -317,16 +317,35 @@ class Downloader:
         """
         获取默认下载目录。
 
-        返回项目根目录下的 Downloads 目录。
+        从配置文件中读取 default_dir 配置项作为下载目录。
+        如果配置文件不存在或配置项缺失，则使用默认值 "Downloads"。
 
         Returns:
             默认下载目录路径
         """
-        base_dir = os.getcwd()
-        downloads_dir = os.path.join(base_dir, DEFAULT_DOWNLOAD_DIR)
-        ensure_dir_exists(downloads_dir)
-        logger.debug(f"默认下载目录: {downloads_dir}")
-        return downloads_dir
+        try:
+            config = YamlConfig()
+            config.load()
+            
+            default_dir = config.get("download.default_dir", "Downloads")
+            
+            if os.path.isabs(default_dir):
+                downloads_dir = default_dir
+            else:
+                base_dir = os.getcwd()
+                downloads_dir = os.path.join(base_dir, default_dir)
+            
+            ensure_dir_exists(downloads_dir)
+            logger.debug(f"默认下载目录: {downloads_dir}")
+            return downloads_dir
+            
+        except Exception as e:
+            logger.warning(f"从配置文件读取默认下载目录失败，使用默认值: {e}")
+            base_dir = os.getcwd()
+            downloads_dir = os.path.join(base_dir, "Downloads")
+            ensure_dir_exists(downloads_dir)
+            logger.debug(f"默认下载目录: {downloads_dir}")
+            return downloads_dir
 
     def _get_manual_download_dir(self) -> Optional[str]:
         """
