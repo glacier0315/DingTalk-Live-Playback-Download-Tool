@@ -98,6 +98,7 @@ def test_concrete_browser_driver_implements_all_methods():
     assert callable(driver.wait_for_video)
     assert callable(driver.close)
 
+
 def test_concrete_browser_driver_create_driver():
     """测试create_driver方法"""
     driver = ConcreteBrowserDriver()
@@ -131,6 +132,7 @@ def test_concrete_browser_driver_get_cookies():
     driver = ConcreteBrowserDriver()
     result = driver.get_cookies()
     assert result == []
+
 
 def test_concrete_browser_driver_navigate():
     """测试navigate方法"""

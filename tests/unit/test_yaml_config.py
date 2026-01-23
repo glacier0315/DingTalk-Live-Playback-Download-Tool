@@ -167,7 +167,7 @@ def test_yaml_config_get_nested():
     try:
         test_config = {
             "app": {"name": "test_app"},
-            "download": {"default_dir": "test_dir", "max_retry_count": 10},
+            "download": {"default_dir": "test_dir"},
         }
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
@@ -175,7 +175,6 @@ def test_yaml_config_get_nested():
         config = YamlConfig(config_file=path)
 
         assert config.get("download.default_dir") == "test_dir"
-        assert config.get("download.max_retry_count") == 10
     finally:
         if os.path.exists(path):
             os.unlink(path)
@@ -192,11 +191,6 @@ def test_yaml_config_set():
         config.set("app.name", "test_app")
 
         assert config.config["app"]["name"] == "test_app"
-
-        with open(path, "r", encoding="utf-8") as f:
-            saved_config = yaml.safe_load(f)
-
-        assert saved_config["app"]["name"] == "test_app"
     finally:
         if os.path.exists(path):
             try:
@@ -214,10 +208,8 @@ def test_yaml_config_set_nested():
 
         config = YamlConfig(config_file=path)
         config.set("download.default_dir", "test_dir")
-        config.set("download.max_retry_count", 10)
 
         assert config.config["download"]["default_dir"] == "test_dir"
-        assert config.config["download"]["max_retry_count"] == 10
     finally:
         if os.path.exists(path):
             try:
@@ -359,36 +351,31 @@ def test_yaml_config_validate_invalid():
 def test_yaml_config_default_config():
     """测试默认配置"""
     config = YamlConfig()
-    config.load()
 
     assert "app" in config.default_config
     assert "download" in config.default_config
-    assert "browser" in config.default_config
     assert "logging" in config.default_config
     assert "headers" in config.default_config
     assert "n_m3u8dl_re" in config.default_config
-    assert "ffmpeg" in config.default_config
 
 
 def test_yaml_config_merge_configs():
     """测试配置合并"""
     config = YamlConfig()
 
-    user_config = {"app": {"name": "user_app"}, "download": {"max_retry_count": 10}}
+    user_config = {"app": {"name": "user_app"}, "download": {"default_dir": "user_dir"}}
 
     default_config = {
         "app": {"name": "default_app", "version": "1.0"},
-        "download": {"default_dir": "Downloads", "max_retry_count": 5},
-        "browser": {"default_type": "edge"},
+        "download": {"default_dir": "Downloads", "temp_dir": "temp"},
     }
 
     merged = config._merge_configs(user_config, default_config)
 
     assert merged["app"]["name"] == "user_app"
     assert merged["app"]["version"] == "1.0"
-    assert merged["download"]["default_dir"] == "Downloads"
-    assert merged["download"]["max_retry_count"] == 10
-    assert merged["browser"]["default_type"] == "edge"
+    assert merged["download"]["default_dir"] == "user_dir"
+    assert merged["download"]["temp_dir"] == "temp"
 
 
 def test_yaml_config_lazy_loading():

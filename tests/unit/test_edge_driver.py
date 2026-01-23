@@ -112,6 +112,7 @@ def test_get_element_by_class_name_without_driver():
 
     assert result is None
 
+
 def test_get_cookies_with_driver():
     """测试获取Cookie - 有驱动实例"""
     edge_driver = EdgeDriver()

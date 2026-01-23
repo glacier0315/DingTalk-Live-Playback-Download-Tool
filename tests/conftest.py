@@ -94,6 +94,7 @@ def mock_config(mocker) -> MagicMock:
     config.load = mocker.MagicMock()
     return config
 
+
 @pytest.fixture(scope="function")
 def mock_file_reader(mocker) -> MagicMock:
     """Mock文件读取器"""
