@@ -75,7 +75,7 @@ class YamlConfig:
             logger.info(f"自动创建配置文件目录: {os.path.dirname(self.config_file)}")
             try:
                 os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-                logger.info(f"配置文件目录创建成功")
+                logger.info("配置文件目录创建成功")
             except Exception as e:
                 logger.error(f"创建配置文件目录失败: {e}")
 
@@ -94,7 +94,7 @@ class YamlConfig:
             if not os.path.exists(config_dir):
                 logger.info(f"创建配置文件目录: {config_dir}")
                 os.makedirs(config_dir, exist_ok=True)
-                logger.info(f"配置文件目录创建成功")
+                logger.info("配置文件目录创建成功")
 
             with open(self.config_file, "w", encoding="utf-8") as f:
                 yaml.dump(
@@ -206,10 +206,6 @@ class YamlConfig:
                 logger.error("配置缺少download部分")
                 return False
 
-            if "browser" not in self.config:
-                logger.error("配置缺少browser部分")
-                return False
-
             if "logging" not in self.config:
                 logger.error("配置缺少logging部分")
                 return False
@@ -235,12 +231,6 @@ class YamlConfig:
             "download": {
                 "default_dir": "Downloads",
                 "temp_dir": "temp",
-                "max_retry_count": 5,
-            },
-            "browser": {
-                "default_type": "edge",
-                "headless": False,
-                "timeout": 30,
             },
             "logging": {
                 "level": "INFO",
@@ -267,13 +257,8 @@ class YamlConfig:
                 "upgrade_insecure_requests": "1",
             },
             "n_m3u8dl_re": {
-                "executable_path": "assets/bin/N_m3u8DL-RE.exe",
-                "ui_language": "zh-CN",
                 "temp_dir": "temp",
                 "log_dir": "logs",
-            },
-            "ffmpeg": {
-                "executable_path": "assets/bin/ffmpeg.exe",
             },
         }
 

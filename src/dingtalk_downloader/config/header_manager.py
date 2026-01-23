@@ -99,7 +99,9 @@ class HeaderManager:
         logger.debug(f"获取请求头字典，共 {len(headers)} 个请求头")
         return headers
 
-    def get_header(self, name: str, default: Optional[str] = None, include_overrides: bool = True) -> Optional[str]:
+    def get_header(
+        self, name: str, default: Optional[str] = None, include_overrides: bool = True
+    ) -> Optional[str]:
         """
         获取单个请求头。
 

@@ -45,7 +45,7 @@ class M3u8FileManager:
         # 确保临时目录存在
         self._ensure_temp_dir_exists()
 
-        logger.debug(f"M3U8文件管理器初始化完成")
+        logger.debug("M3U8文件管理器初始化完成")
         logger.debug(f"临时目录: {self.temp_dir}")
 
     def _resolve_temp_dir(self) -> str:

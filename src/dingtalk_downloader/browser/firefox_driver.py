@@ -83,13 +83,11 @@ class FirefoxDriver(BrowserDriver):
             日志列表
         """
         if self.driver:
-            logs = self.driver.execute_script(
-                """
+            logs = self.driver.execute_script("""
                 var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {};
                 var network = performance.getEntries() || {};
                 return network;
-            """
-            )
+            """)
             return logs
         return []
 

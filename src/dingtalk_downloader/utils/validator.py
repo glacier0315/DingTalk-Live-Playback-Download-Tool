@@ -237,9 +237,7 @@ def validate_file_path(file_path: str) -> str:
     max_size = 100 * 1024 * 1024  # 100MB
 
     if file_size > max_size:
-        raise ValueError(
-            f"文件过大: {file_path} ({file_size} bytes, 最大允许 {max_size} bytes)"
-        )
+        raise ValueError(f"文件过大: {file_path} ({file_size} bytes, 最大允许 {max_size} bytes)")
 
     if file_size == 0:
         raise ValueError(f"文件为空: {file_path}")

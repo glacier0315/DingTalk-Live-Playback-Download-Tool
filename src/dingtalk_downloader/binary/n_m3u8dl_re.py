@@ -55,7 +55,7 @@ class NM3u8DLRE:
 
         self._ensure_directories_exist()
 
-        logger.debug(f"N_m3u8DL-RE 调用器初始化完成")
+        logger.debug("N_m3u8DL-RE 调用器初始化完成")
         logger.debug(f"可执行文件: {self.executable_path}")
         logger.debug(f"临时目录: {self.temp_dir}")
         logger.debug(f"日志目录: {self.log_dir}")
@@ -223,7 +223,7 @@ class NM3u8DLRE:
         if cookies_data:
             cookie_string = "; ".join(f"{name}={value}" for name, value in cookies_data.items())
             command.extend(["-H", f"Cookie: {cookie_string}"])
-            logger.debug(f"已添加请求头，Cookie: ...")
+            logger.debug("已添加请求头，Cookie: ...")
 
         merged_headers = self.header_manager.get_headers()
         if headers:
