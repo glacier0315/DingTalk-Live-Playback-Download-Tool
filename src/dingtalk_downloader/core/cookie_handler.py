@@ -51,32 +51,11 @@ class CookieHandler:
         self.header_manager = HeaderManager()
         logger.debug(f"Cookie 处理器初始化 - 浏览器类型: {browser_type}")
 
-    def _build_headers(self, user_agent: str, referer: str) -> Dict[str, str]:
-        """
-        构建请求头。
-
-        Args:
-            user_agent: User-Agent字符串
-            referer: Referer字符串
-
-        Returns:
-            请求头字典
-        """
-        headers = self.header_manager.get_headers()
-        
-        # 使用浏览器提供的User-Agent和Referer覆盖配置中的值
-        headers["User-Agent"] = user_agent
-        headers["Referer"] = referer
-        
-        return headers
-
     def _collect_browser_data(self) -> Tuple[Dict[str, str], Dict[str, str], str]:
         """
         从浏览器收集数据（请求头、Cookie、直播名称）。
 
         该方法提取了重复的数据收集逻辑，包括：
-        - 获取User-Agent和Referer
-        - 构建请求头
         - 获取直播名称
         - 获取Cookie字典
 
@@ -86,13 +65,8 @@ class CookieHandler:
                 - headers: 请求头字典，包含User-Agent、Referer等
                 - live_name: 直播视频名称
         """
-        user_agent = self.browser.get_user_agent()
-        referer = self.browser.get_referer()
-        logger.debug(f"User-Agent: {user_agent}")
-        logger.debug(f"Referer: {referer}")
-
-        headers = self._build_headers(user_agent, referer)
-        logger.info("请求头构建完成")
+        headers = self.header_manager.get_headers()
+        logger.info(f"获取到 {len(headers)} 个 headers")
 
         live_name = self._get_live_name()
         logger.info(f"直播名称: {live_name}")
@@ -132,7 +106,7 @@ class CookieHandler:
             logger.info("浏览器驱动创建成功")
 
             self.browser.navigate(url)
-            logger.info("导航到指定 URL")
+            logger.info(f"导航到指定 URL: {url}")
 
             input("请在浏览器中登录钉钉账户后，按Enter键继续...")
 
@@ -173,7 +147,7 @@ class CookieHandler:
                 return cookie_dict, headers, live_name
 
             self.browser.navigate(url)
-            logger.info("导航到指定 URL")
+            logger.info(f"导航到指定 URL: {url}")
 
             try:
                 self.browser.wait_for_video(20)
