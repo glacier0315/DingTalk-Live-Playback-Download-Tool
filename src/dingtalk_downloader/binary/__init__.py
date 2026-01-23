@@ -1,7 +1,7 @@
 """
 钉钉直播回放下载工具 - 二进制程序调用模块
 
-本模块包含 N_m3u8DL-RE 和 FFmpeg 工具的调用封装。
+本模块包含 N_m3u8DL-RE 工具的调用封装。
 
 作者：项目团队
 依赖：subprocess, platform
@@ -11,6 +11,5 @@
 """
 
 from .n_m3u8dl_re import NM3u8DLRE
-from .ffmpeg_wrapper import FFmpegWrapper
 
-__all__ = ["NM3u8DLRE", "FFmpegWrapper"]
+__all__ = ["NM3u8DLRE"]

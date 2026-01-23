@@ -18,10 +18,8 @@ from .mock_browser import (
 )
 
 from .mock_binary import (
-    MockFFmpegWrapper,
     MockN_m3u8DL_RE,
     MockBinaryTool,
-    create_mock_ffmpeg,
     create_mock_n_m3u8dl_re,
     create_mock_binary_tool,
 )
@@ -51,10 +49,8 @@ __all__ = [
     "create_mock_firefox_driver",
     "create_mock_browser_factory",
     # Binary mocks
-    "MockFFmpegWrapper",
     "MockN_m3u8DL_RE",
     "MockBinaryTool",
-    "create_mock_ffmpeg",
     "create_mock_n_m3u8dl_re",
     "create_mock_binary_tool",
     # Network mocks

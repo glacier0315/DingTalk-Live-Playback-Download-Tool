@@ -54,16 +54,3 @@ def ensure_dir_exists(dir_path: str) -> None:
         dir_path: 目录路径
     """
     os.makedirs(dir_path, exist_ok=True)
-
-
-def get_file_extension(file_path: str) -> str:
-    """
-    获取文件扩展名。
-
-    Args:
-        file_path: 文件路径
-
-    Returns:
-        文件扩展名（包含点号）
-    """
-    return Path(file_path).suffix

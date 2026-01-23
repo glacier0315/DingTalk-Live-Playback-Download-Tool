@@ -245,34 +245,3 @@ def validate_file_path(file_path: str) -> str:
         raise ValueError(f"文件为空: {file_path}")
 
     return file_path
-
-
-def validate_non_empty_input(input_value: str, input_name: str = "输入") -> bool:
-    """
-    验证输入是否为非空。
-
-    Args:
-        input_value: 输入值
-        input_name: 输入项的名称
-
-    Returns:
-        True表示验证通过，False表示验证失败
-    """
-    return bool(input_value and input_value.strip())
-
-
-def validate_url_format(input_value: str) -> bool:
-    """
-    验证URL格式。
-
-    Args:
-        input_value: 输入值
-
-    Returns:
-        True表示验证通过，False表示验证失败
-    """
-    try:
-        parsed = urlparse(input_value)
-        return bool(parsed.scheme and parsed.netloc)
-    except Exception:
-        return False

@@ -22,7 +22,7 @@ from .browser.browser_factory import BrowserFactory
 from .browser.edge_driver import EdgeDriver
 from .browser.chrome_driver import ChromeDriver
 from .browser.firefox_driver import FirefoxDriver
-from .config.settings import Settings
+from .config.yaml_config import YamlConfig
 
 __all__ = [
     "main",
@@ -38,6 +38,6 @@ __all__ = [
     "EdgeDriver",
     "ChromeDriver",
     "FirefoxDriver",
-    "Settings",
+    "YamlConfig",
 ]
 __version__ = "1.3.0"
