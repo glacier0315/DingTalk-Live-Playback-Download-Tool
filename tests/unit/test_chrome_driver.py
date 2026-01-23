@@ -112,66 +112,6 @@ def test_get_element_by_class_name_without_driver():
 
     assert result is None
 
-
-def test_get_user_agent_with_driver():
-    """测试获取User-Agent - 有驱动实例"""
-    chrome_driver = ChromeDriver()
-    chrome_driver.driver = Mock()
-
-    mock_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    chrome_driver.driver.execute_script.return_value = mock_user_agent
-
-    result = chrome_driver.get_user_agent()
-
-    assert result == mock_user_agent
-    chrome_driver.driver.execute_script.assert_called_once_with("return navigator.userAgent")
-
-
-def test_get_user_agent_without_driver():
-    """测试获取User-Agent - 无驱动实例"""
-    chrome_driver = ChromeDriver()
-
-    result = chrome_driver.get_user_agent()
-
-    assert result == ""
-
-
-def test_get_referer_with_driver():
-    """测试获取Referer - 有驱动实例"""
-    chrome_driver = ChromeDriver()
-    chrome_driver.driver = Mock()
-
-    mock_referer = "https://n.dingtalk.com/live/123"
-    chrome_driver.driver.execute_script.return_value = mock_referer
-
-    result = chrome_driver.get_referer()
-
-    assert result == mock_referer
-    chrome_driver.driver.execute_script.assert_called_once_with("return document.referrer")
-
-
-def test_get_referer_with_driver_empty():
-    """测试获取Referer - 有驱动实例但返回空"""
-    chrome_driver = ChromeDriver()
-    chrome_driver.driver = Mock()
-
-    chrome_driver.driver.execute_script.return_value = None
-
-    result = chrome_driver.get_referer()
-
-    assert result == "https://n.dingtalk.com/"
-    chrome_driver.driver.execute_script.assert_called_once_with("return document.referrer")
-
-
-def test_get_referer_without_driver():
-    """测试获取Referer - 无驱动实例"""
-    chrome_driver = ChromeDriver()
-
-    result = chrome_driver.get_referer()
-
-    assert result == "https://n.dingtalk.com/"
-
-
 def test_get_cookies_with_driver():
     """测试获取Cookie - 有驱动实例"""
     chrome_driver = ChromeDriver()
@@ -268,18 +208,9 @@ def test_full_workflow():
 
         driver = chrome_driver.create_driver()
         assert driver is not None
-
         chrome_driver.navigate("https://n.dingtalk.com/test")
         mock_driver_instance.get.assert_called_once()
-
         cookies = chrome_driver.get_cookies()
         assert isinstance(cookies, list)
-
-        user_agent = chrome_driver.get_user_agent()
-        assert isinstance(user_agent, str)
-
-        referer = chrome_driver.get_referer()
-        assert isinstance(referer, str)
-
         chrome_driver.close()
         assert chrome_driver.driver is None

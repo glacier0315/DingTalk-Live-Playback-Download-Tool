@@ -11,7 +11,7 @@
 """
 
 import logging
-from typing import Dict, Optional, Any
+from typing import Dict, Optional
 from .yaml_config import YamlConfig
 
 logger = logging.getLogger(__name__)
@@ -40,10 +40,10 @@ class HeaderManager:
         self.config.load()
         self._headers_cache: Dict[str, str] = {}
         self._override_headers: Dict[str, str] = {}
-        
+
         # 初始化请求头缓存
         self._load_headers()
-        
+
         logger.debug("请求头管理器初始化完成")
 
     def _load_headers(self) -> None:
@@ -91,11 +91,11 @@ class HeaderManager:
             请求头字典
         """
         headers = self._headers_cache.copy()
-        
+
         if include_overrides:
             # 应用覆盖的请求头（优先级更高）
             headers.update(self._override_headers)
-            
+
         logger.debug(f"获取请求头字典，共 {len(headers)} 个请求头")
         return headers
 
@@ -113,65 +113,8 @@ class HeaderManager:
         """
         if include_overrides and name in self._override_headers:
             return self._override_headers[name]
-        
+
         return self._headers_cache.get(name, default)
-
-    def set_header(self, name: str, value: str, is_override: bool = True) -> None:
-        """
-        设置请求头。
-
-        Args:
-            name: 请求头名称
-            value: 请求头值
-            is_override: 是否为覆盖请求头，默认为True
-        """
-        if is_override:
-            self._override_headers[name] = value
-            logger.info(f"设置覆盖请求头: {name} = {value}")
-        else:
-            self._headers_cache[name] = value
-            logger.info(f"设置请求头: {name} = {value}")
-
-    def remove_header(self, name: str, from_overrides: bool = True) -> bool:
-        """
-        移除请求头。
-
-        Args:
-            name: 请求头名称
-            from_overrides: 是否从覆盖请求头中移除，默认为True
-
-        Returns:
-            是否成功移除
-        """
-        removed = False
-        
-        if from_overrides and name in self._override_headers:
-            del self._override_headers[name]
-            logger.info(f"移除覆盖请求头: {name}")
-            removed = True
-        
-        if not from_overrides and name in self._headers_cache:
-            del self._headers_cache[name]
-            logger.info(f"移除请求头: {name}")
-            removed = True
-            
-        return removed
-
-    def clear_overrides(self) -> None:
-        """
-        清除所有覆盖的请求头。
-        """
-        self._override_headers.clear()
-        logger.info("已清除所有覆盖的请求头")
-
-    def get_override_headers(self) -> Dict[str, str]:
-        """
-        获取所有覆盖的请求头。
-
-        Returns:
-            覆盖请求头字典
-        """
-        return self._override_headers.copy()
 
     def reload_config(self) -> None:
         """
@@ -184,55 +127,3 @@ class HeaderManager:
         self.config.reload()
         self._load_headers()
         logger.info("请求头配置重新加载完成")
-
-    def merge_headers(self, additional_headers: Dict[str, str], is_override: bool = True) -> Dict[str, str]:
-        """
-        合并额外的请求头。
-
-        Args:
-            additional_headers: 额外的请求头字典
-            is_override: 是否作为覆盖请求头，默认为True
-
-        Returns:
-            合并后的请求头字典
-        """
-        if is_override:
-            self._override_headers.update(additional_headers)
-            logger.debug(f"合并 {len(additional_headers)} 个覆盖请求头")
-        else:
-            self._headers_cache.update(additional_headers)
-            logger.debug(f"合并 {len(additional_headers)} 个请求头")
-            
-        return self.get_headers()
-
-    def validate_headers(self) -> bool:
-        """
-        验证请求头配置的有效性。
-
-        Returns:
-            验证结果，True表示有效，False表示无效
-        """
-        required_headers = ["User-Agent", "Referer", "Accept"]
-        headers = self.get_headers()
-        
-        for header in required_headers:
-            if header not in headers or not headers[header]:
-                logger.error(f"缺少必需的请求头: {header}")
-                return False
-                
-        logger.info("请求头配置验证通过")
-        return True
-
-    def get_header_info(self) -> Dict[str, Any]:
-        """
-        获取请求头配置信息。
-
-        Returns:
-            包含请求头统计信息的字典
-        """
-        return {
-            "total_headers": len(self._headers_cache),
-            "override_headers": len(self._override_headers),
-            "headers": self.get_headers(include_overrides=False),
-            "overrides": self.get_override_headers(),
-        }

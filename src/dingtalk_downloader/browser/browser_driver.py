@@ -84,32 +84,6 @@ class BrowserDriver(ABC):
         pass
 
     @abstractmethod
-    def get_user_agent(self) -> str:
-        """
-        获取User-Agent。
-
-        Returns:
-            str: User-Agent字符串
-
-        Raises:
-            Exception: 获取失败时
-        """
-        pass
-
-    @abstractmethod
-    def get_referer(self) -> str:
-        """
-        获取Referer。
-
-        Returns:
-            str: Referer字符串
-
-        Raises:
-            Exception: 获取失败时
-        """
-        pass
-
-    @abstractmethod
     def get_cookies(self) -> List[dict]:
         """
         获取Cookie。

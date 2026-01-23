@@ -12,10 +12,9 @@
     - 2026-01-21: 添加CONFIG_FILE_PATH常量导出
 """
 
-from .settings import Settings
 from .logger_config import LoggerConfig
 from .yaml_config import YamlConfig
 from .header_manager import HeaderManager
 from .constants import CONFIG_FILE_PATH
 
-__all__ = ["Settings", "LoggerConfig", "YamlConfig", "HeaderManager", "CONFIG_FILE_PATH"]
+__all__ = ["LoggerConfig", "YamlConfig", "HeaderManager", "CONFIG_FILE_PATH"]

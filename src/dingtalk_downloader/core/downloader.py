@@ -170,7 +170,7 @@ class Downloader:
                 except DownloadError as e:
                     logger.error(f"视频下载失败: {e}")
                     print(f"下载失败: {e}")
-                
+
                 url = validate_required_input(
                     "请继续输入钉钉直播分享链接，或输入q退出程序: ",
                     validation_func=lambda x: x.lower() == "q" or validate_dingtalk_url(x),
@@ -326,19 +326,19 @@ class Downloader:
         try:
             config = YamlConfig()
             config.load()
-            
+
             default_dir = config.get("download.default_dir", "Downloads")
-            
+
             if os.path.isabs(default_dir):
                 downloads_dir = default_dir
             else:
                 base_dir = os.getcwd()
                 downloads_dir = os.path.join(base_dir, default_dir)
-            
+
             ensure_dir_exists(downloads_dir)
             logger.debug(f"默认下载目录: {downloads_dir}")
             return downloads_dir
-            
+
         except Exception as e:
             logger.warning(f"从配置文件读取默认下载目录失败，使用默认值: {e}")
             base_dir = os.getcwd()

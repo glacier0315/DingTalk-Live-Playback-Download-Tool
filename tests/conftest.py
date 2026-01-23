@@ -94,39 +94,6 @@ def mock_config(mocker) -> MagicMock:
     config.load = mocker.MagicMock()
     return config
 
-
-@pytest.fixture(scope="function")
-def mock_settings(mocker) -> MagicMock:
-    """Mock设置对象"""
-    settings = mocker.MagicMock()
-    settings.get = mocker.MagicMock(return_value="mock_value")
-    settings.get.side_effect = lambda key, default=None: {
-        "output_dir": "output",
-        "browser": "edge",
-        "timeout": 30,
-        "retry": 3,
-        "max_workers": 4,
-        "download_dir": "downloads",
-        "log_level": "INFO",
-    }.get(key, default)
-    settings.set = mocker.MagicMock()
-    settings.save = mocker.MagicMock()
-    settings.load = mocker.MagicMock()
-    settings.__getitem__ = mocker.MagicMock(
-        side_effect=lambda key: {
-            "output_dir": "output",
-            "browser": "edge",
-            "timeout": 30,
-            "retry": 3,
-            "max_workers": 4,
-            "download_dir": "downloads",
-            "log_level": "INFO",
-        }.get(key)
-    )
-    settings.__setitem__ = mocker.MagicMock()
-    return settings
-
-
 @pytest.fixture(scope="function")
 def mock_file_reader(mocker) -> MagicMock:
     """Mock文件读取器"""

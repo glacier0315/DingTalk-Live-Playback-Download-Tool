@@ -11,7 +11,6 @@
 """
 
 import os
-from pathlib import Path
 
 
 def clean_file_path(file_path: str) -> str:

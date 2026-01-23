@@ -112,68 +112,6 @@ def test_get_element_by_class_name_without_driver():
 
     assert result is None
 
-
-def test_get_user_agent_with_driver():
-    """测试获取User-Agent - 有驱动实例"""
-    firefox_driver = FirefoxDriver()
-    firefox_driver.driver = Mock()
-
-    mock_user_agent = (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0"
-    )
-    firefox_driver.driver.execute_script.return_value = mock_user_agent
-
-    result = firefox_driver.get_user_agent()
-
-    assert result == mock_user_agent
-    firefox_driver.driver.execute_script.assert_called_once_with("return navigator.userAgent")
-
-
-def test_get_user_agent_without_driver():
-    """测试获取User-Agent - 无驱动实例"""
-    firefox_driver = FirefoxDriver()
-
-    result = firefox_driver.get_user_agent()
-
-    assert result == ""
-
-
-def test_get_referer_with_driver():
-    """测试获取Referer - 有驱动实例"""
-    firefox_driver = FirefoxDriver()
-    firefox_driver.driver = Mock()
-
-    mock_referer = "https://n.dingtalk.com/live/123"
-    firefox_driver.driver.execute_script.return_value = mock_referer
-
-    result = firefox_driver.get_referer()
-
-    assert result == mock_referer
-    firefox_driver.driver.execute_script.assert_called_once_with("return document.referrer")
-
-
-def test_get_referer_with_driver_empty():
-    """测试获取Referer - 有驱动实例但返回空"""
-    firefox_driver = FirefoxDriver()
-    firefox_driver.driver = Mock()
-
-    firefox_driver.driver.execute_script.return_value = None
-
-    result = firefox_driver.get_referer()
-
-    assert result == "https://n.dingtalk.com/"
-    firefox_driver.driver.execute_script.assert_called_once_with("return document.referrer")
-
-
-def test_get_referer_without_driver():
-    """测试获取Referer - 无驱动实例"""
-    firefox_driver = FirefoxDriver()
-
-    result = firefox_driver.get_referer()
-
-    assert result == "https://n.dingtalk.com/"
-
-
 def test_get_cookies_with_driver():
     """测试获取Cookie - 有驱动实例"""
     firefox_driver = FirefoxDriver()
@@ -270,18 +208,9 @@ def test_full_workflow():
 
         driver = firefox_driver.create_driver()
         assert driver is not None
-
         firefox_driver.navigate("https://n.dingtalk.com/test")
         mock_driver_instance.get.assert_called_once()
-
         cookies = firefox_driver.get_cookies()
         assert isinstance(cookies, list)
-
-        user_agent = firefox_driver.get_user_agent()
-        assert isinstance(user_agent, str)
-
-        referer = firefox_driver.get_referer()
-        assert isinstance(referer, str)
-
         firefox_driver.close()
         assert firefox_driver.driver is None

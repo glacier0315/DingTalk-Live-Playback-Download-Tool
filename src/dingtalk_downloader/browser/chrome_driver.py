@@ -106,41 +106,14 @@ class ChromeDriver(BrowserDriver):
             return self.driver.find_element(By.CLASS_NAME, class_name)
         return None
 
-    def get_user_agent(self) -> str:
-        """
-        获取 User-Agent。
-
-        通过 JavaScript 获取 User-Agent。
-
-        Returns:
-            User-Agent 字符串
-        """
-        if self.driver:
-            return self.driver.execute_script("return navigator.userAgent")
-        return ""
-
-    def get_referer(self) -> str:
-        """
-        获取 Referer。
-
-        通过 JavaScript 获取 Referer。
-
-        Returns:
-            Referer 字符串
-        """
-        if self.driver:
-            referer = self.driver.execute_script("return document.referrer")
-            return referer if referer else "https://n.dingtalk.com/"
-        return "https://n.dingtalk.com/"
-
     def get_cookies(self) -> List[dict]:
         """
-        获取 Cookie。
+        获取Cookie。
 
-        获取浏览器的所有 Cookie。
+        获取浏览器的所有Cookie。
 
         Returns:
-            Cookie 列表
+            Cookie列表
         """
         if self.driver:
             return self.driver.get_cookies()

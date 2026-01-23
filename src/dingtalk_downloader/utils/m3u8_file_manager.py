@@ -41,10 +41,10 @@ class M3u8FileManager:
         self.config = YamlConfig(config_file)
         self.config.load()
         self.temp_dir = self._resolve_temp_dir()
-        
+
         # 确保临时目录存在
         self._ensure_temp_dir_exists()
-        
+
         logger.debug(f"M3U8文件管理器初始化完成")
         logger.debug(f"临时目录: {self.temp_dir}")
 
@@ -58,7 +58,7 @@ class M3u8FileManager:
             解析后的临时目录路径
         """
         temp_dir_config = self.config.get("download.temp_dir", "temp")
-        
+
         if os.path.isabs(temp_dir_config):
             return temp_dir_config
         else:
@@ -88,12 +88,12 @@ class M3u8FileManager:
             生成的文件名，格式为"{prefix}{uuid}.m3u8"或"{uuid}.m3u8"
         """
         unique_id = str(uuid.uuid4())
-        
+
         if prefix:
             filename = f"{prefix}_{unique_id}.m3u8"
         else:
             filename = f"{unique_id}.m3u8"
-        
+
         logger.debug(f"生成文件名: {filename}")
         return filename
 
@@ -109,100 +109,10 @@ class M3u8FileManager:
         """
         if filename is None:
             filename = self.generate_filename()
-        
+
         file_path = os.path.join(self.temp_dir, filename)
         logger.debug(f"临时文件路径: {file_path}")
         return file_path
-
-    def validate_path(self, path: str) -> bool:
-        """
-        验证路径是否有效。
-
-        Args:
-            path: 路径字符串
-
-        Returns:
-            验证结果，True表示有效，False表示无效
-        """
-        if not path or not isinstance(path, str):
-            logger.error(f"路径无效: {path}")
-            return False
-        
-        try:
-            path = os.path.abspath(path)
-            parent_dir = os.path.dirname(path)
-            
-            if parent_dir and not os.path.exists(parent_dir):
-                logger.warning(f"父目录不存在: {parent_dir}")
-                return False
-            
-            logger.debug(f"路径验证通过: {path}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"路径验证失败: {e}")
-            return False
-
-    def ensure_path_exists(self, path: str) -> bool:
-        """
-        确保路径的父目录存在。
-
-        Args:
-            path: 路径字符串
-
-        Returns:
-            是否成功创建或验证目录
-        """
-        try:
-            parent_dir = os.path.dirname(path)
-            
-            if parent_dir and not os.path.exists(parent_dir):
-                ensure_dir_exists(parent_dir)
-                logger.info(f"已创建目录: {parent_dir}")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"创建目录失败: {e}")
-            return False
-
-    def clean_temp_files(self, pattern: Optional[str] = None) -> int:
-        """
-        清理临时目录中的文件。
-
-        Args:
-            pattern: 文件名模式，如果为None则清理所有.m3u8文件
-
-        Returns:
-            清理的文件数量
-        """
-        if not os.path.exists(self.temp_dir):
-            logger.warning(f"临时目录不存在: {self.temp_dir}")
-            return 0
-        
-        cleaned_count = 0
-        
-        try:
-            for filename in os.listdir(self.temp_dir):
-                if pattern:
-                    if pattern in filename:
-                        file_path = os.path.join(self.temp_dir, filename)
-                        os.remove(file_path)
-                        cleaned_count += 1
-                        logger.debug(f"已删除文件: {filename}")
-                else:
-                    if filename.endswith(".m3u8"):
-                        file_path = os.path.join(self.temp_dir, filename)
-                        os.remove(file_path)
-                        cleaned_count += 1
-                        logger.debug(f"已删除文件: {filename}")
-            
-            logger.info(f"清理了 {cleaned_count} 个临时文件")
-            return cleaned_count
-            
-        except Exception as e:
-            logger.error(f"清理临时文件失败: {e}")
-            return 0
 
     def get_temp_dir(self) -> str:
         """
@@ -212,17 +122,6 @@ class M3u8FileManager:
             临时目录路径
         """
         return self.temp_dir
-
-    def set_temp_dir(self, temp_dir: str) -> None:
-        """
-        设置临时目录路径。
-
-        Args:
-            temp_dir: 新的临时目录路径
-        """
-        self.temp_dir = self._resolve_path(temp_dir)
-        self._ensure_temp_dir_exists()
-        logger.info(f"临时目录已更新: {self.temp_dir}")
 
     def _resolve_path(self, path: str) -> str:
         """
@@ -240,44 +139,3 @@ class M3u8FileManager:
             return path
         else:
             return os.path.join(os.getcwd(), path)
-
-    def get_file_info(self, file_path: str) -> dict:
-        """
-        获取文件信息。
-
-        Args:
-            file_path: 文件路径
-
-        Returns:
-            包含文件信息的字典
-        """
-        info = {
-            "path": file_path,
-            "exists": False,
-            "size": 0,
-            "is_file": False,
-            "is_dir": False,
-        }
-        
-        try:
-            if os.path.exists(file_path):
-                info["exists"] = True
-                info["size"] = os.path.getsize(file_path)
-                info["is_file"] = os.path.isfile(file_path)
-                info["is_dir"] = os.path.isdir(file_path)
-        except Exception as e:
-            logger.error(f"获取文件信息失败: {e}")
-        
-        return info
-
-    def reload_config(self) -> None:
-        """
-        重新加载配置。
-
-        重新加载配置文件并更新临时目录路径。
-        """
-        logger.info("重新加载配置")
-        self.config.reload()
-        self.temp_dir = self._resolve_temp_dir()
-        self._ensure_temp_dir_exists()
-        logger.info("配置重新加载完成")

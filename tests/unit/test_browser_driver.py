@@ -32,8 +32,6 @@ def test_browser_driver_has_abstract_methods():
         "get_log",
         "get_element_by_xpath",
         "get_element_by_class_name",
-        "get_user_agent",
-        "get_referer",
         "get_cookies",
         "navigate",
         "wait_for_video",
@@ -67,12 +65,6 @@ class ConcreteBrowserDriver(BrowserDriver):
     def get_element_by_class_name(self, class_name):
         return None
 
-    def get_user_agent(self):
-        return "test"
-
-    def get_referer(self):
-        return "test"
-
     def get_cookies(self):
         return []
 
@@ -101,13 +93,10 @@ def test_concrete_browser_driver_implements_all_methods():
     assert callable(driver.get_log)
     assert callable(driver.get_element_by_xpath)
     assert callable(driver.get_element_by_class_name)
-    assert callable(driver.get_user_agent)
-    assert callable(driver.get_referer)
     assert callable(driver.get_cookies)
     assert callable(driver.navigate)
     assert callable(driver.wait_for_video)
     assert callable(driver.close)
-
 
 def test_concrete_browser_driver_create_driver():
     """测试create_driver方法"""
@@ -137,26 +126,11 @@ def test_concrete_browser_driver_get_element_by_class_name():
     assert result is None
 
 
-def test_concrete_browser_driver_get_user_agent():
-    """测试get_user_agent方法"""
-    driver = ConcreteBrowserDriver()
-    result = driver.get_user_agent()
-    assert result == "test"
-
-
-def test_concrete_browser_driver_get_referer():
-    """测试get_referer方法"""
-    driver = ConcreteBrowserDriver()
-    result = driver.get_referer()
-    assert result == "test"
-
-
 def test_concrete_browser_driver_get_cookies():
     """测试get_cookies方法"""
     driver = ConcreteBrowserDriver()
     result = driver.get_cookies()
     assert result == []
-
 
 def test_concrete_browser_driver_navigate():
     """测试navigate方法"""

@@ -33,12 +33,6 @@ MAX_RETRY_COUNT = 5
 # 浏览器选项映射
 BROWSER_OPTION_MAP = {"1": BROWSER_TYPE_EDGE, "2": BROWSER_TYPE_CHROME, "3": BROWSER_TYPE_FIREFOX}
 
-# 下载模式映射
-DOWNLOAD_MODE_MAP = {"1": DOWNLOAD_MODE_SINGLE, "2": DOWNLOAD_MODE_BATCH}
-
-# 保存模式映射
-SAVE_MODE_MAP = {"1": SAVE_MODE_DEFAULT, "2": SAVE_MODE_MANUAL}
-
 # 直播名称选择器配置
 LIVE_NAME_SELECTORS = [
     ("xpath", '//*[@id="live-room"]/div[1]/div[1]/h3'),

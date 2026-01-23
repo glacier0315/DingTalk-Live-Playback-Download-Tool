@@ -112,66 +112,6 @@ def test_get_element_by_class_name_without_driver():
 
     assert result is None
 
-
-def test_get_user_agent_with_driver():
-    """测试获取User-Agent - 有驱动实例"""
-    edge_driver = EdgeDriver()
-    edge_driver.driver = Mock()
-
-    mock_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    edge_driver.driver.execute_script.return_value = mock_user_agent
-
-    result = edge_driver.get_user_agent()
-
-    assert result == mock_user_agent
-    edge_driver.driver.execute_script.assert_called_once_with("return navigator.userAgent")
-
-
-def test_get_user_agent_without_driver():
-    """测试获取User-Agent - 无驱动实例"""
-    edge_driver = EdgeDriver()
-
-    result = edge_driver.get_user_agent()
-
-    assert result == ""
-
-
-def test_get_referer_with_driver():
-    """测试获取Referer - 有驱动实例"""
-    edge_driver = EdgeDriver()
-    edge_driver.driver = Mock()
-
-    mock_referer = "https://n.dingtalk.com/live/123"
-    edge_driver.driver.execute_script.return_value = mock_referer
-
-    result = edge_driver.get_referer()
-
-    assert result == mock_referer
-    edge_driver.driver.execute_script.assert_called_once_with("return document.referrer")
-
-
-def test_get_referer_with_driver_empty():
-    """测试获取Referer - 有驱动实例但返回空"""
-    edge_driver = EdgeDriver()
-    edge_driver.driver = Mock()
-
-    edge_driver.driver.execute_script.return_value = None
-
-    result = edge_driver.get_referer()
-
-    assert result == "https://n.dingtalk.com/"
-    edge_driver.driver.execute_script.assert_called_once_with("return document.referrer")
-
-
-def test_get_referer_without_driver():
-    """测试获取Referer - 无驱动实例"""
-    edge_driver = EdgeDriver()
-
-    result = edge_driver.get_referer()
-
-    assert result == "https://n.dingtalk.com/"
-
-
 def test_get_cookies_with_driver():
     """测试获取Cookie - 有驱动实例"""
     edge_driver = EdgeDriver()
@@ -268,18 +208,9 @@ def test_full_workflow():
 
         driver = edge_driver.create_driver()
         assert driver is not None
-
         edge_driver.navigate("https://n.dingtalk.com/test")
         mock_driver_instance.get.assert_called_once()
-
         cookies = edge_driver.get_cookies()
         assert isinstance(cookies, list)
-
-        user_agent = edge_driver.get_user_agent()
-        assert isinstance(user_agent, str)
-
-        referer = edge_driver.get_referer()
-        assert isinstance(referer, str)
-
         edge_driver.close()
         assert edge_driver.driver is None

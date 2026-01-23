@@ -50,7 +50,7 @@ def validate_input(
     while True:
         try:
             choice = input(prompt)
-            
+
             # 处理空输入
             if choice == "":
                 if default_option is not None:
@@ -59,18 +59,18 @@ def validate_input(
                 else:
                     print(error_message or "输入不能为空，请重新输入。")
                     continue
-            
+
             # 验证输入
             if validation_func is not None and not validation_func(choice):
                 print(error_message or "输入无效，请重新输入。")
                 continue
-            
+
             # 验证选项
             if choice in valid_options:
                 return choice
-            
+
             print("无效的选择，请重新输入。")
-            
+
         except EOFError:
             if default_option is not None:
                 print(f"\n输入流结束，使用默认选项: {default_option}")
@@ -110,12 +110,12 @@ def validate_required_input(
     while True:
         try:
             user_input = input(prompt).strip()
-            
+
             # 检查空输入
             if not user_input:
                 print(f"{input_name}不能为空，请重新输入。")
                 continue
-            
+
             # 自定义验证
             if validation_func is not None:
                 try:
@@ -125,9 +125,9 @@ def validate_required_input(
                 except ValueError as e:
                     print(error_message or str(e))
                     continue
-            
+
             return user_input
-            
+
         except EOFError:
             print(f"\n输入流结束，{input_name}不能为空。")
             raise
@@ -208,11 +208,11 @@ def validate_file_path(file_path: str) -> str:
         ValueError: 文件格式不支持或文件过大时
     """
     file_path = file_path.strip()
-    
+
     # 检查空路径
     if not file_path:
         raise ValueError("文件路径不能为空")
-    
+
     # 检查文件扩展名
     valid_extensions = [".csv", ".xlsx", ".xls"]
     if not file_path.lower().endswith(tuple(valid_extensions)):
