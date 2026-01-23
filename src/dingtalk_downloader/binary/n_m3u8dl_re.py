@@ -11,6 +11,7 @@
     - 2025-01-15: 添加日志记录
 """
 
+from re import S
 import subprocess
 import platform
 import os
@@ -42,15 +43,16 @@ class NM3u8DLRE:
         Args:
             executable_path: 可执行文件路径，默认为 None（自动查找）
         """
+        config = YamlConfig()
+        config.load()
         if executable_path is None:
-            self.executable_path = self.get_executable_name()
+            self.executable_path = config.get("n_m3u8dl_re.executable_path")
         else:
             self.executable_path = executable_path
 
-        config = YamlConfig()
-        config.load()
         self.temp_dir = config.get("n_m3u8dl_re.temp_dir", "temp")
         self.log_dir = config.get("n_m3u8dl_re.log_dir", "logs")
+        self.ui_language = config.get("n_m3u8dl_re.ui_language", "zh-CN")
         self.header_manager = HeaderManager()
 
         self._ensure_directories_exist()
@@ -188,7 +190,7 @@ class NM3u8DLRE:
             self.executable_path,
             m3u8_file,
             "--ui-language",
-            "zh-CN",
+            self.ui_language,
             "--save-name",
             save_name,
             "--save-dir",
@@ -232,23 +234,3 @@ class NM3u8DLRE:
         for key, value in merged_headers.items():
             command.extend(["-H", f"{key}: {value}"])
             logger.debug(f"已添加请求头，{key}: {value}")
-
-    @staticmethod
-    def get_executable_name() -> str:
-        """
-        获取可执行文件名。
-
-        根据操作系统返回对应的可执行文件名。
-
-        Returns:
-            可执行文件名
-        """
-        import os
-
-        system = platform.system()
-        if system == "Windows":
-            return os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
-        elif system == "Linux" or system == "Darwin":
-            return os.path.join("assets", "bin", "N_m3u8DL-RE")
-        else:
-            raise Exception(f"不支持的操作系统: {system}")
