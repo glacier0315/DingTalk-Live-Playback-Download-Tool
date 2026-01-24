@@ -161,7 +161,7 @@ class Downloader:
             browser, cookies_data, m3u8_headers, live_name = self.cookie_handler.get_cookie(url)
             logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
 
-            self.m3u8_parser = M3u8Parser(browser, self.browser_type)
+            self.m3u8_parser = M3u8Parser(browser)
             logger.info("m3u8 解析器创建成功")
 
             while True:
@@ -218,7 +218,7 @@ class Downloader:
             )
             logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
-            self.m3u8_parser = M3u8Parser(browser, self.browser_type)
+            self.m3u8_parser = M3u8Parser(browser)
             logger.info("m3u8 解析器创建成功")
 
             logger.info(f"正在下载第 1 个视频，共 {total_links} 个视频")

@@ -16,16 +16,9 @@
 import re
 import logging
 from urllib.parse import urlparse, parse_qs
-from typing import List, Optional, Union
-from ..browser.edge_driver import EdgeDriver
-from ..browser.chrome_driver import ChromeDriver
-from ..browser.firefox_driver import FirefoxDriver
-from ..config.constants import (
-    BROWSER_TYPE_EDGE,
-    BROWSER_TYPE_CHROME,
-    BROWSER_TYPE_FIREFOX,
-    MAX_RETRY_COUNT,
-)
+from typing import List, Optional
+from ..browser.browser_driver import BrowserDriver
+from ..config.constants import MAX_RETRY_COUNT
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +41,12 @@ class M3u8Parser:
 
     Attributes:
         browser: 浏览器实例
-        browser_type: 浏览器类型
         max_retries: 最大重试次数
     """
 
     def __init__(
         self,
-        browser: Union[EdgeDriver, ChromeDriver, FirefoxDriver],
-        browser_type: str,
+        browser: BrowserDriver,
         max_retries: int = MAX_RETRY_COUNT,
     ):
         """
@@ -63,11 +54,9 @@ class M3u8Parser:
 
         Args:
             browser: 浏览器实例
-            browser_type: 浏览器类型（edge/chrome/firefox）
             max_retries: 最大重试次数，默认为 5
         """
         self.browser = browser
-        self.browser_type = browser_type
         self.max_retries = max_retries
 
     def fetch_m3u8_links(self, url: str) -> Optional[List[str]]:
@@ -93,44 +82,15 @@ class M3u8Parser:
             logger.error("未能从 URL 提取 liveUuid，程序将退出")
             return None
 
-        m3u8_links = []
-
         for attempt in range(self.max_retries):
             try:
-                if self.browser_type in [BROWSER_TYPE_EDGE, BROWSER_TYPE_CHROME]:
-                    logs = self.browser.get_log(LOG_TYPE_PERFORMANCE)
-                elif self.browser_type == BROWSER_TYPE_FIREFOX:
-                    logs = self.browser.get_log(LOG_TYPE_PERFORMANCE)
+                logs = self.browser.get_log(LOG_TYPE_PERFORMANCE)
+                m3u8_links = self.browser.extract_m3u8_links_from_logs(logs)
 
-                for log in logs:
-                    try:
-                        if self.browser_type == BROWSER_TYPE_FIREFOX:
-                            log_message = str(log)
-                            pattern = r'https://[^,\'"]+\.m3u8\?[^\'"]+'
-                            found_links = re.findall(pattern, log_message)
-
-                            if found_links:
-                                cleaned_link = re.sub(r'[\]\s\\\'"]+$', "", found_links[0])
-                                m3u8_links.append(cleaned_link)
-                                logger.debug(f"获取到m3u8链接: {cleaned_link}")
-                                return m3u8_links
-                        else:
-                            if "message" in log:
-                                log_message = log["message"]
-                            else:
-                                log_message = str(log)
-
-                            if ".m3u8" in log_message:
-                                start_idx = log_message.find('url":"') + len('url":"')
-                                end_idx = log_message.find('"', start_idx)
-                                m3u8_url = log_message[start_idx:end_idx]
-
-                                if live_uuid in m3u8_url:
-                                    logger.debug(f"获取到m3u8链接: {m3u8_url}")
-                                    m3u8_links.append(m3u8_url)
-                                    return m3u8_links
-                    except Exception as e:
-                        logger.error(f"处理日志时发生错误: {e}", exc_info=True)
+                for m3u8_url in m3u8_links:
+                    if live_uuid in m3u8_url:
+                        logger.debug(f"获取到m3u8链接: {m3u8_url}")
+                        return [m3u8_url]
 
                 logger.debug(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接，重试中")
                 self._refresh_page()
@@ -138,8 +98,7 @@ class M3u8Parser:
             except Exception as e:
                 logger.error(f"获取 m3u8 链接时发生错误: {e}", exc_info=True)
 
-        if not m3u8_links:
-            logger.warning(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
+        logger.warning(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
         return None
 
     def download_m3u8_file(self, url: str, filename: str, headers: dict) -> str:

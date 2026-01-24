@@ -198,3 +198,33 @@ class BrowserDriver(ABC):
             WebDriver: 浏览器驱动实例，如果未初始化则返回None
         """
         return self.driver
+
+    def extract_m3u8_links_from_logs(self, logs: List[dict]) -> List[str]:
+        """
+        从浏览器日志中提取m3u8链接。
+
+        提供默认实现，处理Edge和Chrome的日志格式。
+        子类可以重写此方法以处理特定浏览器的日志格式。
+
+        Args:
+            logs: 浏览器日志列表
+
+        Returns:
+            List[str]: m3u8链接列表
+        """
+        m3u8_links = []
+        for log in logs:
+            try:
+                if "message" in log:
+                    log_message = log["message"]
+                else:
+                    log_message = str(log)
+
+                if ".m3u8" in log_message:
+                    start_idx = log_message.find('url":"') + len('url":"')
+                    end_idx = log_message.find('"', start_idx)
+                    m3u8_url = log_message[start_idx:end_idx]
+                    m3u8_links.append(m3u8_url)
+            except Exception as e:
+                logger.error(f"提取m3u8链接时发生错误: {e}", exc_info=True)
+        return m3u8_links

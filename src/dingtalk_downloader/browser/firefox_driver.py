@@ -14,6 +14,7 @@
 """
 
 import logging
+import re
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from typing import List
@@ -94,3 +95,31 @@ class FirefoxDriver(BrowserDriver):
             """)
             return logs
         return []
+
+    def extract_m3u8_links_from_logs(self, logs: List[dict]) -> List[str]:
+        """
+        从浏览器日志中提取m3u8链接。
+
+        重写父类方法，处理Firefox特定的日志格式。
+
+        Args:
+            logs: 浏览器日志列表
+
+        Returns:
+            List[str]: m3u8链接列表
+        """
+        m3u8_links = []
+        pattern = r'https://[^,\'"]+\.m3u8\?[^\'"]+'
+        
+        for log in logs:
+            try:
+                log_message = str(log)
+                found_links = re.findall(pattern, log_message)
+                
+                if found_links:
+                    cleaned_link = re.sub(r'[\]\s\\\'"]+$', "", found_links[0])
+                    m3u8_links.append(cleaned_link)
+            except Exception as e:
+                logger.error(f"提取m3u8链接时发生错误: {e}", exc_info=True)
+        
+        return m3u8_links
