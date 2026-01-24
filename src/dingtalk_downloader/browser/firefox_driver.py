@@ -10,14 +10,13 @@
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
     - 2026-01-21: 重构为继承BrowserDriver抽象基类
+    - 2026-01-24: 重构使用super()调用父类，消除代码冗余
 """
 
 import logging
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from typing import List, Optional
+from typing import List
 from .browser_driver import BrowserDriver
 
 logger = logging.getLogger(__name__)
@@ -28,6 +27,8 @@ class FirefoxDriver(BrowserDriver):
     Firefox 浏览器驱动类。
 
     该类封装了 Firefox 浏览器的创建、配置和操作逻辑。
+    继承 BrowserDriver 父类，复用通用方法实现，
+    仅需实现浏览器特定的创建和日志获取逻辑。
 
     Attributes:
         driver: Firefox 浏览器实例
@@ -36,8 +37,11 @@ class FirefoxDriver(BrowserDriver):
     def __init__(self):
         """
         初始化 Firefox 浏览器驱动。
+
+        通过 super().__init__() 调用父类初始化方法，
+        继承 BrowserDriver 的通用属性和行为。
         """
-        self.driver: Optional[webdriver.Firefox] = None
+        super().__init__()
         logger.debug("Firefox 浏览器驱动初始化")
 
     def create_driver(self) -> webdriver.Firefox:
@@ -74,7 +78,7 @@ class FirefoxDriver(BrowserDriver):
         """
         获取浏览器日志。
 
-        获取指定类型的浏览器日志。
+        使用 JavaScript 获取 Firefox 性能日志。
 
         Args:
             log_type: 日志类型（如 "performance"）
@@ -90,80 +94,3 @@ class FirefoxDriver(BrowserDriver):
             """)
             return logs
         return []
-
-    def get_element_by_xpath(self, xpath: str):
-        """
-        通过 XPath 获取元素。
-
-        Args:
-            xpath: XPath 表达式
-
-        Returns:
-            元素对象
-        """
-        if self.driver:
-            return self.driver.find_element(By.XPATH, xpath)
-        return None
-
-    def get_element_by_class_name(self, class_name: str):
-        """
-        通过类名获取元素。
-
-        Args:
-            class_name: 类名
-
-        Returns:
-            元素对象
-        """
-        if self.driver:
-            return self.driver.find_element(By.CLASS_NAME, class_name)
-        return None
-
-    def get_cookies(self) -> List[dict]:
-        """
-        获取Cookie。
-
-        获取浏览器的所有Cookie。
-
-        Returns:
-            Cookie列表
-        """
-        if self.driver:
-            return self.driver.get_cookies()
-        return []
-
-    def navigate(self, url: str) -> None:
-        """
-        导航到指定 URL。
-
-        Args:
-            url: 目标 URL
-        """
-        if self.driver:
-            self.driver.get(url)
-
-    def wait_for_video(self, timeout: int = 20) -> None:
-        """
-        等待视频加载。
-
-        等待视频元素加载完成。
-
-        Args:
-            timeout: 超时时间（秒），默认为 20
-        """
-        if self.driver:
-            WebDriverWait(self.driver, timeout).until(
-                lambda driver: not driver.execute_script(
-                    "return isNaN(document.querySelector('video')?.duration)"
-                )
-            )
-
-    def close(self) -> None:
-        """
-        关闭浏览器，释放资源。
-        """
-        logger.info("开始关闭 Firefox 浏览器")
-        if self.driver:
-            self.driver.quit()
-            self.driver = None
-        logger.info("Firefox 浏览器关闭完成")

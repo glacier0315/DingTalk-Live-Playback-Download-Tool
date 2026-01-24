@@ -122,3 +122,24 @@ def test_browser_factory_multiple_creations():
         assert edge_browser.create_driver() == mock_edge_driver
         assert chrome_browser.create_driver() == mock_chrome_driver
         assert firefox_browser.create_driver() == mock_firefox_driver
+
+
+def test_browser_factory_create_edge_without_mock():
+    """测试创建 Edge 浏览器（不使用 mock）"""
+    with patch("dingtalk_downloader.browser.edge_driver.webdriver.Edge"):
+        browser = BrowserFactory.create_browser(BROWSER_TYPE_EDGE)
+        assert isinstance(browser, EdgeDriver)
+
+
+def test_browser_factory_create_chrome_without_mock():
+    """测试创建 Chrome 浏览器（不使用 mock）"""
+    with patch("dingtalk_downloader.browser.chrome_driver.webdriver.Chrome"):
+        browser = BrowserFactory.create_browser(BROWSER_TYPE_CHROME)
+        assert isinstance(browser, ChromeDriver)
+
+
+def test_browser_factory_create_firefox_without_mock():
+    """测试创建 Firefox 浏览器（不使用 mock）"""
+    with patch("dingtalk_downloader.browser.firefox_driver.webdriver.Firefox"):
+        browser = BrowserFactory.create_browser(BROWSER_TYPE_FIREFOX)
+        assert isinstance(browser, FirefoxDriver)
