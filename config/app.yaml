@@ -57,7 +57,7 @@ logging:
   # 日志级别
   # 可选值：DEBUG, INFO, WARNING, ERROR, CRITICAL
   # 说明：DEBUG显示所有日志，CRITICAL只显示严重错误
-  level: "DEBUG"
+  level: "INFO"
 
   # 日志目录
   # 说明：日志文件保存目录
