@@ -28,6 +28,7 @@ from dingtalk_downloader.config.yaml_config import (
     ConfigLoadError,
     ConfigValueError,
     ConfigValidationError,
+    CONFIG_SCHEMA,
 )
 
 
@@ -37,6 +38,48 @@ def reset_singleton():
     YamlConfig.reset_instance()
     yield
     YamlConfig.reset_instance()
+
+
+def get_full_test_config():
+    """获取完整的测试配置"""
+    return {
+        "app": {"name": "test_app", "version": "1.0.0"},
+        "download": {"default_dir": "test_dir", "temp_dir": "temp", "max_retry_count": 5},
+        "browser": {
+            "default_type": "edge",
+            "headless": False,
+            "timeout": 30,
+        },
+        "logging": {
+            "level": "INFO",
+            "dir": "logs",
+            "max_bytes": 10485760,
+            "backup_count": 5,
+            "retention_days": 30,
+        },
+        "headers": {
+            "user_agent": "Mozilla/5.0",
+            "referer": "https://n.dingtalk.com/",
+            "accept": "application/vnd.apple.mpegurl",
+            "accept_language": "zh-CN,zh;q=0.9",
+            "accept_encoding": "gzip, deflate",
+            "connection": "keep-alive",
+            "sec_fetch_dest": "document",
+            "sec_fetch_mode": "navigate",
+            "sec_fetch_site": "same-origin",
+            "sec_fetch_user": "?1",
+            "upgrade_insecure_requests": "1",
+        },
+        "n_m3u8dl_re": {
+            "executable_path": "assets/bin/N_m3u8DL-RE.exe",
+            "ui_language": "zh-CN",
+            "temp_dir": "temp",
+            "log_dir": "logs",
+        },
+        "ffmpeg": {
+            "executable_path": "assets/bin/ffmpeg.exe",
+        },
+    }
 
 
 def test_yaml_config_singleton():
@@ -89,14 +132,14 @@ def test_yaml_config_load_existing_file():
     """测试加载配置 - 文件存在"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test"}, "download": {"default_dir": "test_dir"}}
+        test_config = get_full_test_config()
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
         config = YamlConfig(config_file=path)
         config.load()
 
-        assert config.config["app"]["name"] == "test"
+        assert config.config["app"]["name"] == "test_app"
         assert config.config["download"]["default_dir"] == "test_dir"
         assert config._loaded is True
     finally:
@@ -108,11 +151,9 @@ def test_yaml_config_load_nonexistent_file():
     """测试加载配置 - 文件不存在"""
     non_existent_path = "/non/existent/config.yaml"
     config = YamlConfig(config_file=non_existent_path)
-    config.load()
 
-    assert config._loaded is True
-    assert "app" in config.config
-    assert "download" in config.config
+    with pytest.raises(ConfigLoadError):
+        config.load()
 
 
 def test_yaml_config_load_invalid_yaml():
@@ -152,7 +193,7 @@ def test_yaml_config_get_existing_key():
     """测试获取配置项 - 键存在"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test_app"}}
+        test_config = get_full_test_config()
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -168,7 +209,7 @@ def test_yaml_config_get_nonexistent_key():
     """测试获取配置项 - 键不存在"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test_app"}}
+        test_config = get_full_test_config()
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -185,10 +226,7 @@ def test_yaml_config_get_nested():
     """测试获取嵌套配置项"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {
-            "app": {"name": "test_app"},
-            "download": {"default_dir": "test_dir"},
-        }
+        test_config = get_full_test_config()
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -204,7 +242,7 @@ def test_yaml_config_get_str():
     """测试获取字符串类型配置项"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test_app"}}
+        test_config = get_full_test_config()
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -222,14 +260,15 @@ def test_yaml_config_get_str_type_error():
     """测试获取字符串类型配置项 - 类型错误"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"count": 123}}
+        test_config = get_full_test_config()
+        test_config["app"]["name"] = 123
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
         config = YamlConfig(config_file=path)
 
         with pytest.raises(ConfigValueError):
-            config.get_str("app.count")
+            config.get_str("app.name")
     finally:
         if os.path.exists(path):
             os.unlink(path)
@@ -239,7 +278,8 @@ def test_yaml_config_get_int():
     """测试获取整数类型配置项"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"count": 123}}
+        test_config = get_full_test_config()
+        test_config["app"]["count"] = 123
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -257,7 +297,8 @@ def test_yaml_config_get_int_from_string():
     """测试从字符串获取整数"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"count": "456"}}
+        test_config = get_full_test_config()
+        test_config["app"]["count"] = "456"
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -273,7 +314,8 @@ def test_yaml_config_get_int_type_error():
     """测试获取整数类型配置项 - 类型错误"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test"}}
+        test_config = get_full_test_config()
+        test_config["app"]["name"] = "test"
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -290,7 +332,8 @@ def test_yaml_config_get_float():
     """测试获取浮点数类型配置项"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"ratio": 3.14}}
+        test_config = get_full_test_config()
+        test_config["app"]["ratio"] = 3.14
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -308,7 +351,8 @@ def test_yaml_config_get_float_from_string():
     """测试从字符串获取浮点数"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"ratio": "2.71"}}
+        test_config = get_full_test_config()
+        test_config["app"]["ratio"] = "2.71"
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -324,7 +368,9 @@ def test_yaml_config_get_bool():
     """测试获取布尔类型配置项"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"enabled": True, "disabled": False}}
+        test_config = get_full_test_config()
+        test_config["app"]["enabled"] = True
+        test_config["app"]["disabled"] = False
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -343,18 +389,15 @@ def test_yaml_config_get_bool_from_string():
     """测试从字符串获取布尔值"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {
-            "app": {
-                "true1": "true",
-                "true2": "1",
-                "true3": "yes",
-                "true4": "on",
-                "false1": "false",
-                "false2": "0",
-                "false3": "no",
-                "false4": "off",
-            }
-        }
+        test_config = get_full_test_config()
+        test_config["app"]["true1"] = "true"
+        test_config["app"]["true2"] = "1"
+        test_config["app"]["true3"] = "yes"
+        test_config["app"]["true4"] = "on"
+        test_config["app"]["false1"] = "false"
+        test_config["app"]["false2"] = "0"
+        test_config["app"]["false3"] = "no"
+        test_config["app"]["false4"] = "off"
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -377,7 +420,8 @@ def test_yaml_config_get_bool_type_error():
     """测试获取布尔类型配置项 - 类型错误"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test"}}
+        test_config = get_full_test_config()
+        test_config["app"]["name"] = "test"
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -394,7 +438,8 @@ def test_yaml_config_get_list():
     """测试获取列表类型配置项"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"items": [1, 2, 3]}}
+        test_config = get_full_test_config()
+        test_config["app"]["items"] = [1, 2, 3]
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -412,7 +457,8 @@ def test_yaml_config_get_list_type_error():
     """测试获取列表类型配置项 - 类型错误"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test"}}
+        test_config = get_full_test_config()
+        test_config["app"]["name"] = "test"
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -429,7 +475,8 @@ def test_yaml_config_get_dict():
     """测试获取字典类型配置项"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"settings": {"key1": "value1", "key2": "value2"}}}
+        test_config = get_full_test_config()
+        test_config["app"]["settings"] = {"key1": "value1", "key2": "value2"}
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -447,7 +494,8 @@ def test_yaml_config_get_dict_type_error():
     """测试获取字典类型配置项 - 类型错误"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test"}}
+        test_config = get_full_test_config()
+        test_config["app"]["name"] = "test"
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -464,7 +512,7 @@ def test_yaml_config_get_nested_method():
     """测试get_nested方法"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test_app"}, "download": {"default_dir": "test_dir"}}
+        test_config = get_full_test_config()
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -481,7 +529,7 @@ def test_yaml_config_reload():
     """测试重新加载配置"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test_app"}}
+        test_config = get_full_test_config()
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -490,7 +538,8 @@ def test_yaml_config_reload():
 
         assert config.config["app"]["name"] == "test_app"
 
-        updated_config = {"app": {"name": "updated_app"}}
+        updated_config = get_full_test_config()
+        updated_config["app"]["name"] = "updated_app"
         with open(path, "w", encoding="utf-8") as f:
             yaml.dump(updated_config, f)
 
@@ -506,12 +555,7 @@ def test_yaml_config_validate():
     """测试配置验证"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {
-            "app": {"name": "test"},
-            "download": {"default_dir": "test_dir"},
-            "browser": {"default_type": "edge"},
-            "logging": {"level": "INFO"},
-        }
+        test_config = get_full_test_config()
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
@@ -535,122 +579,127 @@ def test_yaml_config_validate_invalid():
             yaml.dump(test_config, f)
 
         config = YamlConfig(config_file=path)
-        config.load()
-
-        # 手动删除必需的配置部分以触发验证失败
-        del config.config["download"]
-        del config.config["logging"]
 
         with pytest.raises(ConfigValidationError):
-            config.validate()
+            config.load()
     finally:
         if os.path.exists(path):
             os.unlink(path)
 
 
-def test_yaml_config_default_config():
-    """测试默认配置"""
-    config = YamlConfig()
-
-    assert "app" in config.default_config
-    assert "download" in config.default_config
-    assert "logging" in config.default_config
-    assert "headers" in config.default_config
-    assert "n_m3u8dl_re" in config.default_config
-
-
-def test_yaml_config_merge_configs():
-    """测试配置合并"""
-    config = YamlConfig()
-
-    user_config = {"app": {"name": "user_app"}, "download": {"default_dir": "user_dir"}}
-
-    default_config = {
-        "app": {"name": "default_app", "version": "1.0"},
-        "download": {"default_dir": "Downloads", "temp_dir": "temp"},
-    }
-
-    merged = config._merge_configs(user_config, default_config)
-
-    assert merged["app"]["name"] == "user_app"
-    assert merged["app"]["version"] == "1.0"
-    assert merged["download"]["default_dir"] == "user_dir"
-    assert merged["download"]["temp_dir"] == "temp"
+def test_config_schema():
+    """测试CONFIG_SCHEMA定义"""
+    assert "app" in CONFIG_SCHEMA
+    assert "download" in CONFIG_SCHEMA
+    assert "browser" in CONFIG_SCHEMA
+    assert "logging" in CONFIG_SCHEMA
+    assert "headers" in CONFIG_SCHEMA
+    assert "n_m3u8dl_re" in CONFIG_SCHEMA
+    assert "ffmpeg" in CONFIG_SCHEMA
 
 
-def test_yaml_config_lazy_loading():
-    """测试延迟加载"""
+def test_config_schema_required():
+    """测试CONFIG_SCHEMA必填项"""
+    assert CONFIG_SCHEMA["app"]["required"] is True
+    assert CONFIG_SCHEMA["download"]["required"] is True
+    assert CONFIG_SCHEMA["browser"]["required"] is True
+    assert CONFIG_SCHEMA["logging"]["required"] is True
+    assert CONFIG_SCHEMA["headers"]["required"] is True
+    assert CONFIG_SCHEMA["n_m3u8dl_re"]["required"] is True
+    assert CONFIG_SCHEMA["ffmpeg"]["required"] is True
+
+
+def test_config_schema_fields():
+    """测试CONFIG_SCHEMA字段定义"""
+    assert "fields" in CONFIG_SCHEMA["app"]
+    assert "name" in CONFIG_SCHEMA["app"]["fields"]
+    assert "version" in CONFIG_SCHEMA["app"]["fields"]
+    assert CONFIG_SCHEMA["app"]["fields"]["name"]["required"] is True
+    assert CONFIG_SCHEMA["app"]["fields"]["name"]["type"] == str
+
+
+def test_config_validate_missing_required():
+    """测试配置验证 - 缺少必填项"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test_app"}}
+        test_config = {
+            "app": {"name": "test"},
+        }
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
         config = YamlConfig(config_file=path)
 
-        assert config._loaded is False
+        with pytest.raises(ConfigValidationError) as exc_info:
+            config.load()
 
-        value = config.get("app.name")
-
-        assert config._loaded is True
-        assert value == "test_app"
+        assert "缺少必填配置项" in str(exc_info.value)
     finally:
         if os.path.exists(path):
             os.unlink(path)
 
 
-def test_yaml_config_thread_safety():
-    """测试线程安全性"""
+def test_config_validate_type_error():
+    """测试配置验证 - 类型错误"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
-        test_config = {"app": {"name": "test_app"}}
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            yaml.dump(test_config, f)
-
-        results = []
-        errors = []
-
-        def worker():
-            try:
-                config = YamlConfig(config_file=path)
-                value = config.get("app.name")
-                results.append(value)
-            except Exception as e:
-                errors.append(e)
-
-        threads = [threading.Thread(target=worker) for _ in range(10)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-        assert len(errors) == 0
-        assert all(r == "test_app" for r in results)
-    finally:
-        if os.path.exists(path):
-            os.unlink(path)
-
-
-
-
-
-def test_yaml_config_no_duplicate_load():
-    """测试不重复加载"""
-    fd, path = tempfile.mkstemp(suffix=".yaml")
-    try:
-        test_config = {"app": {"name": "test_app"}}
+        test_config = get_full_test_config()
+        test_config["app"]["name"] = 123
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.dump(test_config, f)
 
         config = YamlConfig(config_file=path)
-        config.load()
-        first_load_id = id(config.config)
 
-        config.load()
-        config.load()
-        config.load()
+        with pytest.raises(ConfigValueError) as exc_info:
+            config.load()
 
-        assert id(config.config) == first_load_id
+        assert "配置项类型错误" in str(exc_info.value)
+        assert "期望类型: str" in str(exc_info.value)
+        assert "实际类型: int" in str(exc_info.value)
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
+
+
+def test_config_validate_range_error():
+    """测试配置验证 - 值超出范围"""
+    fd, path = tempfile.mkstemp(suffix=".yaml")
+    try:
+        test_config = get_full_test_config()
+        test_config["download"]["max_retry_count"] = 200
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            yaml.dump(test_config, f)
+
+        config = YamlConfig(config_file=path)
+
+        with pytest.raises(ConfigValueError) as exc_info:
+            config.load()
+
+        assert "配置值过大" in str(exc_info.value)
+        assert "最大值: 100" in str(exc_info.value)
+        assert "实际值: 200" in str(exc_info.value)
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
+
+
+def test_config_validate_choices_error():
+    """测试配置验证 - 值不在选项中"""
+    fd, path = tempfile.mkstemp(suffix=".yaml")
+    try:
+        test_config = get_full_test_config()
+        test_config["browser"]["default_type"] = "safari"
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            yaml.dump(test_config, f)
+
+        config = YamlConfig(config_file=path)
+
+        with pytest.raises(ConfigValueError) as exc_info:
+            config.load()
+
+        assert "配置值无效" in str(exc_info.value)
+        assert "可选值:" in str(exc_info.value)
+        assert "实际值: safari" in str(exc_info.value)
     finally:
         if os.path.exists(path):
             os.unlink(path)

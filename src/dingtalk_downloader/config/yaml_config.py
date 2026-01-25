@@ -3,6 +3,7 @@
 
 本模块负责管理YAML格式的配置文件。
 采用单例模式确保配置文件在应用生命周期内仅被加载一次。
+支持配置验证，确保配置值的有效性和完整性。
 
 作者：项目团队
 依赖：yaml, os, typing, logging, threading
@@ -11,6 +12,7 @@
     - 2026-01-21: 初始版本
     - 2026-01-21: 优化配置文件路径，使用CONFIG_FILE_PATH常量
     - 2026-01-25: 实现单例模式和线程安全，添加类型安全访问接口
+    - 2026-01-25: 移除硬编码默认值，实现配置验证机制
 """
 
 import os
@@ -23,6 +25,84 @@ from ..config.constants import CONFIG_FILE_PATH
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+CONFIG_SCHEMA = {
+    "app": {
+        "required": True,
+        "type": dict,
+        "fields": {
+            "name": {"required": True, "type": str},
+            "version": {"required": True, "type": str},
+        },
+    },
+    "download": {
+        "required": True,
+        "type": dict,
+        "fields": {
+            "default_dir": {"required": True, "type": str},
+            "temp_dir": {"required": True, "type": str},
+            "max_retry_count": {"required": True, "type": int, "min": 1, "max": 100},
+        },
+    },
+    "browser": {
+        "required": True,
+        "type": dict,
+        "fields": {
+            "default_type": {"required": True, "type": str, "choices": ["edge", "chrome", "firefox"]},
+            "headless": {"required": True, "type": bool},
+            "timeout": {"required": True, "type": int, "min": 1, "max": 300},
+        },
+    },
+    "logging": {
+        "required": True,
+        "type": dict,
+        "fields": {
+            "level": {
+                "required": True,
+                "type": str,
+                "choices": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            },
+            "dir": {"required": True, "type": str},
+            "max_bytes": {"required": True, "type": int, "min": 1024},
+            "backup_count": {"required": True, "type": int, "min": 1, "max": 100},
+            "retention_days": {"required": True, "type": int, "min": 1, "max": 365},
+        },
+    },
+    "headers": {
+        "required": True,
+        "type": dict,
+        "fields": {
+            "user_agent": {"required": True, "type": str},
+            "referer": {"required": True, "type": str},
+            "accept": {"required": True, "type": str},
+            "accept_language": {"required": True, "type": str},
+            "accept_encoding": {"required": True, "type": str},
+            "connection": {"required": True, "type": str},
+            "sec_fetch_dest": {"required": True, "type": str},
+            "sec_fetch_mode": {"required": True, "type": str},
+            "sec_fetch_site": {"required": True, "type": str},
+            "sec_fetch_user": {"required": True, "type": str},
+            "upgrade_insecure_requests": {"required": True, "type": str},
+        },
+    },
+    "n_m3u8dl_re": {
+        "required": True,
+        "type": dict,
+        "fields": {
+            "executable_path": {"required": True, "type": str},
+            "ui_language": {"required": True, "type": str},
+            "temp_dir": {"required": True, "type": str},
+            "log_dir": {"required": True, "type": str},
+        },
+    },
+    "ffmpeg": {
+        "required": True,
+        "type": dict,
+        "fields": {
+            "executable_path": {"required": True, "type": str},
+        },
+    },
+}
 
 
 class ConfigError(Exception):
@@ -68,11 +148,11 @@ class YamlConfig:
 
     采用单例模式确保配置文件在应用生命周期内仅被加载一次。
     支持线程安全的并发访问。
+    支持配置验证，确保配置值的有效性和完整性。
 
     Attributes:
         config (dict): 配置字典
         config_file (str): 配置文件路径
-        default_config (dict): 默认配置
         _loaded (bool): 配置是否已加载
         _lock (threading.RLock): 线程锁
         _instance (YamlConfig): 单例实例
@@ -115,15 +195,14 @@ class YamlConfig:
         else:
             self.config_file = config_file
 
-        self.default_config = self._load_default_config()
         logger.debug(f"YamlConfig初始化完成，配置文件路径: {self.config_file}")
 
     def load(self) -> None:
         """
         加载配置文件。
 
-        从配置文件中加载配置项，如果配置文件不存在，则使用默认配置。
-        如果配置文件不存在，则自动创建配置文件目录和默认配置文件。
+        从配置文件中加载配置项，如果配置文件不存在则抛出异常。
+        加载完成后自动验证配置有效性。
         线程安全，确保只加载一次。
         """
         with self._lock:
@@ -132,33 +211,27 @@ class YamlConfig:
                 return
 
             logger.info(f"开始加载配置文件: {self.config_file}")
-            user_config = {}
 
-            if os.path.exists(self.config_file):
-                try:
-                    with open(self.config_file, "r", encoding="utf-8") as f:
-                        user_config = yaml.safe_load(f) or {}
-                    logger.info(f"配置文件加载成功: {self.config_file}")
-                except yaml.YAMLError as e:
-                    error_msg = f"配置文件格式错误: {e}，使用默认配置"
-                    logger.error(error_msg)
-                    raise ConfigLoadError(error_msg) from e
-                except IOError as e:
-                    error_msg = f"读取配置文件失败: {e}，使用默认配置"
-                    logger.error(error_msg)
-                    raise ConfigLoadError(error_msg) from e
-            else:
-                logger.warning(f"配置文件不存在: {self.config_file}")
-                logger.info(f"自动创建配置文件目录: {os.path.dirname(self.config_file)}")
-                try:
-                    os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-                    logger.info("配置文件目录创建成功")
-                except Exception as e:
-                    error_msg = f"创建配置文件目录失败: {e}"
-                    logger.error(error_msg)
-                    raise ConfigLoadError(error_msg) from e
+            if not os.path.exists(self.config_file):
+                error_msg = f"配置文件不存在: {self.config_file}"
+                logger.error(error_msg)
+                raise ConfigLoadError(error_msg)
 
-            self.config = self._merge_configs(user_config, self.default_config)
+            try:
+                with open(self.config_file, "r", encoding="utf-8") as f:
+                    self.config = yaml.safe_load(f) or {}
+                logger.info(f"配置文件加载成功: {self.config_file}")
+            except yaml.YAMLError as e:
+                error_msg = f"配置文件格式错误: {e}"
+                logger.error(error_msg)
+                raise ConfigLoadError(error_msg) from e
+            except IOError as e:
+                error_msg = f"读取配置文件失败: {e}"
+                logger.error(error_msg)
+                raise ConfigLoadError(error_msg) from e
+
+            self._validate_config(self.config, CONFIG_SCHEMA)
+
             self._loaded = True
             logger.info("配置加载完成")
 
@@ -341,6 +414,60 @@ class YamlConfig:
                     return default
             return current
 
+    def _validate_config(
+        self, config: Dict[str, Any], schema: Dict[str, Any], path: str = ""
+    ) -> None:
+        """
+        验证配置是否符合schema定义。
+
+        Args:
+            config: 配置字典
+            schema: 配置schema
+            path: 当前配置路径（用于错误信息）
+
+        Raises:
+            ConfigValidationError: 必填项缺失
+            ConfigValueError: 类型不匹配、值超出范围、值不在选项中
+        """
+        for key, field_schema in schema.items():
+            current_path = f"{path}.{key}" if path else key
+
+            if field_schema.get("required", False) and key not in config:
+                raise ConfigValidationError(f"缺少必填配置项: {current_path}")
+
+            if key not in config:
+                continue
+
+            value = config[key]
+
+            expected_type = field_schema.get("type")
+            if expected_type and not isinstance(value, expected_type):
+                raise ConfigValueError(
+                    f"配置项类型错误: {current_path}, 期望类型: {expected_type.__name__}, 实际类型: {type(value).__name__}",
+                    current_path,
+                )
+
+            if "min" in field_schema and value < field_schema["min"]:
+                raise ConfigValueError(
+                    f"配置值过小: {current_path}, 最小值: {field_schema['min']}, 实际值: {value}",
+                    current_path,
+                )
+
+            if "max" in field_schema and value > field_schema["max"]:
+                raise ConfigValueError(
+                    f"配置值过大: {current_path}, 最大值: {field_schema['max']}, 实际值: {value}",
+                    current_path,
+                )
+
+            if "choices" in field_schema and value not in field_schema["choices"]:
+                raise ConfigValueError(
+                    f"配置值无效: {current_path}, 可选值: {field_schema['choices']}, 实际值: {value}",
+                    current_path,
+                )
+
+            if "fields" in field_schema and isinstance(value, dict):
+                self._validate_config(value, field_schema["fields"], current_path)
+
     def reload(self) -> None:
         """
         重新加载配置文件。
@@ -360,7 +487,7 @@ class YamlConfig:
         验证配置有效性。
 
         Returns:
-            验证结果，True表示配置有效，False表示配置无效
+            验证结果，True表示配置有效
 
         Raises:
             ConfigValidationError: 配置验证失败
@@ -368,28 +495,9 @@ class YamlConfig:
         if not self._loaded:
             self.load()
 
-        try:
-            required_sections = ["app", "download", "logging"]
-            missing_sections = []
-
-            for section in required_sections:
-                if section not in self.config:
-                    missing_sections.append(section)
-
-            if missing_sections:
-                error_msg = f"配置缺少必要部分: {', '.join(missing_sections)}"
-                logger.error(error_msg)
-                raise ConfigValidationError(error_msg)
-
-            logger.info("配置验证通过")
-            return True
-
-        except ConfigValidationError:
-            raise
-        except Exception as e:
-            error_msg = f"配置验证失败: {e}"
-            logger.error(error_msg)
-            raise ConfigValidationError(error_msg) from e
+        self._validate_config(self.config, CONFIG_SCHEMA)
+        logger.info("配置验证通过")
+        return True
 
     @classmethod
     def get_instance(cls, config_file: Optional[str] = None) -> "YamlConfig":
@@ -414,74 +522,3 @@ class YamlConfig:
         with cls._lock:
             cls._instance = None
             logger.debug("YamlConfig单例实例已重置")
-
-    def _load_default_config(self) -> Dict[str, Any]:
-        """
-        加载默认配置。
-
-        Returns:
-            默认配置字典
-        """
-        return {
-            "app": {
-                "name": "钉钉直播回放下载工具",
-                "version": "1.5.0",
-            },
-            "download": {
-                "default_dir": "Downloads",
-                "temp_dir": "temp",
-            },
-            "logging": {
-                "level": "INFO",
-                "dir": "logs",
-                "max_bytes": 10485760,
-                "backup_count": 5,
-                "retention_days": 30,
-            },
-            "headers": {
-                "user_agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/120.0.0.0 Safari/537.36"
-                ),
-                "referer": "https://n.dingtalk.com/",
-                "accept": "application/vnd.apple.mpegurl, text/plain, */*",
-                "accept_language": "zh-CN,zh;q=0.9,en;q=0.8",
-                "accept_encoding": "gzip, deflate, br",
-                "connection": "keep-alive",
-                "sec_fetch_dest": "document",
-                "sec_fetch_mode": "navigate",
-                "sec_fetch_site": "same-origin",
-                "sec_fetch_user": "?1",
-                "upgrade_insecure_requests": "1",
-            },
-            "n_m3u8dl_re": {
-                "temp_dir": "temp",
-                "log_dir": "logs",
-            },
-        }
-
-    def _merge_configs(
-        self, user_config: Dict[str, Any], default_config: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        合并配置。
-
-        将用户配置与默认配置合并，用户配置优先。
-
-        Args:
-            user_config: 用户配置
-            default_config: 默认配置
-
-        Returns:
-            合并后的配置
-        """
-        merged = default_config.copy()
-
-        for key, value in user_config.items():
-            if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
-                merged[key] = self._merge_configs(value, merged[key])
-            else:
-                merged[key] = value
-
-        return merged
