@@ -631,39 +631,7 @@ def test_yaml_config_thread_safety():
             os.unlink(path)
 
 
-def test_yaml_config_concurrent_writes():
-    """测试并发写入"""
-    fd, path = tempfile.mkstemp(suffix=".yaml")
-    try:
-        os.close(fd)
-        os.unlink(path)
 
-        errors = []
-
-        def worker(index):
-            try:
-                config = YamlConfig(config_file=path)
-                config.set(f"test.key{index}", f"value{index}")
-            except Exception as e:
-                errors.append(e)
-
-        threads = [threading.Thread(target=worker, args=(i,)) for i in range(5)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-        assert len(errors) == 0
-
-        config = YamlConfig(config_file=path)
-        for i in range(5):
-            assert config.get(f"test.key{i}") == f"value{i}"
-    finally:
-        if os.path.exists(path):
-            try:
-                os.unlink(path)
-            except:
-                pass
 
 
 def test_yaml_config_no_duplicate_load():

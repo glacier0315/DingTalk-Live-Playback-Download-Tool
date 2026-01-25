@@ -41,14 +41,21 @@ def test_setup_logging_from_yaml():
 
         with patch("dingtalk_downloader.config.yaml_config.YamlConfig") as mock_yaml_config_class:
             mock_instance = Mock()
-            mock_instance.get.side_effect = lambda key, default=None: {
+            mock_instance.get_str.side_effect = lambda key, default=None: {
                 "logging.level": "DEBUG",
                 "logging.dir": "test_logs",
                 "logging.max_bytes": 5242880,
                 "logging.backup_count": 3,
                 "logging.retention_days": 15,
             }.get(key, default)
-            mock_yaml_config_class.return_value = mock_instance
+            mock_instance.get_int.side_effect = lambda key, default=None: {
+                "logging.level": "DEBUG",
+                "logging.dir": "test_logs",
+                "logging.max_bytes": 5242880,
+                "logging.backup_count": 3,
+                "logging.retention_days": 15,
+            }.get(key, default)
+            mock_yaml_config_class.get_instance.return_value = mock_instance
 
             LoggerConfig._initialized = False
             LoggerConfig.setup_logging()
@@ -64,14 +71,21 @@ def test_log_level_from_yaml():
     """测试从YAML读取日志级别"""
     with patch("dingtalk_downloader.config.yaml_config.YamlConfig") as mock_yaml_config_class:
         mock_instance = Mock()
-        mock_instance.get.side_effect = lambda key, default=None: {
+        mock_instance.get_str.side_effect = lambda key, default=None: {
             "logging.level": "WARNING",
             "logging.dir": "logs",
             "logging.max_bytes": 10485760,
             "logging.backup_count": 5,
             "logging.retention_days": 30,
         }.get(key, default)
-        mock_yaml_config_class.return_value = mock_instance
+        mock_instance.get_int.side_effect = lambda key, default=None: {
+            "logging.level": "WARNING",
+            "logging.dir": "logs",
+            "logging.max_bytes": 10485760,
+            "logging.backup_count": 5,
+            "logging.retention_days": 30,
+        }.get(key, default)
+        mock_yaml_config_class.get_instance.return_value = mock_instance
 
         LoggerConfig._initialized = False
         LoggerConfig.setup_logging()
@@ -84,14 +98,21 @@ def test_log_dir_from_yaml():
     """测试从YAML读取日志目录"""
     with patch("dingtalk_downloader.config.yaml_config.YamlConfig") as mock_yaml_config_class:
         mock_instance = Mock()
-        mock_instance.get.side_effect = lambda key, default=None: {
+        mock_instance.get_str.side_effect = lambda key, default=None: {
             "logging.level": "INFO",
             "logging.dir": "custom_logs",
             "logging.max_bytes": 10485760,
             "logging.backup_count": 5,
             "logging.retention_days": 30,
         }.get(key, default)
-        mock_yaml_config_class.return_value = mock_instance
+        mock_instance.get_int.side_effect = lambda key, default=None: {
+            "logging.level": "INFO",
+            "logging.dir": "custom_logs",
+            "logging.max_bytes": 10485760,
+            "logging.backup_count": 5,
+            "logging.retention_days": 30,
+        }.get(key, default)
+        mock_yaml_config_class.get_instance.return_value = mock_instance
 
         LoggerConfig._initialized = False
         LoggerConfig.setup_logging()
@@ -160,14 +181,21 @@ def test_setup_logging_with_override():
     """测试使用参数覆盖YAML配置"""
     with patch("dingtalk_downloader.config.yaml_config.YamlConfig") as mock_yaml_config_class:
         mock_instance = Mock()
-        mock_instance.get.side_effect = lambda key, default=None: {
+        mock_instance.get_str.side_effect = lambda key, default=None: {
             "logging.level": "INFO",
             "logging.dir": "logs",
             "logging.max_bytes": 10485760,
             "logging.backup_count": 5,
             "logging.retention_days": 30,
         }.get(key, default)
-        mock_yaml_config_class.return_value = mock_instance
+        mock_instance.get_int.side_effect = lambda key, default=None: {
+            "logging.level": "INFO",
+            "logging.dir": "logs",
+            "logging.max_bytes": 10485760,
+            "logging.backup_count": 5,
+            "logging.retention_days": 30,
+        }.get(key, default)
+        mock_yaml_config_class.get_instance.return_value = mock_instance
 
         LoggerConfig._initialized = False
         LoggerConfig.setup_logging(log_level="ERROR")

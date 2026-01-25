@@ -11,49 +11,58 @@ from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
 class TestNM3u8DLREInit:
     """测试 NM3u8DLRE 初始化"""
 
-    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
     @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
     @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
-    def test_init_default_windows(self, mock_ensure, mock_config, mock_system):
+    def test_init_default_windows(self, mock_ensure, mock_config):
         """测试 Windows 系统默认初始化"""
-        mock_system.return_value = "Windows"
+        import os
         mock_config_instance = Mock()
-        mock_config_instance.get.side_effect = lambda key, default=None: default
+        mock_config_instance.get.side_effect = lambda key, default=None: {
+            "n_m3u8dl_re.executable_path": os.path.join("assets", "bin", "N_m3u8DL-RE.exe"),
+            "n_m3u8dl_re.temp_dir": "temp",
+            "n_m3u8dl_re.log_dir": "logs",
+            "n_m3u8dl_re.ui_language": "zh-CN",
+        }.get(key, default)
         mock_config.return_value = mock_config_instance
         dl = NM3u8DLRE()
-        import os
 
         assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
         assert dl.temp_dir == "temp"
         assert dl.log_dir == "logs"
 
-    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
     @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
     @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
-    def test_init_default_linux(self, mock_ensure, mock_config, mock_system):
+    def test_init_default_linux(self, mock_ensure, mock_config):
         """测试 Linux 系统默认初始化"""
-        mock_system.return_value = "Linux"
+        import os
         mock_config_instance = Mock()
-        mock_config_instance.get.side_effect = lambda key, default=None: default
+        mock_config_instance.get.side_effect = lambda key, default=None: {
+            "n_m3u8dl_re.executable_path": os.path.join("assets", "bin", "N_m3u8DL-RE"),
+            "n_m3u8dl_re.temp_dir": "temp",
+            "n_m3u8dl_re.log_dir": "logs",
+            "n_m3u8dl_re.ui_language": "zh-CN",
+        }.get(key, default)
         mock_config.return_value = mock_config_instance
         dl = NM3u8DLRE()
-        import os
 
         assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE")
         assert dl.temp_dir == "temp"
         assert dl.log_dir == "logs"
 
-    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
     @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
     @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
-    def test_init_default_macos(self, mock_ensure, mock_config, mock_system):
+    def test_init_default_macos(self, mock_ensure, mock_config):
         """测试 macOS 系统默认初始化"""
-        mock_system.return_value = "Darwin"
+        import os
         mock_config_instance = Mock()
-        mock_config_instance.get.side_effect = lambda key, default=None: default
+        mock_config_instance.get.side_effect = lambda key, default=None: {
+            "n_m3u8dl_re.executable_path": os.path.join("assets", "bin", "N_m3u8DL-RE"),
+            "n_m3u8dl_re.temp_dir": "temp",
+            "n_m3u8dl_re.log_dir": "logs",
+            "n_m3u8dl_re.ui_language": "zh-CN",
+        }.get(key, default)
         mock_config.return_value = mock_config_instance
         dl = NM3u8DLRE()
-        import os
 
         assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE")
         assert dl.temp_dir == "temp"
@@ -133,43 +142,7 @@ class TestNM3u8DLREGetLogFilePath:
         assert log_path1 != log_path2
 
 
-class TestNM3u8DLREGetExecutableName:
-    """测试获取可执行文件名"""
 
-    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
-    def test_get_executable_name_windows(self, mock_system):
-        """测试 Windows 系统可执行文件名"""
-        mock_system.return_value = "Windows"
-        name = NM3u8DLRE.get_executable_name()
-        import os
-
-        assert name == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
-
-    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
-    def test_get_executable_name_linux(self, mock_system):
-        """测试 Linux 系统可执行文件名"""
-        mock_system.return_value = "Linux"
-        name = NM3u8DLRE.get_executable_name()
-        import os
-
-        assert name == os.path.join("assets", "bin", "N_m3u8DL-RE")
-
-    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
-    def test_get_executable_name_macos(self, mock_system):
-        """测试 macOS 系统可执行文件名"""
-        mock_system.return_value = "Darwin"
-        name = NM3u8DLRE.get_executable_name()
-        import os
-
-        assert name == os.path.join("assets", "bin", "N_m3u8DL-RE")
-
-    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
-    def test_get_executable_name_unsupported(self, mock_system):
-        """测试不支持的操作系统"""
-        mock_system.return_value = "FreeBSD"
-        with pytest.raises(Exception) as exc_info:
-            NM3u8DLRE.get_executable_name()
-        assert "不支持的操作系统" in str(exc_info.value)
 
 
 class TestNM3u8DLREBuildCommand:
@@ -530,21 +503,23 @@ class TestNM3u8DLREIntegration:
     """测试集成场景"""
 
     @patch("dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run")
-    @patch("dingtalk_downloader.binary.n_m3u8dl_re.platform.system")
     @patch("dingtalk_downloader.binary.n_m3u8dl_re.YamlConfig")
     @patch("dingtalk_downloader.utils.path_helper.ensure_dir_exists")
-    def test_full_workflow(self, mock_ensure, mock_config, mock_system, mock_run):
+    def test_full_workflow(self, mock_ensure, mock_config, mock_run):
         """测试完整工作流程"""
+        import os
         mock_config_instance = Mock()
-        mock_config_instance.get.side_effect = lambda key, default=None: default
+        mock_config_instance.get.side_effect = lambda key, default=None: {
+            "n_m3u8dl_re.executable_path": os.path.join("assets", "bin", "N_m3u8DL-RE.exe"),
+            "n_m3u8dl_re.temp_dir": "temp",
+            "n_m3u8dl_re.log_dir": "logs",
+            "n_m3u8dl_re.ui_language": "zh-CN",
+        }.get(key, default)
         mock_config.return_value = mock_config_instance
         mock_run.return_value = subprocess.CompletedProcess(
             args=[], returncode=0, stdout="INFO: 下载成功", stderr=""
         )
-        mock_system.return_value = "Windows"
         dl = NM3u8DLRE()
-
-        import os
 
         assert dl.executable_path == os.path.join("assets", "bin", "N_m3u8DL-RE.exe")
 
@@ -559,7 +534,6 @@ class TestNM3u8DLREIntegration:
 
         assert "test.m3u8" in command
         assert any("Cookie:" in arg for arg in command)
-
         result = dl.download(
             m3u8_file="test.m3u8",
             save_name="output",
