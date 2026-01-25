@@ -2,12 +2,14 @@
 钉钉直播回放下载工具 - 请求头管理模块
 
 本模块负责统一管理请求头配置，支持动态覆盖机制。
+使用YamlConfig单例模式确保配置只加载一次。
 
 作者：项目团队
 依赖：typing, logging
 创建日期：2026-01-22
 修改历史：
     - 2026-01-22: 初始版本，实现请求头配置加载与动态覆盖
+    - 2026-01-25: 使用YamlConfig单例模式
 """
 
 import logging
@@ -29,15 +31,14 @@ class HeaderManager:
         _override_headers (Dict[str, str]): 覆盖请求头
     """
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self):
         """
         初始化请求头管理器。
 
         Args:
             config_file: 配置文件路径，默认为None（使用默认路径）
         """
-        self.config = YamlConfig(config_file)
-        self.config.load()
+        self.config = YamlConfig.get_instance()
         self._headers_cache: Dict[str, str] = {}
         self._override_headers: Dict[str, str] = {}
 

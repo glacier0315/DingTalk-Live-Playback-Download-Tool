@@ -23,7 +23,6 @@ from ..binary.n_m3u8dl_re import NM3u8DLRE
 from ..utils.path_helper import ensure_dir_exists
 from ..utils.validator import validate_required_input, validate_dingtalk_url
 from ..utils.m3u8_file_manager import M3u8FileManager
-from ..config.yaml_config import YamlConfig
 from ..config.constants import (
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
@@ -324,10 +323,10 @@ class Downloader:
             默认下载目录路径
         """
         try:
-            config = YamlConfig()
-            config.load()
+            from ..config.yaml_config import YamlConfig
 
-            default_dir = config.get("download.default_dir", "Downloads")
+            config = YamlConfig.get_instance()
+            default_dir = config.get_str("download.default_dir", "Downloads")
 
             if os.path.isabs(default_dir):
                 downloads_dir = default_dir

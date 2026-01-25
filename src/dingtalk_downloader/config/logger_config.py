@@ -2,6 +2,7 @@
 钉钉直播回放下载工具 - 日志配置模块
 
 本模块负责配置和管理日志系统。
+使用YamlConfig单例模式确保配置只加载一次。
 
 作者：项目团队
 依赖：logging, logging.handlers, os, datetime
@@ -9,6 +10,7 @@
 修改历史：
     - 2025-01-15: 初始版本
     - 2026-01-21: 改造为从YAML读取配置
+    - 2026-01-25: 使用YamlConfig单例模式
 """
 
 import logging
@@ -74,16 +76,16 @@ class LoggerConfig:
         try:
             from .yaml_config import YamlConfig
 
-            yaml_config = YamlConfig()
+            yaml_config = YamlConfig.get_instance()
 
-            LoggerConfig._log_dir = yaml_config.get("logging.dir", "logs")
+            LoggerConfig._log_dir = yaml_config.get_str("logging.dir", "logs")
             os.makedirs(LoggerConfig._log_dir, exist_ok=True)
 
-            log_level_str = log_level or yaml_config.get("logging.level", "INFO")
+            log_level_str = log_level or yaml_config.get_str("logging.level", "INFO")
             numeric_level = getattr(logging, log_level_str.upper(), logging.INFO)
 
-            max_bytes = yaml_config.get("logging.max_bytes", 10 * 1024 * 1024)
-            backup_count = yaml_config.get("logging.backup_count", 5)
+            max_bytes = yaml_config.get_int("logging.max_bytes", 10 * 1024 * 1024)
+            backup_count = yaml_config.get_int("logging.backup_count", 5)
 
             root_logger = logging.getLogger()
             root_logger.setLevel(numeric_level)
@@ -165,8 +167,8 @@ class LoggerConfig:
         try:
             from .yaml_config import YamlConfig
 
-            yaml_config = YamlConfig()
-            retention_days = days or yaml_config.get("logging.retention_days", 30)
+            yaml_config = YamlConfig.get_instance()
+            retention_days = days or yaml_config.get_int("logging.retention_days", 30)
 
             now = datetime.now()
             logger = LoggerConfig.get_logger(__name__)

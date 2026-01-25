@@ -10,11 +10,25 @@
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志配置模块导出
     - 2026-01-21: 添加CONFIG_FILE_PATH常量导出
+    - 2026-01-25: 添加配置异常类导出
 """
 
 from .logger_config import LoggerConfig
-from .yaml_config import YamlConfig
+from .yaml_config import (
+    YamlConfig,
+    ConfigError,
+    ConfigLoadError,
+    ConfigValueError,
+    ConfigValidationError,
+)
 from .header_manager import HeaderManager
-from .constants import CONFIG_FILE_PATH
 
-__all__ = ["LoggerConfig", "YamlConfig", "HeaderManager", "CONFIG_FILE_PATH"]
+__all__ = [
+    "LoggerConfig",
+    "YamlConfig",
+    "HeaderManager",
+    "ConfigError",
+    "ConfigLoadError",
+    "ConfigValueError",
+    "ConfigValidationError",
+]
