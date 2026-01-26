@@ -79,17 +79,17 @@ class M3u8Parser:
 
         for attempt in range(self.max_retries):
             try:
+                self._refresh_page()
                 logs = self.browser.get_log(LOG_TYPE_PERFORMANCE)
+                logger.info(f"从浏览器日志中提取到 {len(logs)} 个 性能日志")
                 m3u8_links = self.browser.extract_m3u8_links_from_logs(logs)
-
+                logger.info(f"从浏览器日志中提取到 {len(m3u8_links)} 个 m3u8 链接")
                 for m3u8_url in m3u8_links:
                     if live_uuid in m3u8_url:
                         logger.debug(f"获取到m3u8链接: {m3u8_url}")
                         return [m3u8_url]
 
                 logger.debug(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接，重试中")
-                self._refresh_page()
-
             except Exception as e:
                 logger.error(f"获取 m3u8 链接时发生错误: {e}", exc_info=True)
 

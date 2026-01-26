@@ -220,10 +220,12 @@ class BrowserDriver(ABC):
                 else:
                     log_message = str(log)
 
+                logger.info(f"从日志中提取到消息: {log_message}")
                 if ".m3u8" in log_message:
                     start_idx = log_message.find('url":"') + len('url":"')
                     end_idx = log_message.find('"', start_idx)
                     m3u8_url = log_message[start_idx:end_idx]
+                    logger.info(f"从日志中提取到 m3u8 链接: {m3u8_url}")
                     m3u8_links.append(m3u8_url)
             except Exception as e:
                 logger.error(f"提取m3u8链接时发生错误: {e}", exc_info=True)
