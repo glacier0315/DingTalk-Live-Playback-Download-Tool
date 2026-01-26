@@ -51,7 +51,9 @@ class CookieHandler:
         self.header_manager = HeaderManager()
         logger.debug(f"Cookie 处理器初始化 - 浏览器类型: {browser_type}")
 
-    def _collect_browser_data(self) -> Tuple[Dict[str, str], Dict[str, str], str]:
+    def _collect_browser_data(
+        self,
+    ) -> Tuple[Dict[str, str], Dict[str, str], str]:
         """
         从浏览器收集数据（请求头、Cookie、直播名称）。
 
@@ -61,7 +63,8 @@ class CookieHandler:
 
         Returns:
             tuple: 包含三个元素的元组
-                - cookie_dict: Cookie字典，格式为{cookie_name: cookie_value}
+                - cookie_dict: Cookie字典，格式为{cookie_name:
+                cookie_value}
                 - headers: 请求头字典，包含User-Agent、Referer等
                 - live_name: 直播视频名称
         """
@@ -77,7 +80,9 @@ class CookieHandler:
 
         return cookie_dict, headers, live_name
 
-    def get_cookie(self, url: str) -> Tuple[Any, Dict[str, str], Dict[str, str], str]:
+    def get_cookie(
+        self, url: str
+    ) -> Tuple[Any, Dict[str, str], Dict[str, str], str]:
         """
         获取 Cookie 和请求头信息。
 
@@ -89,7 +94,8 @@ class CookieHandler:
         Returns:
             tuple: 包含四个元素的元组
                 - browser: 浏览器实例
-                - cookie_dict: Cookie 字典，格式为 {cookie_name: cookie_value}
+                - cookie_dict: Cookie 字典，格式为
+                {cookie_name: cookie_value}
                 - headers: 请求头字典，包含 User-Agent、Referer 等
                 - live_name: 直播视频名称
 
@@ -120,7 +126,9 @@ class CookieHandler:
                 self.browser.close()
             raise CookieError(f"获取Cookie失败: {e}") from e
 
-    def repeat_get_cookie(self, url: str) -> Tuple[Dict[str, str], Dict[str, str], str]:
+    def repeat_get_cookie(
+        self, url: str
+    ) -> Tuple[Dict[str, str], Dict[str, str], str]:
         """
         重复获取 Cookie 和请求头信息。
 
@@ -131,7 +139,8 @@ class CookieHandler:
 
         Returns:
             tuple: 包含三个元素的元组
-                - cookie_dict: Cookie 字典，格式为 {cookie_name: cookie_value}
+                - cookie_dict: Cookie 字典，格式为
+                {cookie_name: cookie_value}
                 - headers: 请求头字典，包含 User-Agent、Referer 等
                 - live_name: 直播视频名称
 
@@ -178,9 +187,17 @@ class CookieHandler:
         for selector_type, selector_value in LIVE_NAME_SELECTORS:
             try:
                 if selector_type == "xpath":
-                    live_name = self.browser.get_element_by_xpath(selector_value).text
+                    live_name = (
+                        self.browser.get_element_by_xpath(
+                            selector_value
+                        ).text
+                    )
                 elif selector_type == "css":
-                    live_name = self.browser.get_element_by_class_name(selector_value).text
+                    live_name = (
+                        self.browser.get_element_by_class_name(
+                            selector_value
+                        ).text
+                    )
                 else:
                     continue
 

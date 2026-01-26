@@ -15,7 +15,7 @@
 import os
 import tkinter as tk
 from tkinter import filedialog
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 import logging
 from ..core.cookie_handler import CookieHandler
 from ..core.m3u8_parser import M3u8Parser
@@ -97,7 +97,9 @@ class Downloader:
         logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
 
         m3u8_file = self.m3u8_file_manager.get_temp_file_path()
-        m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_links[0], m3u8_file, m3u8_headers)
+        m3u8_file = self.m3u8_parser.download_m3u8_file(
+            m3u8_links[0], m3u8_file, m3u8_headers
+        )
         logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
         prefix = self.m3u8_parser.extract_prefix(m3u8_links[0])
@@ -125,10 +127,13 @@ class Downloader:
             bool: 下载成功返回 True，下载失败返回 False
         """
         try:
-            m3u8_file, prefix = self._fetch_and_download_m3u8(url, m3u8_headers)
+            m3u8_file, prefix = self._fetch_and_download_m3u8(
+                url, m3u8_headers
+            )
 
             download_success = self._download_video(
-                m3u8_file, live_name, prefix, cookies_data, m3u8_headers
+                m3u8_file, live_name, prefix, cookies_data,
+                m3u8_headers
             )
 
             if download_success:
@@ -141,6 +146,67 @@ class Downloader:
         except Exception as e:
             logger.error(f"处理视频时发生错误: {e}", exc_info=True)
             raise DownloadError(f"处理视频失败: {e}") from e
+
+    def _initialize_download(
+        self, url: str
+    ) -> Tuple[Any, Dict[str, str], Dict[str, str], str]:
+        """
+        初始化下载环境。
+
+        获取Cookie、请求头和创建m3u8解析器。
+
+        Args:
+            url: 钉钉直播回放分享链接
+
+        Returns:
+            tuple: (browser, cookies_data, m3u8_headers, live_name)
+        """
+        browser, cookies_data, m3u8_headers, live_name = (
+            self.cookie_handler.get_cookie(url)
+        )
+        logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
+
+        self.m3u8_parser = M3u8Parser(browser)
+        logger.info("m3u8 解析器创建成功")
+
+        return browser, cookies_data, m3u8_headers, live_name
+
+    def _handle_user_input(
+        self, url: str
+    ) -> Tuple[str, Dict[str, str], Dict[str, str], str]:
+        """
+        处理用户输入。
+
+        获取用户输入的链接或退出命令。
+
+        Args:
+            url: 当前链接
+
+        Returns:
+            tuple: (url, cookies_data, m3u8_headers, live_name)
+        """
+        url = validate_required_input(
+            "请继续输入钉钉直播分享链接，或输入q退出程序: ",
+            validation_func=lambda x: (
+                x.lower() == "q" or validate_dingtalk_url(x)
+            ),
+            error_message="输入不正确，请重新输入。",
+            input_name="钉钉直播分享链接",
+        )
+
+        if url.lower() == "q":
+            logger.info("用户选择退出程序")
+            self.close()
+            print("程序已退出。")
+            return None, None, None, None
+
+        logger.info(f"用户输入新链接: {url}")
+        cookies_data, m3u8_headers, live_name = (
+            self.cookie_handler.repeat_get_cookie(url)
+        )
+        logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
+
+        return url, cookies_data, m3u8_headers, live_name
 
     def download_single_video(self, url: str) -> None:
         """
@@ -157,33 +223,25 @@ class Downloader:
         logger.info("开始下载单个视频")
 
         try:
-            browser, cookies_data, m3u8_headers, live_name = self.cookie_handler.get_cookie(url)
-            logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
-
-            self.m3u8_parser = M3u8Parser(browser)
-            logger.info("m3u8 解析器创建成功")
+            browser, cookies_data, m3u8_headers, live_name = (
+                self._initialize_download(url)
+            )
 
             while True:
                 try:
-                    self._process_single_video(url, cookies_data, m3u8_headers, live_name)
+                    self._process_single_video(
+                        url, cookies_data, m3u8_headers, live_name
+                    )
                 except DownloadError as e:
                     logger.error(f"视频下载失败: {e}")
                     print(f"下载失败: {e}")
 
-                url = validate_required_input(
-                    "请继续输入钉钉直播分享链接，或输入q退出程序: ",
-                    validation_func=lambda x: x.lower() == "q" or validate_dingtalk_url(x),
-                    error_message="输入不正确，请重新输入。",
-                    input_name="钉钉直播分享链接",
+                url, cookies_data, m3u8_headers, live_name = (
+                    self._handle_user_input(url)
                 )
-                if url.lower() == "q":
-                    logger.info("用户选择退出程序")
-                    self.close()
-                    print("程序已退出。")
+
+                if url is None:
                     break
-                logger.info(f"用户输入新链接: {url}")
-                cookies_data, m3u8_headers, live_name = self.cookie_handler.repeat_get_cookie(url)
-                logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
         except KeyboardInterrupt:
             logger.warning("用户中断下载")
@@ -193,6 +251,70 @@ class Downloader:
         except Exception as e:
             logger.error(f"下载单个视频时发生错误: {e}", exc_info=True)
             raise DownloadError(f"下载单个视频失败: {e}") from e
+
+    def _download_first_video(
+        self, first_link: str, cookies_data: Dict[str, str],
+        m3u8_headers: Dict[str, str], live_name: str
+    ) -> None:
+        """
+        下载第一个视频。
+
+        Args:
+            first_link: 第一个链接
+            cookies_data: Cookie字典
+            m3u8_headers: 请求头字典
+            live_name: 直播名称
+        """
+        logger.info("正在下载第 1 个视频，共 1 个视频")
+
+        try:
+            m3u8_file, prefix = self._fetch_and_download_m3u8(
+                first_link, m3u8_headers
+            )
+            self._download_video(
+                m3u8_file, live_name, prefix, cookies_data,
+                m3u8_headers
+            )
+            logger.info(f"视频下载完成: {live_name}")
+        except DownloadError as e:
+            logger.error(f"第 1 个视频下载失败: {e}")
+
+        print("=" * 100)
+        logger.info("第 1 个视频下载完成")
+
+    def _download_remaining_videos(
+        self, urls: Dict[int, str], total_links: int
+    ) -> None:
+        """
+        下载剩余的视频。
+
+        Args:
+            urls: 链接字典
+            total_links: 总链接数
+        """
+        for idx, dingtalk_url in list(urls.items())[1:]:
+            logger.info(
+                f"正在下载第 {idx + 1} 个视频，共 {total_links} 个视频"
+            )
+
+            cookies_data, m3u8_headers, live_name = (
+                self.cookie_handler.repeat_get_cookie(dingtalk_url)
+            )
+            logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
+
+            try:
+                m3u8_file, prefix = self._fetch_and_download_m3u8(
+                    dingtalk_url, m3u8_headers
+                )
+                self._download_video(
+                    m3u8_file, live_name, prefix, cookies_data,
+                    m3u8_headers
+                )
+                logger.info(f"视频下载完成: {live_name}")
+            except DownloadError as e:
+                logger.error(f"第 {idx + 1} 个视频下载失败: {e}")
+
+            logger.info(f"第 {idx + 1} 个视频下载完成")
 
     def download_batch_videos(self, urls: Dict[int, str]) -> None:
         """
@@ -212,42 +334,18 @@ class Downloader:
             total_links = len(urls)
 
             first_link = next(iter(urls.values()))
-            browser, cookies_data, m3u8_headers, live_name = self.cookie_handler.get_cookie(
-                first_link
+            browser, cookies_data, m3u8_headers, live_name = (
+                self.cookie_handler.get_cookie(first_link)
             )
             logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
             self.m3u8_parser = M3u8Parser(browser)
             logger.info("m3u8 解析器创建成功")
 
-            logger.info(f"正在下载第 1 个视频，共 {total_links} 个视频")
-
-            try:
-                m3u8_file, prefix = self._fetch_and_download_m3u8(first_link, m3u8_headers)
-                self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
-                logger.info(f"视频下载完成: {live_name}")
-            except DownloadError as e:
-                logger.error(f"第 1 个视频下载失败: {e}")
-
-            print("=" * 100)
-            logger.info("第 1 个视频下载完成")
-
-            for idx, dingtalk_url in list(urls.items())[1:]:
-                logger.info(f"正在下载第 {idx + 1} 个视频，共 {total_links} 个视频")
-
-                cookies_data, m3u8_headers, live_name = self.cookie_handler.repeat_get_cookie(
-                    dingtalk_url
-                )
-                logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
-
-                try:
-                    m3u8_file, prefix = self._fetch_and_download_m3u8(dingtalk_url, m3u8_headers)
-                    self._download_video(m3u8_file, live_name, prefix, cookies_data, m3u8_headers)
-                    logger.info(f"视频下载完成: {live_name}")
-                except DownloadError as e:
-                    logger.error(f"第 {idx + 1} 个视频下载失败: {e}")
-
-                logger.info(f"第 {idx + 1} 个视频下载完成")
+            self._download_first_video(
+                first_link, cookies_data, m3u8_headers, live_name
+            )
+            self._download_remaining_videos(urls, total_links)
 
             self._continue_download()
 
@@ -259,6 +357,32 @@ class Downloader:
         except Exception as e:
             logger.error(f"批量下载视频时发生错误: {e}", exc_info=True)
             raise DownloadError(f"批量下载失败: {e}") from e
+
+    def _get_save_dir(self) -> Optional[str]:
+        """
+        获取保存目录。
+
+        根据保存模式选择保存目录。
+
+        Returns:
+            保存目录路径，如果用户取消则返回 None
+        """
+        if self.save_mode == SAVE_MODE_DEFAULT:
+            save_dir = self._get_default_download_dir()
+            logger.info(f"使用默认保存目录: {save_dir}")
+        elif self.save_mode == SAVE_MODE_MANUAL:
+            save_dir = self._get_manual_download_dir()
+            logger.info(f"使用手动选择目录: {save_dir}")
+        else:
+            logger.error(f"无效的保存模式: {self.save_mode}")
+            return None
+
+        if not save_dir:
+            logger.warning("用户取消了目录选择")
+            print("用户取消了选择。视频下载已中止。")
+            return None
+
+        return save_dir
 
     def _download_video(
         self,
@@ -285,24 +409,14 @@ class Downloader:
         """
         logger.info(f"开始下载视频 - 文件名: {save_name}")
 
-        if self.save_mode == SAVE_MODE_DEFAULT:
-            save_dir = self._get_default_download_dir()
-            logger.info(f"使用默认保存目录: {save_dir}")
-        elif self.save_mode == SAVE_MODE_MANUAL:
-            save_dir = self._get_manual_download_dir()
-            logger.info(f"使用手动选择目录: {save_dir}")
-        else:
-            logger.error(f"无效的保存模式: {self.save_mode}")
-            return False
-
+        save_dir = self._get_save_dir()
         if not save_dir:
-            logger.warning("用户取消了目录选择")
-            print("用户取消了选择。视频下载已中止。")
             return False
 
         logger.info("调用 N_m3u8DL-RE 下载视频")
         download_success = self.n_m3u8dl_re.download(
-            m3u8_file, save_name, save_dir, prefix, cookies_data, m3u8_headers
+            m3u8_file, save_name, save_dir, prefix, cookies_data,
+            m3u8_headers
         )
 
         if download_success:
