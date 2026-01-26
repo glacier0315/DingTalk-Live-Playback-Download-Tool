@@ -101,7 +101,9 @@ class M3u8Parser:
         logger.warning(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
         return None
 
-    def download_m3u8_file(self, url: str, filename: str, headers: dict) -> str:
+    def download_m3u8_file(
+        self, url: str, filename: str, headers: dict
+    ) -> str:
         """
         下载 m3u8 文件。
 

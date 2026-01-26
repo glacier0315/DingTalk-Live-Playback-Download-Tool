@@ -18,6 +18,69 @@ from typing import List, Optional, Callable
 from urllib.parse import urlparse, parse_qs
 
 
+def _handle_empty_input(
+    default_option: Optional[str], error_message: Optional[str]
+) -> Optional[str]:
+    """
+    处理空输入。
+
+    Args:
+        default_option: 默认选项
+        error_message: 错误消息
+
+    Returns:
+        默认选项或None
+    """
+    if default_option is not None:
+        print(f"已选择默认选项: {default_option}")
+        return default_option
+    print(error_message or "输入不能为空，请重新输入。")
+    return None
+
+
+def _validate_input(
+    choice: str,
+    validation_func: Optional[Callable[[str], bool]],
+    error_message: Optional[str],
+) -> bool:
+    """
+    验证输入。
+
+    Args:
+        choice: 用户输入
+        validation_func: 验证函数
+        error_message: 错误消息
+
+    Returns:
+        验证是否通过
+    """
+    if validation_func is not None and not validation_func(choice):
+        print(error_message or "输入无效，请重新输入。")
+        return False
+    return True
+
+
+def _handle_eof_error(
+    default_option: Optional[str],
+) -> Optional[str]:
+    """
+    处理EOF错误。
+
+    Args:
+        default_option: 默认选项
+
+    Returns:
+        默认选项或None
+
+    Raises:
+        EOFError: 没有默认选项时
+    """
+    if default_option is not None:
+        print(f"\n输入流结束，使用默认选项: {default_option}")
+        return default_option
+    raise EOFError()
+
+
 def validate_input(
     prompt: str,
     valid_options: List[str],
@@ -53,16 +116,13 @@ def validate_input(
 
             # 处理空输入
             if choice == "":
-                if default_option is not None:
-                    print(f"已选择默认选项: {default_option}")
-                    return default_option
-                else:
-                    print(error_message or "输入不能为空，请重新输入。")
-                    continue
+                result = _handle_empty_input(default_option, error_message)
+                if result is not None:
+                    return result
+                continue
 
             # 验证输入
-            if validation_func is not None and not validation_func(choice):
-                print(error_message or "输入无效，请重新输入。")
+            if not _validate_input(choice, validation_func, error_message):
                 continue
 
             # 验证选项
@@ -72,13 +132,43 @@ def validate_input(
             print("无效的选择，请重新输入。")
 
         except EOFError:
-            if default_option is not None:
-                print(f"\n输入流结束，使用默认选项: {default_option}")
-                return default_option
-            raise
+            result = _handle_eof_error(default_option)
+            if result is not None:
+                return result
         except KeyboardInterrupt:
             print("\n用户中断输入")
             raise
+
+
+def _validate_required_input(
+    user_input: str,
+    validation_func: Optional[Callable[[str], bool]],
+    error_message: Optional[str],
+    input_name: str,
+) -> bool:
+    """
+    验证必填输入。
+
+    Args:
+        user_input: 用户输入
+        validation_func: 验证函数
+        error_message: 错误消息
+        input_name: 输入项名称
+
+    Returns:
+        验证是否通过
+    """
+    if validation_func is None:
+        return True
+
+    try:
+        if not validation_func(user_input):
+            print(error_message or f"{input_name}格式不正确，请重新输入。")
+            return False
+        return True
+    except ValueError as e:
+        print(error_message or str(e))
+        return False
 
 
 def validate_required_input(
@@ -117,16 +207,10 @@ def validate_required_input(
                 continue
 
             # 自定义验证
-            if validation_func is not None:
-                try:
-                    if not validation_func(user_input):
-                        print(error_message or f"{input_name}格式不正确，请重新输入。")
-                        continue
-                except ValueError as e:
-                    print(error_message or str(e))
-                    continue
-
-            return user_input
+            if _validate_required_input(
+                user_input, validation_func, error_message, input_name
+            ):
+                return user_input
 
         except EOFError:
             print(f"\n输入流结束，{input_name}不能为空。")

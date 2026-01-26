@@ -177,7 +177,9 @@ class FileReader:
             logger.error(f"读取 Excel 文件时发生错误: {e}", exc_info=True)
             raise FileReaderError(f"读取Excel文件失败: {e}") from e
 
-    def _extract_links_from_dataframe(self, df: pd.DataFrame, links: Dict[int, str]) -> None:
+    def _extract_links_from_dataframe(
+        self, df: pd.DataFrame, links: Dict[int, str]
+    ) -> None:
         """
         从 DataFrame 中提取链接。
 
