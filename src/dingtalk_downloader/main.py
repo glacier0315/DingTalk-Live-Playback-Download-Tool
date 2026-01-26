@@ -16,7 +16,11 @@
 import sys
 import logging
 from .config.logger_config import LoggerConfig
-from .config.yaml_config import YamlConfig, ConfigLoadError, ConfigValidationError
+from .config.yaml_config import (
+    YamlConfig,
+    ConfigLoadError,
+    ConfigValidationError,
+)
 from .core.downloader import Downloader
 from .core.cookie_handler import CookieError
 from .core.m3u8_parser import M3u8ParseError
@@ -34,6 +38,84 @@ from .config.constants import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _handle_download_error(error: Exception) -> None:
+    """
+    处理下载错误。
+
+    Args:
+        error: 异常对象
+    """
+    logger.error(f"发生错误: {error}", exc_info=True)
+    print(f"发生错误: {error}")
+    sys.exit(1)
+
+
+def _handle_interrupt() -> None:
+    """
+    处理用户中断。
+    """
+    logger.warning("用户中断程序")
+    print("\n程序已被用户终止。")
+    sys.exit(0)
+
+
+def _get_user_inputs() -> tuple[str, str, str]:
+    """
+    获取用户输入。
+
+    获取链接、保存模式和浏览器类型。
+
+    Returns:
+        tuple: (dingtalk_url, save_mode, browser_option)
+    """
+    dingtalk_url = validate_required_input(
+        "请输入钉钉直播回放分享链接: ",
+        validation_func=validate_dingtalk_url,
+        error_message="链接格式不正确。请确保链接以 https://n.dingtalk.com "
+        "开头，并包含 liveUuid 参数。",
+        input_name="钉钉直播链接",
+    )
+    logger.info(f"用户输入链接: {dingtalk_url}")
+
+    save_mode = validate_input(
+        "请选择保存模式（输入1：保存到程序默认路径，"
+        "输入2：手动选择保存路径模式，直接回车默认选择1）: ",
+        ["1", "2"],
+        default_option="1",
+    )
+    logger.info(f"用户选择保存模式: {save_mode}")
+
+    browser_option = validate_input(
+        "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，"
+        "输入3：Firefox，直接回车默认选择1）: ",
+        ["1", "2", "3"],
+        default_option="1",
+    )
+    logger.info(f"浏览器选项: {browser_option}")
+
+    return dingtalk_url, save_mode, browser_option
+
+
+def _create_downloader(browser_option: str, save_mode: str) -> Downloader:
+    """
+    创建下载器实例。
+
+    Args:
+        browser_option: 浏览器选项
+        save_mode: 保存模式
+
+    Returns:
+        Downloader实例
+    """
+    browser_type = BROWSER_OPTION_MAP[browser_option]
+    downloader = Downloader(browser_type, save_mode)
+    logger.info(
+        f"下载器创建成功 - 浏览器: {browser_type}, "
+        f"保存模式: {save_mode}"
+    )
+    return downloader
 
 
 def single_mode() -> None:
@@ -60,54 +142,54 @@ def single_mode() -> None:
     logger.info("进入单个视频下载模式")
 
     try:
-        dingtalk_url = validate_required_input(
-            "请输入钉钉直播回放分享链接: ",
-            validation_func=validate_dingtalk_url,
-            error_message="链接格式不正确。",
-            input_name="钉钉直播链接",
-        )
-        logger.info(f"用户输入链接: {dingtalk_url}")
-
-        save_mode = validate_input(
-            "请选择保存模式（输入1：保存到程序默认路径，"
-            "输入2：手动选择保存路径模式，直接回车默认选择1）: ",
-            ["1", "2"],
-            default_option="1",
-        )
-        logger.info(f"用户选择保存模式: {save_mode}")
-
-        browser_option = validate_input(
-            "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，"
-            "输入3：Firefox，直接回车默认选择1）: ",
-            ["1", "2", "3"],
-            default_option="1",
-        )
-        logger.info(f"浏览器选项: {browser_option}")
-
-        browser_type = BROWSER_OPTION_MAP[browser_option]
-
-        downloader = Downloader(browser_type, save_mode)
-        logger.info(
-            f"下载器创建成功 - 浏览器: {browser_type}, "
-            f"保存模式: {save_mode}"
-        )
-
+        dingtalk_url, save_mode, browser_option = _get_user_inputs()
+        downloader = _create_downloader(browser_option, save_mode)
         downloader.download_single_video(dingtalk_url)
 
     except KeyboardInterrupt:
-        logger.warning("用户中断程序")
-        print("\n程序已被用户终止。")
-        sys.exit(0)
-
+        _handle_interrupt()
     except (CookieError, M3u8ParseError, FileReaderError) as e:
-        logger.error(f"发生错误: {e}", exc_info=True)
-        print(f"发生错误: {e}")
-        sys.exit(1)
-
+        _handle_download_error(e)
     except Exception as e:
-        logger.error(f"发生未知错误: {e}", exc_info=True)
-        print(f"发生未知错误: {e}")
-        sys.exit(1)
+        _handle_download_error(e)
+
+
+def _get_batch_inputs() -> tuple[str, dict, str, str]:
+    """
+    获取批量下载模式的用户输入。
+
+    Returns:
+        tuple: (file_path, links_dict, save_mode, browser_option)
+    """
+    file_path = validate_required_input(
+        "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，"
+        "可直接将文件拖放进窗口）: ",
+        validation_func=validate_file_path,
+        error_message="文件路径不正确。",
+        input_name="文件路径",
+    )
+    logger.info("用户已输入文件路径")
+
+    links_dict = FileReader(file_path).read_links()
+    logger.info(f"从文件中读取到 {len(links_dict)} 个链接")
+
+    save_mode = validate_input(
+        "请选择保存模式（输入1：保存到程序默认路径，"
+        "输入2：手动选择保存路径模式，直接回车默认选择1）: ",
+        ["1", "2"],
+        default_option="1",
+    )
+    logger.info(f"用户选择保存模式: {save_mode}")
+
+    browser_option = validate_input(
+        "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，"
+        "输入3：Firefox，直接回车默认选择1）: ",
+        ["1", "2", "3"],
+        default_option="1",
+    )
+    logger.info(f"用户选择浏览器选项: {browser_option}")
+
+    return file_path, links_dict, save_mode, browser_option
 
 
 def batch_mode() -> None:
@@ -135,53 +217,49 @@ def batch_mode() -> None:
     logger.info("进入批量下载模式")
 
     try:
-        file_path = validate_required_input(
-            "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: ",
-            validation_func=validate_file_path,
-            error_message="文件路径不正确。",
-            input_name="文件路径",
+        file_path, links_dict, save_mode, browser_option = (
+            _get_batch_inputs()
         )
-        logger.info("用户已输入文件路径")
-
-        links_dict = FileReader(file_path).read_links()
-        logger.info(f"从文件中读取到 {len(links_dict)} 个链接")
-
-        save_mode = validate_input(
-            "请选择保存模式（输入1：保存到程序默认路径，输入2：手动选择保存路径模式，直接回车默认选择1）: ",
-            ["1", "2"],
-            default_option="1",
-        )
-        logger.info(f"用户选择保存模式: {save_mode}")
-
-        browser_option = validate_input(
-            "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，输入3：Firefox，直接回车默认选择1）: ",
-            ["1", "2", "3"],
-            default_option="1",
-        )
-        logger.info(f"用户选择浏览器选项: {browser_option}")
-
-        browser_type = BROWSER_OPTION_MAP[browser_option]
-        logger.info(f"浏览器类型: {browser_type}")
-
-        downloader = Downloader(browser_type, save_mode)
-        logger.info("下载器创建成功")
-
+        downloader = _create_downloader(browser_option, save_mode)
         downloader.download_batch_videos(links_dict)
 
     except KeyboardInterrupt:
-        logger.warning("用户中断程序")
-        print("\n程序已被用户终止。")
-        sys.exit(0)
-
+        _handle_interrupt()
     except (CookieError, M3u8ParseError, FileReaderError) as e:
-        logger.error(f"发生错误: {e}", exc_info=True)
-        print(f"发生错误: {e}")
-        sys.exit(1)
-
+        _handle_download_error(e)
     except Exception as e:
-        logger.error(f"发生未知错误: {e}", exc_info=True)
-        print(f"发生未知错误: {e}")
-        sys.exit(1)
+        _handle_download_error(e)
+
+
+def _display_welcome_info(config) -> None:
+    """
+    显示欢迎信息。
+
+    Args:
+        config: 配置对象
+    """
+    app_name = config.get_str("app.name")
+    app_version = config.get_str("app.version")
+    build_date = config.get_str("app.build_date")
+
+    print("=" * 47)
+    print(f"     欢迎使用{app_name} v{app_version}")
+    print(f"         构建日期:{build_date}")
+    print("=" * 47)
+    logger.info("程序启动")
+
+
+def _handle_config_error(error: Exception, error_type: str) -> None:
+    """
+    处理配置错误。
+
+    Args:
+        error: 异常对象
+        error_type: 错误类型
+    """
+    logger.error(f"配置{error_type}失败: {error}")
+    print(f"错误: 配置文件{error_type}失败 - {error}")
+    sys.exit(1)
 
 
 def main() -> None:
@@ -199,26 +277,12 @@ def main() -> None:
     try:
         config = YamlConfig.get_instance()
         config.load()
-
-        app_name = config.get_str("app.name")
-        app_version = config.get_str("app.version")
-        build_date = config.get_str("app.build_date")
-
-        print("=" * 47)
-        print(f"     欢迎使用{app_name} v{app_version}")
-        print(f"         构建日期:{build_date}")
-        print("=" * 47)
-
-        logger.info("程序启动")
+        _display_welcome_info(config)
 
     except ConfigLoadError as e:
-        logger.error(f"配置加载失败: {e}")
-        print(f"错误: 配置文件加载失败 - {e}")
-        sys.exit(1)
+        _handle_config_error(e, "加载")
     except ConfigValidationError as e:
-        logger.error(f"配置验证失败: {e}")
-        print(f"错误: 配置文件验证失败 - {e}")
-        sys.exit(1)
+        _handle_config_error(e, "验证")
 
     try:
         download_mode = validate_input(
@@ -235,19 +299,11 @@ def main() -> None:
             batch_mode()
 
     except KeyboardInterrupt:
-        logger.warning("用户中断程序")
-        print("\n程序已被用户终止。")
-        sys.exit(0)
-
+        _handle_interrupt()
     except (CookieError, M3u8ParseError, FileReaderError) as e:
-        logger.error(f"发生错误: {e}", exc_info=True)
-        print(f"发生错误: {e}")
-        sys.exit(1)
-
+        _handle_download_error(e)
     except Exception as e:
-        logger.error(f"发生未知错误: {e}", exc_info=True)
-        print(f"发生未知错误: {e}")
-        sys.exit(1)
+        _handle_download_error(e)
 
     logger.info("程序退出")
 
