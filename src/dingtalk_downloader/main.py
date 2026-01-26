@@ -16,6 +16,7 @@
 import sys
 import logging
 from .config.logger_config import LoggerConfig
+from .config.yaml_config import YamlConfig, ConfigLoadError, ConfigValidationError
 from .core.downloader import Downloader
 from .core.cookie_handler import CookieError
 from .core.m3u8_parser import M3u8ParseError
@@ -182,20 +183,41 @@ def main() -> None:
     """
     主程序入口。
 
-    显示欢迎信息，获取用户输入的下载模式，调用相应的下载函数。
+    显示欢迎信息,获取用户输入的下载模式,调用相应的下载函数。
+
+    Raises:
+        ConfigLoadError: 配置文件加载失败
+        ConfigValidationError: 配置文件验证失败
     """
     LoggerConfig.setup_logging()
 
-    print("=" * 47)
-    print("     欢迎使用钉钉直播回放下载工具 v1.5.0")
-    print("         构建日期：2026年01月15日")
-    print("=" * 47)
+    try:
+        config = YamlConfig.get_instance()
+        config.load()
 
-    logger.info("程序启动")
+        app_name = config.get_str("app.name")
+        app_version = config.get_str("app.version")
+        build_date = config.get_str("app.build_date")
+
+        print("=" * 47)
+        print(f"     欢迎使用{app_name} v{app_version}")
+        print(f"         构建日期:{build_date}")
+        print("=" * 47)
+
+        logger.info("程序启动")
+
+    except ConfigLoadError as e:
+        logger.error(f"配置加载失败: {e}")
+        print(f"错误: 配置文件加载失败 - {e}")
+        sys.exit(1)
+    except ConfigValidationError as e:
+        logger.error(f"配置验证失败: {e}")
+        print(f"错误: 配置文件验证失败 - {e}")
+        sys.exit(1)
 
     try:
         download_mode = validate_input(
-            "请选择下载模式（输入1：单个视频下载模式，输入2：批量下载模式，直接回车默认选择1）: ",
+            "请选择下载模式(输入1:单个视频下载模式,输入2:批量下载模式,直接回车默认选择1): ",
             ["1", "2"],
             default_option="1",
         )

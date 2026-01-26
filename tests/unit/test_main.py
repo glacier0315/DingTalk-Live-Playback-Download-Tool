@@ -13,20 +13,19 @@
 import sys
 import os
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.main import main, single_mode, batch_mode
+from dingtalk_downloader.config.yaml_config import ConfigLoadError, ConfigValidationError
 from dingtalk_downloader.config.constants import (
     BROWSER_TYPE_EDGE,
     BROWSER_TYPE_CHROME,
     BROWSER_TYPE_FIREFOX,
-    DOWNLOAD_MODE_SINGLE,
-    DOWNLOAD_MODE_BATCH,
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
 )
+from dingtalk_downloader.main import main, single_mode, batch_mode
 
 
 def test_single_mode_with_default_options():
@@ -233,10 +232,14 @@ def test_batch_mode_exception():
 def test_main_single_mode():
     """测试主程序入口 - 单个视频下载模式"""
     with patch("builtins.input") as mock_input, patch(
-        "dingtalk_downloader.main.single_mode"
-    ) as mock_single_mode:
+        "dingtalk_downloader.main.YamlConfig"
+    ) as mock_yaml_config_class, patch("dingtalk_downloader.main.single_mode") as mock_single_mode:
 
-        mock_input.side_effect = ["1"]  # 选择单个视频下载模式
+        mock_input.side_effect = ["1"]
+
+        mock_config = Mock()
+        mock_config.get_str.side_effect = ["test", "1.0.0", "2026-01-01"]
+        mock_yaml_config_class.get_instance.return_value = mock_config
 
         main()
 
@@ -246,10 +249,14 @@ def test_main_single_mode():
 def test_main_batch_mode():
     """测试主程序入口 - 批量下载模式"""
     with patch("builtins.input") as mock_input, patch(
-        "dingtalk_downloader.main.batch_mode"
-    ) as mock_batch_mode:
+        "dingtalk_downloader.main.YamlConfig"
+    ) as mock_yaml_config_class, patch("dingtalk_downloader.main.batch_mode") as mock_batch_mode:
 
-        mock_input.side_effect = ["2"]  # 选择批量下载模式
+        mock_input.side_effect = ["2"]
+
+        mock_config = Mock()
+        mock_config.get_str.side_effect = ["test", "1.0.0", "2026-01-01"]
+        mock_yaml_config_class.get_instance.return_value = mock_config
 
         main()
 
@@ -258,8 +265,15 @@ def test_main_batch_mode():
 
 def test_main_keyboard_interrupt():
     """测试主程序入口 - 用户中断"""
-    with patch("builtins.input") as mock_input:
+    with patch("builtins.input") as mock_input, patch(
+        "dingtalk_downloader.main.YamlConfig"
+    ) as mock_yaml_config_class:
+
         mock_input.side_effect = KeyboardInterrupt()
+
+        mock_config = Mock()
+        mock_config.get_str.side_effect = ["test", "1.0.0", "2026-01-01"]
+        mock_yaml_config_class.get_instance.return_value = mock_config
 
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -269,8 +283,15 @@ def test_main_keyboard_interrupt():
 
 def test_main_exception():
     """测试主程序入口 - 异常处理"""
-    with patch("builtins.input") as mock_input:
+    with patch("builtins.input") as mock_input, patch(
+        "dingtalk_downloader.main.YamlConfig"
+    ) as mock_yaml_config_class:
+
         mock_input.side_effect = Exception("输入错误")
+
+        mock_config = Mock()
+        mock_config.get_str.side_effect = ["test", "1.0.0", "2026-01-01"]
+        mock_yaml_config_class.get_instance.return_value = mock_config
 
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -281,10 +302,14 @@ def test_main_exception():
 def test_main_default_mode():
     """测试主程序入口 - 默认模式"""
     with patch("builtins.input") as mock_input, patch(
-        "dingtalk_downloader.main.single_mode"
-    ) as mock_single_mode:
+        "dingtalk_downloader.main.YamlConfig"
+    ) as mock_yaml_config_class, patch("dingtalk_downloader.main.single_mode") as mock_single_mode:
 
-        mock_input.side_effect = [""]  # 直接回车，默认选择单个视频下载模式
+        mock_input.side_effect = [""]
+
+        mock_config = Mock()
+        mock_config.get_str.side_effect = ["test", "1.0.0", "2026-01-01"]
+        mock_yaml_config_class.get_instance.return_value = mock_config
 
         main()
 
@@ -394,3 +419,64 @@ def test_single_mode_manual_save_mode():
 
         call_args = mock_downloader_class.call_args
         assert call_args[0][1] == SAVE_MODE_MANUAL
+
+
+def test_main_config_loading():
+    """测试主程序入口 - 配置加载"""
+    with patch("builtins.input") as mock_input, patch(
+        "dingtalk_downloader.main.YamlConfig"
+    ) as mock_yaml_config_class, patch("builtins.print") as mock_print, patch(
+        "dingtalk_downloader.main.single_mode"
+    ):
+
+        mock_input.side_effect = [""]
+
+        mock_config = Mock()
+        mock_config.get_str.side_effect = [
+            "钉钉直播回放下载工具",
+            "1.5.0",
+            "2026年01月26日",
+        ]
+        mock_yaml_config_class.get_instance.return_value = mock_config
+
+        main()
+
+        mock_yaml_config_class.get_instance.assert_called_once()
+        mock_config.load.assert_called_once()
+
+        mock_config.get_str.assert_any_call("app.name")
+        mock_config.get_str.assert_any_call("app.version")
+        mock_config.get_str.assert_any_call("app.build_date")
+
+        print_calls = [str(call) for call in mock_print.call_args_list]
+        assert any("钉钉直播回放下载工具" in call for call in print_calls)
+        assert any("1.5.0" in call for call in print_calls)
+        assert any("2026年01月26日" in call for call in print_calls)
+
+
+def test_main_config_load_error():
+    """测试主程序入口 - 配置加载失败"""
+    with patch("dingtalk_downloader.main.YamlConfig") as mock_yaml_config_class:
+
+        mock_yaml_config_class.get_instance.side_effect = ConfigLoadError(
+            "配置文件不存在: config/app.yaml"
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 1
+
+
+def test_main_config_validation_error():
+    """测试主程序入口 - 配置验证失败"""
+    with patch("dingtalk_downloader.main.YamlConfig") as mock_yaml_config_class:
+
+        mock_config = Mock()
+        mock_config.load.side_effect = ConfigValidationError("缺少必填配置项: app.build_date")
+        mock_yaml_config_class.get_instance.return_value = mock_config
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+
+        assert exc_info.value.code == 1

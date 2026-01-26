@@ -19,7 +19,7 @@ import os
 import yaml
 import logging
 import threading
-from typing import Any, Dict, List, Optional, TypeVar, Type
+from typing import Any, Dict, List, Optional, TypeVar
 from ..config.constants import CONFIG_FILE_PATH
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ CONFIG_SCHEMA = {
         "fields": {
             "name": {"required": True, "type": str},
             "version": {"required": True, "type": str},
+            "build_date": {"required": True, "type": str},
         },
     },
     "download": {
@@ -48,7 +49,11 @@ CONFIG_SCHEMA = {
         "required": True,
         "type": dict,
         "fields": {
-            "default_type": {"required": True, "type": str, "choices": ["edge", "chrome", "firefox"]},
+            "default_type": {
+                "required": True,
+                "type": str,
+                "choices": ["edge", "chrome", "firefox"],
+            },
             "headless": {"required": True, "type": bool},
             "timeout": {"required": True, "type": int, "min": 1, "max": 300},
         },
@@ -291,7 +296,9 @@ class YamlConfig:
         if value is None:
             return default
         if isinstance(value, bool):
-            raise ConfigValueError(f"配置值类型错误，bool不能转换为int", key)
+            raise ConfigValueError(
+                f"配置值类型错误，bool不能转换为int: {key}", key
+            )
         try:
             return int(value)
         except (ValueError, TypeError) as e:
@@ -443,7 +450,8 @@ class YamlConfig:
             expected_type = field_schema.get("type")
             if expected_type and not isinstance(value, expected_type):
                 raise ConfigValueError(
-                    f"配置项类型错误: {current_path}, 期望类型: {expected_type.__name__}, 实际类型: {type(value).__name__}",
+                    f"配置项类型错误: {current_path}, 期望类型: "
+                    f"{expected_type.__name__}, 实际类型: {type(value).__name__}",
                     current_path,
                 )
 

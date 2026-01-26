@@ -16,9 +16,7 @@ import os
 import yaml
 import pytest
 import tempfile
-import threading
-import time
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
@@ -43,7 +41,7 @@ def reset_singleton():
 def get_full_test_config():
     """获取完整的测试配置"""
     return {
-        "app": {"name": "test_app", "version": "1.0.0"},
+        "app": {"name": "test_app", "version": "1.0.0", "build_date": "2026年01月26日"},
         "download": {"default_dir": "test_dir", "temp_dir": "temp", "max_retry_count": 5},
         "browser": {
             "default_type": "edge",
@@ -249,6 +247,8 @@ def test_yaml_config_get_str():
         config = YamlConfig(config_file=path)
 
         assert config.get_str("app.name") == "test_app"
+        assert config.get_str("app.version") == "1.0.0"
+        assert config.get_str("app.build_date") == "2026年01月26日"
         assert config.get_str("nonexistent") == ""
         assert config.get_str("nonexistent", "default") == "default"
     finally:
@@ -525,6 +525,7 @@ def test_yaml_config_get_nested_method():
         if os.path.exists(path):
             os.unlink(path)
 
+
 def test_yaml_config_reload():
     """测试重新加载配置"""
     fd, path = tempfile.mkstemp(suffix=".yaml")
@@ -614,8 +615,13 @@ def test_config_schema_fields():
     assert "fields" in CONFIG_SCHEMA["app"]
     assert "name" in CONFIG_SCHEMA["app"]["fields"]
     assert "version" in CONFIG_SCHEMA["app"]["fields"]
+    assert "build_date" in CONFIG_SCHEMA["app"]["fields"]
     assert CONFIG_SCHEMA["app"]["fields"]["name"]["required"] is True
     assert CONFIG_SCHEMA["app"]["fields"]["name"]["type"] == str
+    assert CONFIG_SCHEMA["app"]["fields"]["version"]["required"] is True
+    assert CONFIG_SCHEMA["app"]["fields"]["version"]["type"] == str
+    assert CONFIG_SCHEMA["app"]["fields"]["build_date"]["required"] is True
+    assert CONFIG_SCHEMA["app"]["fields"]["build_date"]["type"] == str
 
 
 def test_config_validate_missing_required():
@@ -634,6 +640,28 @@ def test_config_validate_missing_required():
             config.load()
 
         assert "缺少必填配置项" in str(exc_info.value)
+    finally:
+        if os.path.exists(path):
+            os.unlink(path)
+
+
+def test_config_validate_missing_build_date():
+    """测试配置验证 - 缺少build_date"""
+    fd, path = tempfile.mkstemp(suffix=".yaml")
+    try:
+        test_config = {
+            "app": {"name": "test_app", "version": "1.0.0"},
+        }
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            yaml.dump(test_config, f)
+
+        config = YamlConfig(config_file=path)
+
+        with pytest.raises(ConfigValidationError) as exc_info:
+            config.load()
+
+        assert "缺少必填配置项" in str(exc_info.value)
+        assert "build_date" in str(exc_info.value)
     finally:
         if os.path.exists(path):
             os.unlink(path)
