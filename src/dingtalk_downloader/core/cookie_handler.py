@@ -18,14 +18,10 @@ from typing import Dict, Tuple, Any
 from ..browser.browser_factory import BrowserFactory
 from ..config.constants import LIVE_NAME_SELECTORS
 from ..config.header_manager import HeaderManager
+from ..utils.models import CookieData, HeadersData
+from .exceptions import CookieError
 
 logger = logging.getLogger(__name__)
-
-
-class CookieError(Exception):
-    """Cookie处理异常"""
-
-    pass
 
 
 class CookieHandler:
@@ -53,7 +49,7 @@ class CookieHandler:
 
     def _collect_browser_data(
         self,
-    ) -> Tuple[Dict[str, str], Dict[str, str], str]:
+    ) -> Tuple[CookieData, HeadersData, str]:
         """
         从浏览器收集数据（请求头、Cookie、直播名称）。
 
@@ -63,26 +59,27 @@ class CookieHandler:
 
         Returns:
             tuple: 包含三个元素的元组
-                - cookie_dict: Cookie字典，格式为{cookie_name:
-                cookie_value}
-                - headers: 请求头字典，包含User-Agent、Referer等
+                - cookie_data: Cookie数据值对象
+                - headers_data: 请求头数据值对象
                 - live_name: 直播视频名称
         """
-        headers = self.header_manager.get_headers()
-        logger.info(f"获取到 {len(headers)} 个 headers")
+        headers_dict = self.header_manager.get_headers()
+        headers_data = HeadersData(headers=headers_dict)
+        logger.info(f"获取到 {len(headers_data)} 个 headers")
 
         live_name = self._get_live_name()
         logger.info(f"直播名称: {live_name}")
 
         cookies = self.browser.get_cookies()
         cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
-        logger.info(f"获取到 {len(cookie_dict)} 个 Cookie")
+        cookie_data = CookieData(cookies=cookie_dict)
+        logger.info(f"获取到 {len(cookie_data)} 个 Cookie")
 
-        return cookie_dict, headers, live_name
+        return cookie_data, headers_data, live_name
 
     def get_cookie(
         self, url: str
-    ) -> Tuple[Any, Dict[str, str], Dict[str, str], str]:
+    ) -> Tuple[Any, CookieData, HeadersData, str]:
         """
         获取 Cookie 和请求头信息。
 
@@ -94,9 +91,8 @@ class CookieHandler:
         Returns:
             tuple: 包含四个元素的元组
                 - browser: 浏览器实例
-                - cookie_dict: Cookie 字典，格式为
-                {cookie_name: cookie_value}
-                - headers: 请求头字典，包含 User-Agent、Referer 等
+                - cookie_data: Cookie 数据值对象
+                - headers_data: 请求头数据值对象
                 - live_name: 直播视频名称
 
         Raises:
@@ -116,9 +112,9 @@ class CookieHandler:
 
             input("请在浏览器中登录钉钉账户后，按Enter键继续...")
 
-            cookie_dict, headers, live_name = self._collect_browser_data()
+            cookie_data, headers_data, live_name = self._collect_browser_data()
 
-            return self.browser, cookie_dict, headers, live_name
+            return self.browser, cookie_data, headers_data, live_name
 
         except Exception as e:
             logger.error(f"获取Cookie时发生错误: {e}", exc_info=True)
@@ -128,7 +124,7 @@ class CookieHandler:
 
     def repeat_get_cookie(
         self, url: str
-    ) -> Tuple[Dict[str, str], Dict[str, str], str]:
+    ) -> Tuple[CookieData, HeadersData, str]:
         """
         重复获取 Cookie 和请求头信息。
 
@@ -139,9 +135,8 @@ class CookieHandler:
 
         Returns:
             tuple: 包含三个元素的元组
-                - cookie_dict: Cookie 字典，格式为
-                {cookie_name: cookie_value}
-                - headers: 请求头字典，包含 User-Agent、Referer 等
+                - cookie_data: Cookie 数据值对象
+                - headers_data: 请求头数据值对象
                 - live_name: 直播视频名称
 
         Raises:
@@ -152,8 +147,8 @@ class CookieHandler:
         try:
             if self.browser is None:
                 logger.warning("浏览器实例不存在，调用 get_cookie")
-                browser, cookie_dict, headers, live_name = self.get_cookie(url)
-                return cookie_dict, headers, live_name
+                browser, cookie_data, headers_data, live_name = self.get_cookie(url)
+                return cookie_data, headers_data, live_name
 
             self.browser.navigate(url)
             logger.info(f"导航到指定 URL: {url}")
@@ -165,9 +160,9 @@ class CookieHandler:
                 logger.warning(f"等待视频加载时发生错误: {e}")
                 input("未能确定页面是否成功加载。请在页面加载后，按Enter键继续...")
 
-            cookie_dict, headers, live_name = self._collect_browser_data()
+            cookie_data, headers_data, live_name = self._collect_browser_data()
 
-            return cookie_dict, headers, live_name
+            return cookie_data, headers_data, live_name
 
         except Exception as e:
             logger.error(f"重复获取Cookie时发生错误: {e}", exc_info=True)

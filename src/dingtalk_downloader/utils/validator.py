@@ -384,23 +384,45 @@ def validate_file_path(file_path: str) -> str:
     """
     file_path = file_path.strip()
 
-    # 检查空路径
-    if not file_path:
-        raise ValueError("文件路径不能为空")
-
-    # 检查文件扩展名
-    valid_extensions = [".csv", ".xlsx", ".xls"]
-    if not file_path.lower().endswith(tuple(valid_extensions)):
-        raise ValueError(
-            f"文件格式不支持: {file_path}. 请使用CSV或Excel文件（.csv, .xlsx, .xls）。"
-        )
-
+    _check_file_path_not_empty(file_path)
+    _check_file_extension(file_path)
     _check_file_exists(file_path)
     _check_is_file(file_path)
     _check_file_readable(file_path)
     _check_file_size(file_path)
 
     return file_path
+
+
+def _check_file_path_not_empty(file_path: str) -> None:
+    """
+    检查文件路径是否为空。
+
+    Args:
+        file_path: 文件路径
+
+    Raises:
+        ValueError: 文件路径为空时
+    """
+    if not file_path:
+        raise ValueError("文件路径不能为空")
+
+
+def _check_file_extension(file_path: str) -> None:
+    """
+    检查文件扩展名。
+
+    Args:
+        file_path: 文件路径
+
+    Raises:
+        ValueError: 文件扩展名不支持时
+    """
+    valid_extensions = [".csv", ".xlsx", ".xls"]
+    if not file_path.lower().endswith(tuple(valid_extensions)):
+        raise ValueError(
+            f"文件格式不支持: {file_path}. 请使用CSV或Excel文件（.csv, .xlsx, .xls）。"
+        )
 
 
 def _check_file_exists(file_path: str) -> None:

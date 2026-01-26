@@ -39,12 +39,12 @@ def test_cookie_handler_get_cookie(mock_browser_factory, mock_browser):
     handler = CookieHandler(BROWSER_TYPE_EDGE)
 
     with patch("builtins.input", return_value=""):
-        browser, cookies, headers, live_name = handler.get_cookie("https://n.dingtalk.com/test")
+        browser, cookie_data, headers_data, live_name = handler.get_cookie("https://n.dingtalk.com/test")
 
-    assert len(cookies) == 1
-    assert cookies["test"] == "value"
-    assert "User-Agent" in headers
-    assert "Referer" in headers
+    assert len(cookie_data) == 1
+    assert cookie_data.get("test") == "value"
+    assert "User-Agent" in headers_data
+    assert "Referer" in headers_data
     assert live_name == "测试直播"
 
 
@@ -56,6 +56,7 @@ def test_cookie_handler_get_cookie_with_multiple_cookies(mock_browser_factory):
         {"name": "cookie1", "value": "value1"},
         {"name": "cookie2", "value": "value2"},
     ]
+
     mock_browser.get_user_agent.return_value = "Mozilla/5.0"
     mock_browser.get_referer.return_value = "https://n.dingtalk.com/"
     mock_browser.get_element_by_xpath.return_value.text = "测试直播"
@@ -64,13 +65,13 @@ def test_cookie_handler_get_cookie_with_multiple_cookies(mock_browser_factory):
     handler = CookieHandler(BROWSER_TYPE_EDGE)
 
     with patch("builtins.input", return_value=""):
-        browser, cookies, headers, live_name = handler.get_cookie("https://n.dingtalk.com/test")
+        browser, cookie_data, headers_data, live_name = handler.get_cookie("https://n.dingtalk.com/test")
 
-    assert len(cookies) == 2
-    assert cookies["cookie1"] == "value1"
-    assert cookies["cookie2"] == "value2"
-    assert "User-Agent" in headers
-    assert "Referer" in headers
+    assert len(cookie_data) == 2
+    assert cookie_data.get("cookie1") == "value1"
+    assert cookie_data.get("cookie2") == "value2"
+    assert "User-Agent" in headers_data
+    assert "Referer" in headers_data
 
 
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
@@ -96,12 +97,12 @@ def test_cookie_handler_repeat_get_cookie(mock_browser_factory, mock_browser):
         handler.get_cookie("https://n.dingtalk.com/test")
 
     with patch("builtins.input", return_value=""):
-        cookies, headers, live_name = handler.repeat_get_cookie("https://n.dingtalk.com/test2")
+        cookie_data, headers_data, live_name = handler.repeat_get_cookie("https://n.dingtalk.com/test2")
 
-    assert len(cookies) == 1
-    assert cookies["test"] == "value"
-    assert "User-Agent" in headers
-    assert "Referer" in headers
+    assert len(cookie_data) == 1
+    assert cookie_data.get("test") == "value"
+    assert "User-Agent" in headers_data
+    assert "Referer" in headers_data
 
 
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")

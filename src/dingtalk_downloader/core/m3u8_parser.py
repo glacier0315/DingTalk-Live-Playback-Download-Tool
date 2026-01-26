@@ -19,17 +19,12 @@ from urllib.parse import urlparse, parse_qs
 from typing import List, Optional
 from ..browser.browser_driver import BrowserDriver
 from ..config.constants import MAX_RETRY_COUNT
+from .exceptions import M3u8ParseError
 
 logger = logging.getLogger(__name__)
 
 FIRST_ELEMENT_INDEX = 0
 LOG_TYPE_PERFORMANCE = "performance"
-
-
-class M3u8ParseError(Exception):
-    """m3u8解析异常"""
-
-    pass
 
 
 class M3u8Parser:

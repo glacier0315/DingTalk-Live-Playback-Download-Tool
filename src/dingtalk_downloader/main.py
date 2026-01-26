@@ -22,15 +22,14 @@ from .config.yaml_config import (
     ConfigValidationError,
 )
 from .core.downloader import Downloader
-from .core.cookie_handler import CookieError
-from .core.m3u8_parser import M3u8ParseError
+from .core.exceptions import CookieError, M3u8ParseError, FileReaderError
 from .utils.validator import (
     validate_input,
     validate_required_input,
     validate_dingtalk_url,
     validate_file_path,
 )
-from .utils.file_reader import FileReader, FileReaderError
+from .utils.file_reader import FileReader
 from .config.constants import (
     BROWSER_OPTION_MAP,
     DOWNLOAD_MODE_SINGLE,

@@ -17,14 +17,9 @@ import logging
 import pandas as pd
 from typing import Dict
 from .path_helper import clean_file_path
+from ..core.exceptions import FileReaderError
 
 logger = logging.getLogger(__name__)
-
-
-class FileReaderError(Exception):
-    """文件读取异常"""
-
-    pass
 
 
 class FileReader:
@@ -66,20 +61,61 @@ class FileReader:
             PermissionError: 文件不可读时
             ValueError: 文件格式不支持或文件过大时
         """
-        valid_extensions = [".csv", ".xlsx", ".xls"]
+        self._check_file_extension()
+        self._check_file_exists()
+        self._check_is_file()
+        self._check_file_readable()
+        self._check_file_size()
+        logger.debug(f"文件验证通过: {self.file_path}, 大小: {os.path.getsize(self.file_path)} bytes")
 
+    def _check_file_extension(self) -> None:
+        """
+        检查文件扩展名。
+
+        Raises:
+            ValueError: 文件扩展名不支持时
+        """
+        valid_extensions = [".csv", ".xlsx", ".xls"]
         if not self.file_path.lower().endswith(tuple(valid_extensions)):
             raise ValueError(f"文件格式不支持: {self.file_path}. 请使用CSV或Excel文件。")
 
+    def _check_file_exists(self) -> None:
+        """
+        检查文件是否存在。
+
+        Raises:
+            FileNotFoundError: 文件不存在时
+        """
         if not os.path.exists(self.file_path):
             raise FileNotFoundError(f"文件不存在: {self.file_path}")
 
+    def _check_is_file(self) -> None:
+        """
+        检查是否为文件。
+
+        Raises:
+            ValueError: 路径不是文件时
+        """
         if not os.path.isfile(self.file_path):
             raise ValueError(f"路径不是文件: {self.file_path}")
 
+    def _check_file_readable(self) -> None:
+        """
+        检查文件是否可读。
+
+        Raises:
+            PermissionError: 文件不可读时
+        """
         if not os.access(self.file_path, os.R_OK):
             raise PermissionError(f"文件不可读: {self.file_path}")
 
+    def _check_file_size(self) -> None:
+        """
+        检查文件大小是否合理。
+
+        Raises:
+            ValueError: 文件过大或为空时
+        """
         file_size = os.path.getsize(self.file_path)
         max_size = 100 * 1024 * 1024
 
@@ -91,8 +127,6 @@ class FileReader:
 
         if file_size == 0:
             raise ValueError(f"文件为空: {self.file_path}")
-
-        logger.debug(f"文件验证通过: {self.file_path}, 大小: {file_size} bytes")
 
     def read_links(self) -> Dict[int, str]:
         """
