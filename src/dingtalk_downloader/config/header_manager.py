@@ -75,7 +75,7 @@ class HeaderManager:
                     self._headers_cache[header_name] = headers_config[config_key]
                     logger.debug(f"加载请求头: {header_name}")
 
-            logger.info(f"成功加载 {len(self._headers_cache)} 个请求头")
+            logger.debug(f"成功加载 {len(self._headers_cache)} 个请求头")
 
         except Exception as e:
             logger.error(f"加载请求头配置失败: {e}", exc_info=True)

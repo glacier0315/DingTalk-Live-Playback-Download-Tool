@@ -54,7 +54,7 @@ class VideoDownloadManager:
         self.path_selector = PathSelector(save_mode)
         self.n_m3u8dl_re = NM3u8DLRE()
 
-        logger.info(
+        logger.debug(
             f"视频下载管理器初始化完成 - 浏览器类型: {browser_type}, "
             f"保存模式: {save_mode}"
         )
@@ -74,11 +74,11 @@ class VideoDownloadManager:
         browser, cookie_data, headers_data, live_name = (
             self.cookie_handler.get_cookie(url)
         )
-        logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
+        logger.debug(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
 
         self.m3u8_parser = M3u8Parser(browser)
         self.m3u8_download_service = M3u8DownloadService(self.m3u8_parser)
-        logger.info("m3u8 解析器创建成功")
+        logger.debug("m3u8 解析器创建成功")
 
         return VideoDownloadContext(
             url=url,
@@ -103,7 +103,7 @@ class VideoDownloadManager:
         cookie_data, headers_data, live_name = (
             self.cookie_handler.repeat_get_cookie(url)
         )
-        logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
+        logger.debug(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
         return VideoDownloadContext(
             url=url,
@@ -192,11 +192,6 @@ class VideoDownloadManager:
             context.get_cookies_dict(),
             context.get_headers_dict(),
         )
-
-        if download_success:
-            logger.info(f"视频下载成功: {context.live_name}")
-        else:
-            logger.error(f"视频下载失败: {context.live_name}")
 
         return download_success
 

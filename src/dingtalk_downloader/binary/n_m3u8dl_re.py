@@ -98,7 +98,6 @@ class NM3u8DLRE:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file_name = f"n_m3u8dl_re_{timestamp}.log"
         log_file_path = os.path.join(self.log_dir, log_file_name)
-        logger.debug(f"日志文件路径: {log_file_path}")
         return log_file_path
 
     def download(
@@ -155,7 +154,7 @@ class NM3u8DLRE:
                     logger.error(f"错误信息:\n{error_info}")
                 return False
 
-            logger.info(f"视频下载成功完成。文件保存路径: {save_dir}")
+            logger.debug(f"视频下载成功完成。文件保存路径: {save_dir}")
             return True
         except Exception as e:
             logger.error(f"下载视频时发生错误: {e}", exc_info=True)

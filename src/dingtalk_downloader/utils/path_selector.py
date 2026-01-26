@@ -55,10 +55,10 @@ class PathSelector:
         """
         if self.save_mode == SAVE_MODE_DEFAULT:
             save_dir = self._get_default_download_dir()
-            logger.info(f"使用默认保存目录: {save_dir}")
+            logger.debug(f"使用默认保存目录: {save_dir}")
         elif self.save_mode == SAVE_MODE_MANUAL:
             save_dir = self._get_manual_download_dir()
-            logger.info(f"使用手动选择目录: {save_dir}")
+            logger.debug(f"使用手动选择目录: {save_dir}")
         else:
             logger.error(f"无效的保存模式: {self.save_mode}")
             return None

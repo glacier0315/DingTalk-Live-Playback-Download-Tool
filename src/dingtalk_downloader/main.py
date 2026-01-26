@@ -76,7 +76,7 @@ def _get_user_inputs() -> tuple[str, str, str]:
         "开头，并包含 liveUuid 参数。",
         input_name="钉钉直播链接",
     )
-    logger.info(f"用户输入链接: {dingtalk_url}")
+    logger.debug(f"用户输入链接: {dingtalk_url}")
 
     save_mode = validate_input(
         "请选择保存模式（输入1：保存到程序默认路径，"
@@ -84,7 +84,7 @@ def _get_user_inputs() -> tuple[str, str, str]:
         ["1", "2"],
         default_option="1",
     )
-    logger.info(f"用户选择保存模式: {save_mode}")
+    logger.debug(f"用户选择保存模式: {save_mode}")
 
     browser_option = validate_input(
         "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，"
@@ -92,7 +92,7 @@ def _get_user_inputs() -> tuple[str, str, str]:
         ["1", "2", "3"],
         default_option="1",
     )
-    logger.info(f"浏览器选项: {browser_option}")
+    logger.debug(f"浏览器选项: {browser_option}")
 
     return dingtalk_url, save_mode, browser_option
 
@@ -110,7 +110,7 @@ def _create_downloader(browser_option: str, save_mode: str) -> Downloader:
     """
     browser_type = BROWSER_OPTION_MAP[browser_option]
     downloader = Downloader(browser_type, save_mode)
-    logger.info(
+    logger.debug(
         f"下载器创建成功 - 浏览器: {browser_type}, "
         f"保存模式: {save_mode}"
     )
@@ -167,7 +167,7 @@ def _get_batch_inputs() -> tuple[str, dict, str, str]:
         error_message="文件路径不正确。",
         input_name="文件路径",
     )
-    logger.info("用户已输入文件路径")
+    logger.debug("用户已输入文件路径")
 
     links_dict = FileReader(file_path).read_links()
     logger.info(f"从文件中读取到 {len(links_dict)} 个链接")
@@ -178,7 +178,7 @@ def _get_batch_inputs() -> tuple[str, dict, str, str]:
         ["1", "2"],
         default_option="1",
     )
-    logger.info(f"用户选择保存模式: {save_mode}")
+    logger.debug(f"用户选择保存模式: {save_mode}")
 
     browser_option = validate_input(
         "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，"
@@ -290,7 +290,7 @@ def main() -> None:
             ["1", "2"],
             default_option="1",
         )
-        logger.info(f"用户选择下载模式: {download_mode}")
+        logger.debug(f"用户选择下载模式: {download_mode}")
 
         if download_mode == DOWNLOAD_MODE_SINGLE:
             single_mode()

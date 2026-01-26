@@ -67,7 +67,7 @@ class M3u8DownloadService:
         if not m3u8_links:
             raise DownloadError("未找到m3u8链接")
 
-        logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接")
+        logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接，第一个链接: {m3u8_links[0]}")
 
         m3u8_file = self.m3u8_file_manager.get_temp_file_path()
         logger.debug(f"准备下载 m3u8 文件到: {m3u8_file}")

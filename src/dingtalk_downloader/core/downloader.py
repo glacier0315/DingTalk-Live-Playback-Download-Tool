@@ -50,7 +50,7 @@ class Downloader:
         self.save_mode = save_mode
         self.video_manager = VideoDownloadManager(browser_type, save_mode)
 
-        logger.info(f"下载器初始化完成 - 浏览器类型: {browser_type}, 保存模式: {save_mode}")
+        logger.debug(f"下载器初始化完成 - 浏览器类型: {browser_type}, 保存模式: {save_mode}")
 
     def download_single_video(self, url: str) -> None:
         """
@@ -115,7 +115,7 @@ class Downloader:
             print("程序已退出。")
             return None
 
-        logger.info(f"用户输入新链接: {url}")
+        logger.debug(f"用户输入新链接: {url}")
         return url
 
     def _download_first_video(self, first_url: str) -> None:
@@ -231,4 +231,4 @@ class Downloader:
         logger.info("开始释放下载器资源")
         if self.video_manager:
             self.video_manager.close()
-        logger.info("下载器资源释放完成")
+        logger.debug("下载器资源释放完成")

@@ -48,13 +48,13 @@ class BrowserFactory:
         logger.debug(f"创建浏览器实例 - 浏览器类型: {browser_type}")
 
         if browser_type == BROWSER_TYPE_EDGE:
-            logger.info("创建 Edge 浏览器实例")
+            logger.debug("创建 Edge 浏览器实例")
             return EdgeDriver()
         elif browser_type == BROWSER_TYPE_CHROME:
-            logger.info("创建 Chrome 浏览器实例")
+            logger.debug("创建 Chrome 浏览器实例")
             return ChromeDriver()
         elif browser_type == BROWSER_TYPE_FIREFOX:
-            logger.info("创建 Firefox 浏览器实例")
+            logger.debug("创建 Firefox 浏览器实例")
             return FirefoxDriver()
         else:
             logger.error(f"不支持的浏览器类型: {browser_type}")

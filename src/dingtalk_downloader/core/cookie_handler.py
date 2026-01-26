@@ -65,15 +65,15 @@ class CookieHandler:
         """
         headers_dict = self.header_manager.get_headers()
         headers_data = HeadersData(headers=headers_dict)
-        logger.info(f"获取到 {len(headers_data)} 个 headers")
+        logger.debug(f"获取到 {len(headers_data)} 个 headers")
 
         live_name = self._get_live_name()
-        logger.info(f"直播名称: {live_name}")
+        logger.debug(f"直播名称: {live_name}")
 
         cookies = self.browser.get_cookies()
         cookie_dict = {cookie["name"]: cookie["value"] for cookie in cookies}
         cookie_data = CookieData(cookies=cookie_dict)
-        logger.info(f"获取到 {len(cookie_data)} 个 Cookie")
+        logger.debug(f"获取到 {len(cookie_data)} 个 Cookie")
 
         return cookie_data, headers_data, live_name
 
@@ -102,13 +102,13 @@ class CookieHandler:
 
         try:
             self.browser = BrowserFactory.create_browser(self.browser_type)
-            logger.info("浏览器实例创建成功")
+            logger.debug("浏览器实例创建成功")
 
             self.browser.create_driver()
-            logger.info("浏览器驱动创建成功")
+            logger.debug("浏览器驱动创建成功")
 
             self.browser.navigate(url)
-            logger.info(f"导航到指定 URL: {url}")
+            logger.debug(f"导航到指定 URL: {url}")
 
             input("请在浏览器中登录钉钉账户后，按Enter键继续...")
 
@@ -146,16 +146,16 @@ class CookieHandler:
 
         try:
             if self.browser is None:
-                logger.warning("浏览器实例不存在，调用 get_cookie")
+                logger.debug("浏览器实例不存在，调用 get_cookie")
                 browser, cookie_data, headers_data, live_name = self.get_cookie(url)
                 return cookie_data, headers_data, live_name
 
             self.browser.navigate(url)
-            logger.info(f"导航到指定 URL: {url}")
+            logger.debug(f"导航到指定 URL: {url}")
 
             try:
                 self.browser.wait_for_video(20)
-                logger.info("视频加载完成")
+                logger.debug("视频加载完成")
             except Exception as e:
                 logger.warning(f"等待视频加载时发生错误: {e}")
                 input("未能确定页面是否成功加载。请在页面加载后，按Enter键继续...")
@@ -209,8 +209,8 @@ class CookieHandler:
         """
         关闭浏览器，释放资源。
         """
-        logger.info("开始释放 Cookie 处理器资源")
+        logger.debug("开始释放 Cookie 处理器资源")
         if self.browser:
             self.browser.close()
             self.browser = None
-        logger.info("Cookie 处理器资源释放完成")
+        logger.debug("Cookie 处理器资源释放完成")

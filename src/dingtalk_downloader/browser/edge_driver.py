@@ -65,7 +65,7 @@ class EdgeDriver(BrowserDriver):
         edge_options.set_capability("ms:loggingPrefs", {"performance": "ALL"})
 
         self.driver = webdriver.Edge(options=edge_options)
-        logger.info("Edge 浏览器驱动创建成功")
+        logger.debug("Edge 浏览器驱动创建成功")
         return self.driver
 
     def get_log(self, log_type: str) -> List[dict]:

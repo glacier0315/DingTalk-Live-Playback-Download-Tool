@@ -175,11 +175,11 @@ class BrowserDriver(ABC):
                 # 子类特定清理逻辑
                 self.driver_service = None
         """
-        logger.info("开始关闭浏览器")
+        logger.debug("开始关闭浏览器")
         if self.driver:
             self.driver.quit()
             self.driver = None
-        logger.info("浏览器关闭完成")
+        logger.debug("浏览器关闭完成")
 
     def is_driver_initialized(self) -> bool:
         """
