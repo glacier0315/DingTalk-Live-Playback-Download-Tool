@@ -151,43 +151,50 @@ def validate_dingtalk_url(url: str) -> str:
     Raises:
         ValueError: URL无效时
     """
-    try:
-        parsed = urlparse(url)
+    parsed = urlparse(url)
 
-        if not parsed.scheme:
-            raise ValueError("URL缺少协议")
+    if not parsed.scheme:
+        raise ValueError("URL缺少协议")
 
-        if parsed.scheme not in ["http", "https"]:
-            raise ValueError("仅支持 http 和 https 协议")
+    if parsed.scheme not in ["http", "https"]:
+        raise ValueError("仅支持 http 和 https 协议")
 
-        if not parsed.netloc:
-            raise ValueError("URL缺少域名")
+    if not parsed.netloc:
+        raise ValueError("URL缺少域名")
 
-        if parsed.netloc != "n.dingtalk.com":
-            raise ValueError("仅支持钉钉直播链接 (n.dingtalk.com)")
+    if parsed.netloc != "n.dingtalk.com":
+        raise ValueError("仅支持钉钉直播链接 (n.dingtalk.com)")
 
-        if not parsed.path:
-            raise ValueError("URL缺少路径")
+    if not parsed.path:
+        raise ValueError("URL缺少路径")
 
-        query_params = parse_qs(parsed.query)
+    _validate_live_uuid(parsed)
 
-        if "liveUuid" not in query_params:
-            raise ValueError("链接缺少 liveUuid 参数")
+    return url
 
-        live_uuid = query_params.get("liveUuid", [None])[0]
 
-        if not live_uuid:
-            raise ValueError("liveUuid 参数为空")
+def _validate_live_uuid(parsed) -> None:
+    """
+    验证liveUuid参数。
 
-        if not re.match(r"^[a-f0-9\-]{36}$", live_uuid):
-            raise ValueError("liveUuid 格式无效")
+    Args:
+        parsed: 解析后的URL对象
 
-        return url
+    Raises:
+        ValueError: liveUuid无效时
+    """
+    query_params = parse_qs(parsed.query)
 
-    except ValueError:
-        raise
-    except Exception as e:
-        raise ValueError(f"无效的钉钉直播链接: {e}") from e
+    if "liveUuid" not in query_params:
+        raise ValueError("链接缺少 liveUuid 参数")
+
+    live_uuid = query_params.get("liveUuid", [None])[0]
+
+    if not live_uuid:
+        raise ValueError("liveUuid 参数为空")
+
+    if not re.match(r"^[a-f0-9\-]{36}$", live_uuid):
+        raise ValueError("liveUuid 格式无效")
 
 
 def validate_file_path(file_path: str) -> str:
@@ -220,26 +227,74 @@ def validate_file_path(file_path: str) -> str:
             f"文件格式不支持: {file_path}. 请使用CSV或Excel文件（.csv, .xlsx, .xls）。"
         )
 
-    # 检查文件是否存在
+    _check_file_exists(file_path)
+    _check_is_file(file_path)
+    _check_file_readable(file_path)
+    _check_file_size(file_path)
+
+    return file_path
+
+
+def _check_file_exists(file_path: str) -> None:
+    """
+    检查文件是否存在。
+
+    Args:
+        file_path: 文件路径
+
+    Raises:
+        FileNotFoundError: 文件不存在时
+    """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"文件不存在: {file_path}")
 
-    # 检查是否为文件
+
+def _check_is_file(file_path: str) -> None:
+    """
+    检查是否为文件。
+
+    Args:
+        file_path: 文件路径
+
+    Raises:
+        ValueError: 路径不是文件时
+    """
     if not os.path.isfile(file_path):
         raise ValueError(f"路径不是文件: {file_path}")
 
-    # 检查文件可读性
+
+def _check_file_readable(file_path: str) -> None:
+    """
+    检查文件是否可读。
+
+    Args:
+        file_path: 文件路径
+
+    Raises:
+        PermissionError: 文件不可读时
+    """
     if not os.access(file_path, os.R_OK):
         raise PermissionError(f"文件不可读: {file_path}")
 
-    # 检查文件大小
+
+def _check_file_size(file_path: str) -> None:
+    """
+    检查文件大小是否合理。
+
+    Args:
+        file_path: 文件路径
+
+    Raises:
+        ValueError: 文件过大或为空时
+    """
     file_size = os.path.getsize(file_path)
     max_size = 100 * 1024 * 1024  # 100MB
 
     if file_size > max_size:
-        raise ValueError(f"文件过大: {file_path} ({file_size} bytes, 最大允许 {max_size} bytes)")
+        raise ValueError(
+            f"文件过大: {file_path} ({file_size} bytes, "
+            f"最大允许 {max_size} bytes)"
+        )
 
     if file_size == 0:
         raise ValueError(f"文件为空: {file_path}")
-
-    return file_path

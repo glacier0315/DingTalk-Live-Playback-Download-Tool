@@ -61,22 +61,24 @@ def single_mode() -> None:
 
     try:
         dingtalk_url = validate_required_input(
-            "请输入钉钉直播回放分享链接（格式：https://n.dingtalk.com/...?liveUuid=...）: ",
+            "请输入钉钉直播回放分享链接: ",
             validation_func=validate_dingtalk_url,
-            error_message="链接格式不正确。请确保链接以 https://n.dingtalk.com 开头，并包含 liveUuid 参数。",
+            error_message="链接格式不正确。",
             input_name="钉钉直播链接",
         )
         logger.info(f"用户输入链接: {dingtalk_url}")
 
         save_mode = validate_input(
-            "请选择保存模式（输入1：保存到程序默认路径，输入2：手动选择保存路径模式，直接回车默认选择1）: ",
+            "请选择保存模式（输入1：保存到程序默认路径，"
+            "输入2：手动选择保存路径模式，直接回车默认选择1）: ",
             ["1", "2"],
             default_option="1",
         )
         logger.info(f"用户选择保存模式: {save_mode}")
 
         browser_option = validate_input(
-            "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，输入3：Firefox，直接回车默认选择1）: ",
+            "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，"
+            "输入3：Firefox，直接回车默认选择1）: ",
             ["1", "2", "3"],
             default_option="1",
         )
@@ -85,7 +87,10 @@ def single_mode() -> None:
         browser_type = BROWSER_OPTION_MAP[browser_option]
 
         downloader = Downloader(browser_type, save_mode)
-        logger.info(f"下载器创建成功 - 浏览器: {browser_type}, 保存模式: {save_mode}")
+        logger.info(
+            f"下载器创建成功 - 浏览器: {browser_type}, "
+            f"保存模式: {save_mode}"
+        )
 
         downloader.download_single_video(dingtalk_url)
 
@@ -133,7 +138,7 @@ def batch_mode() -> None:
         file_path = validate_required_input(
             "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: ",
             validation_func=validate_file_path,
-            error_message="文件路径不正确。请确保文件存在、可读，且格式为CSV或Excel（.csv, .xlsx, .xls）。",
+            error_message="文件路径不正确。",
             input_name="文件路径",
         )
         logger.info("用户已输入文件路径")
@@ -217,7 +222,8 @@ def main() -> None:
 
     try:
         download_mode = validate_input(
-            "请选择下载模式(输入1:单个视频下载模式,输入2:批量下载模式,直接回车默认选择1): ",
+            "请选择下载模式(输入1:单个视频下载模式,输入2:批量下载模式,"
+            "直接回车默认选择1）: ",
             ["1", "2"],
             default_option="1",
         )

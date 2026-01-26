@@ -120,8 +120,12 @@ class M3u8Parser:
             M3u8ParseError: 下载失败时
         """
         try:
+            script = (
+                "return fetch(arguments[0], { method: 'GET' })"
+                ".then(response => response.text())"
+            )
             m3u8_content = self.browser.driver.execute_script(
-                "return fetch(arguments[0], { method: 'GET' }).then(response => response.text())",
+                script,
                 url,
             )
 
