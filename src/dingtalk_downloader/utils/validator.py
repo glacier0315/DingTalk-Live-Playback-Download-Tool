@@ -81,6 +81,103 @@ def _handle_eof_error(
     raise EOFError()
 
 
+def _validate_choice(
+    choice: str, valid_options: List[str]
+) -> bool:
+    """
+    验证选项是否有效。
+
+    Args:
+        choice: 用户输入
+        valid_options: 有效选项列表
+
+    Returns:
+        选项是否有效
+    """
+    return choice in valid_options
+
+
+def _process_user_choice(
+    choice: str,
+    valid_options: List[str],
+    validation_func: Optional[Callable[[str], bool]],
+    error_message: Optional[str],
+) -> Optional[str]:
+    """
+    处理用户选择。
+
+    Args:
+        choice: 用户输入
+        valid_options: 有效选项列表
+        validation_func: 验证函数
+        error_message: 错误消息
+
+    Returns:
+        有效选项或None
+    """
+    if not _validate_input(choice, validation_func, error_message):
+        return None
+
+    if _validate_choice(choice, valid_options):
+        return choice
+
+    print("无效的选择，请重新输入。")
+    return None
+
+
+def _handle_input_exception(
+    exception: Exception,
+    default_option: Optional[str],
+) -> Optional[str]:
+    """
+    处理输入异常。
+
+    Args:
+        exception: 异常对象
+        default_option: 默认选项
+
+    Returns:
+        默认选项或None
+
+    Raises:
+        Exception: 无法处理的异常
+    """
+    if isinstance(exception, EOFError):
+        return _handle_eof_error(default_option)
+    if isinstance(exception, KeyboardInterrupt):
+        print("\n用户中断输入")
+        raise
+    return None
+
+
+def _process_input(
+    choice: str,
+    valid_options: List[str],
+    validation_func: Optional[Callable[[str], bool]],
+    error_message: Optional[str],
+    default_option: Optional[str],
+) -> Optional[str]:
+    """
+    处理输入。
+
+    Args:
+        choice: 用户输入
+        valid_options: 有效选项列表
+        validation_func: 验证函数
+        error_message: 错误消息
+        default_option: 默认选项
+
+    Returns:
+        有效选项或None
+    """
+    if choice == "":
+        return _handle_empty_input(default_option, error_message)
+
+    return _process_user_choice(
+        choice, valid_options, validation_func, error_message
+    )
+
+
 def validate_input(
     prompt: str,
     valid_options: List[str],
@@ -114,30 +211,17 @@ def validate_input(
         try:
             choice = input(prompt)
 
-            # 处理空输入
-            if choice == "":
-                result = _handle_empty_input(default_option, error_message)
-                if result is not None:
-                    return result
-                continue
-
-            # 验证输入
-            if not _validate_input(choice, validation_func, error_message):
-                continue
-
-            # 验证选项
-            if choice in valid_options:
-                return choice
-
-            print("无效的选择，请重新输入。")
-
-        except EOFError:
-            result = _handle_eof_error(default_option)
+            result = _process_input(
+                choice, valid_options, validation_func, error_message,
+                default_option
+            )
             if result is not None:
                 return result
-        except KeyboardInterrupt:
-            print("\n用户中断输入")
-            raise
+
+        except (EOFError, KeyboardInterrupt) as e:
+            result = _handle_input_exception(e, default_option)
+            if result is not None:
+                return result
 
 
 def _validate_required_input(
