@@ -54,7 +54,7 @@ class M3u8Parser:
         self.browser = browser
         self.max_retries = max_retries
 
-    def fetch_m3u8_links(self, url: str) -> Optional[List[str]]:
+    def fetch_m3u8_link(self, url: str) -> str:
         """
         从浏览器网络日志中提取 m3u8 链接。
 
@@ -64,7 +64,10 @@ class M3u8Parser:
             url: 钉钉直播回放分享链接
 
         Returns:
-            m3u8 链接列表，如果提取失败则返回 None
+            m3u8 链接，如果提取失败则返回 None,
+            提取到的 m3u8 链接列表长度为 1 时，返回该链接；
+            提取到的 m3u8 链接列表长度大于 1 时，返回最后一个链接。
+
 
         Raises:
             Exception: 提取失败时
@@ -92,13 +95,13 @@ class M3u8Parser:
                 logger.info(f"提取到的 m3u8 链接: {m3u8_links}")
                 # 预期仅 1 个 m3u8 链接，返回最后一个
                 if len(m3u8_links) >= 1:
-                    logger.warning(f"提取到 {len(m3u8_links)} 个 m3u8 链接，预期仅 1 个, 返回最后一个链接: {m3u8_links[-1]}")
-                    return [m3u8_links[-1]]
+                    logger.info(f"提取到 {len(m3u8_links)} 个 m3u8 链接，预期仅 1 个, 返回最后一个链接: {m3u8_links[-1]}")
+                    return m3u8_links[-1]
             except Exception as e:
                 logger.error(f"第 {attempt + 1} 次尝试获取 m3u8 链接时发生错误: {e}", exc_info=True)
 
         logger.warning(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
-        return None
+        raise M3u8ParseError(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
 
     def download_m3u8_file(
         self, url: str, filename: str, headers: dict

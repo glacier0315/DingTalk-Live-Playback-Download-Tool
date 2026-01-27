@@ -61,20 +61,15 @@ class M3u8DownloadService:
         Raises:
             DownloadError: 获取或下载失败时
         """
-        logger.info("开始获取 m3u8 链接")
-        m3u8_links = self.m3u8_parser.fetch_m3u8_links(url)
-
-        if not m3u8_links:
-            raise DownloadError("未找到m3u8链接")
-
-        logger.info(f"获取到 {len(m3u8_links)} 个 m3u8 链接，第一个链接: {m3u8_links[0]}")
+        m3u8_link = self.m3u8_parser.fetch_m3u8_link(url)
+        logger.info(f"获取到 m3u8 链接: {m3u8_link}")
 
         m3u8_file = self.m3u8_file_manager.get_temp_file_path()
         logger.debug(f"准备下载 m3u8 文件到: {m3u8_file}")
 
         try:
             m3u8_file = self.m3u8_parser.download_m3u8_file(
-                m3u8_links[0], m3u8_file, m3u8_headers
+                m3u8_link, m3u8_file, m3u8_headers
             )
             logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
@@ -88,9 +83,9 @@ class M3u8DownloadService:
             logger.error(f"下载 m3u8 文件时发生错误: {e}", exc_info=True)
             raise DownloadError(f"下载 m3u8 文件失败: {e}") from e
 
-        prefix = self.m3u8_parser.extract_prefix(m3u8_links[0])
+        prefix = self.m3u8_parser.extract_prefix(m3u8_link)
         logger.info(f"提取到基础 URL: {prefix}")
 
         return M3u8Link(
-            url=m3u8_links[0], prefix=prefix, local_file_path=m3u8_file
+            url=m3u8_link, prefix=prefix, local_file_path=m3u8_file
         )
