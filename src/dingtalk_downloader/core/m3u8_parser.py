@@ -77,8 +77,8 @@ class M3u8Parser:
         live_uuid = query_params.get("liveUuid", [None])[FIRST_ELEMENT_INDEX]
 
         if not live_uuid:
-            logger.error("未能从 URL 提取 liveUuid，程序将退出")
-            return None
+            logger.error("未能从 URL 提取 liveUuid")
+            raise M3u8ParseError("未能从 URL 提取 liveUuid 参数")
 
         for attempt in range(self.max_retries):
             try:
