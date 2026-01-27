@@ -2,6 +2,7 @@
 .trae/
 .vscode/
 .idea/
+.history/
 
 # Python缓存文件
 __pycache__/
