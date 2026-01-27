@@ -56,10 +56,7 @@ class ChromeDriver(BrowserDriver):
         logger.info("开始创建 Chrome 浏览器驱动")
 
         chrome_options = ChromeOptions()
-        chrome_options.add_argument("--disable-usb-device-event-log")
-        chrome_options.add_argument("--ignore-certificate-errors")
-        chrome_options.add_argument("--disable-logging")
-        chrome_options.add_argument("--log-level=3")
+        self.apply_common_options(chrome_options)
         chrome_options.set_capability("goog:loggingPrefs", {"performance": "ALL"})
 
         self.driver = webdriver.Chrome(options=chrome_options)

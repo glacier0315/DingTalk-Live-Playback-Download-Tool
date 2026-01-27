@@ -56,11 +56,8 @@ class EdgeDriver(BrowserDriver):
         logger.info("开始创建 Edge 浏览器驱动")
 
         edge_options = EdgeOptions()
-        edge_options.add_argument("--disable-usb-device-event-log")
-        edge_options.add_argument("--ignore-certificate-errors")
-        edge_options.add_argument("--disable-logging")
+        self.apply_common_options(edge_options)
         edge_options.add_argument("--disable_ssl_verification")
-        edge_options.add_argument("--log-level=3")
         edge_options.add_experimental_option("excludeSwitches", ["enable-logging"])
         edge_options.set_capability("ms:loggingPrefs", {"performance": "ALL"})
 

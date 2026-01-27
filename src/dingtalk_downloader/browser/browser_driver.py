@@ -20,6 +20,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+COMMON_BROWSER_ARGS = [
+    "--disable-usb-device-event-log",
+    "--ignore-certificate-errors",
+    "--disable-logging",
+    "--log-level=3",
+]
+
 
 class BrowserDriver(ABC):
     """
@@ -66,6 +73,17 @@ class BrowserDriver(ABC):
             Exception: 创建失败时
         """
         pass
+
+    @staticmethod
+    def apply_common_options(options) -> None:
+        """
+        应用通用浏览器配置选项。
+
+        Args:
+            options: 浏览器选项对象
+        """
+        for arg in COMMON_BROWSER_ARGS:
+            options.add_argument(arg)
 
     @abstractmethod
     def get_log(self, log_type: str) -> List[dict]:

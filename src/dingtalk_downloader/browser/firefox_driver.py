@@ -57,10 +57,7 @@ class FirefoxDriver(BrowserDriver):
         logger.info("开始创建 Firefox 浏览器驱动")
 
         firefox_options = FirefoxOptions()
-        firefox_options.add_argument("--disable-usb-device-event-log")
-        firefox_options.add_argument("--ignore-certificate-errors")
-        firefox_options.add_argument("--disable-logging")
-        firefox_options.add_argument("--log-level=3")
+        self.apply_common_options(firefox_options)
         firefox_options.set_capability(
             "moz:firefoxOptions",
             {
