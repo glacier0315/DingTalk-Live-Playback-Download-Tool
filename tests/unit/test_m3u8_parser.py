@@ -77,11 +77,14 @@ def test_m3u8_parser_fetch_m3u8_link_success(mock_browser_with_logs):
 
 def test_m3u8_parser_fetch_m3u8_link_no_live_uuid(mock_browser):
     """测试没有liveUuid的情况"""
+    from dingtalk_downloader.core.exceptions import M3u8ParseError
+
     parser = M3u8Parser(mock_browser)
 
-    result = parser.fetch_m3u8_link("https://n.dingtalk.com/test")
+    with pytest.raises(M3u8ParseError) as exc_info:
+        parser.fetch_m3u8_link("https://n.dingtalk.com/test")
 
-    assert result is None
+    assert "未能从 URL 提取 liveUuid 参数" in str(exc_info.value)
 
 
 def test_m3u8_parser_fetch_m3u8_link_retry_success(mock_browser):
