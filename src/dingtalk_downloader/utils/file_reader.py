@@ -55,18 +55,53 @@ class FileReader:
         验证文件路径。
 
         检查文件扩展名、文件是否存在、文件是否可读、文件大小是否合理。
+        检查路径遍历攻击，确保文件路径在预期的工作目录内。
 
         Raises:
             FileNotFoundError: 文件不存在时
             PermissionError: 文件不可读时
             ValueError: 文件格式不支持或文件过大时
         """
+        self._check_path_traversal()
         self._check_file_extension()
         self._check_file_exists()
         self._check_is_file()
         self._check_file_readable()
         self._check_file_size()
         logger.debug(f"文件验证通过: {self.file_path}, 大小: {os.path.getsize(self.file_path)} bytes")
+
+    def _check_path_traversal(self) -> None:
+        """
+        检查路径遍历攻击。
+
+        确保文件路径在预期的工作目录内，防止路径遍历攻击。
+
+        Raises:
+            ValueError: 路径遍历攻击时
+        """
+        try:
+            real_path = os.path.realpath(self.file_path)
+            abs_path = os.path.abspath(self.file_path)
+
+            if real_path != abs_path:
+                logger.warning(f"检测到符号链接: {self.file_path} -> {real_path}")
+
+            current_dir = os.getcwd()
+            if not abs_path.startswith(current_dir):
+                logger.error(f"检测到路径遍历攻击: {self.file_path}")
+                logger.error(f"当前工作目录: {current_dir}")
+                logger.error(f"文件绝对路径: {abs_path}")
+                raise ValueError(
+                    f"路径遍历攻击检测: 文件路径必须在当前工作目录内。"
+                    f"当前工作目录: {current_dir}"
+                )
+
+            self.file_path = real_path
+            logger.debug(f"路径验证通过: {self.file_path}")
+
+        except (OSError, ValueError) as e:
+            logger.error(f"路径验证失败: {e}")
+            raise ValueError(f"路径验证失败: {e}") from e
 
     def _check_file_extension(self) -> None:
         """
