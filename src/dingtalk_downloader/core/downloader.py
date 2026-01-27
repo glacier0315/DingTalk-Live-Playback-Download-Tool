@@ -50,7 +50,7 @@ class Downloader:
         self.save_mode = save_mode
         self.video_manager = VideoDownloadManager(browser_type, save_mode)
 
-        logger.debug(f"下载器初始化完成 - 浏览器类型: {browser_type}, 保存模式: {save_mode}")
+        logger.info(f"下载器初始化完成 - 浏览器类型: {browser_type}, 保存模式: {save_mode}")
 
     def download_single_video(self, url: str) -> None:
         """
@@ -66,6 +66,7 @@ class Downloader:
         """
         logger.info("开始下载单个视频")
 
+        context = None
         try:
             context = self.video_manager.initialize_download(url)
 
@@ -90,6 +91,9 @@ class Downloader:
         except Exception as e:
             logger.error(f"下载单个视频时发生错误: {e}", exc_info=True)
             raise DownloadError(f"下载单个视频失败: {e}") from e
+        finally:
+            if context:
+                self.video_manager.cleanup_context(context)
 
     def _handle_user_input(self) -> Optional[str]:
         """

@@ -152,7 +152,7 @@ class NM3u8DLRE:
                     logger.error(f"错误信息:\n{error_info}")
                 return False
 
-            logger.debug(f"视频下载成功完成。文件保存路径: {save_dir}")
+            logger.info(f"视频下载成功完成。文件保存路径: {save_dir}")
             return True
         except Exception as e:
             logger.error(f"下载视频时发生错误: {e}", exc_info=True)

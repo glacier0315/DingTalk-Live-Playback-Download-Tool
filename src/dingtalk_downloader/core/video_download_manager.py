@@ -74,11 +74,11 @@ class VideoDownloadManager:
         browser, cookie_data, headers_data, live_name = (
             self.cookie_handler.get_cookie(url)
         )
-        logger.debug(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
+        logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
 
         self.m3u8_parser = M3u8Parser(browser)
         self.m3u8_download_service = M3u8DownloadService(self.m3u8_parser)
-        logger.debug("m3u8 解析器创建成功")
+        logger.info("m3u8 解析器创建成功")
 
         return VideoDownloadContext(
             url=url,
@@ -103,7 +103,7 @@ class VideoDownloadManager:
         cookie_data, headers_data, live_name = (
             self.cookie_handler.repeat_get_cookie(url)
         )
-        logger.debug(f"获取到 Cookie 和请求头，直播名称: {live_name}")
+        logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
         return VideoDownloadContext(
             url=url,
@@ -178,7 +178,7 @@ class VideoDownloadManager:
             logger.error(f"m3u8 文件不存在: {m3u8_link.local_file_path}")
             return False
 
-        logger.debug(f"使用本地 m3u8 文件: {m3u8_link.local_file_path}")
+        logger.info(f"使用本地 m3u8 文件: {m3u8_link.local_file_path}")
 
         save_dir = self.path_selector.get_save_dir()
         if not save_dir:
@@ -211,3 +211,16 @@ class VideoDownloadManager:
         if self.cookie_handler:
             self.cookie_handler.close()
         logger.info("视频下载管理器资源释放完成")
+
+    def cleanup_context(self, context: VideoDownloadContext) -> None:
+        """
+        清理下载上下文相关资源。
+
+        Args:
+            context: 视频下载上下文
+        """
+        try:
+            if context and hasattr(context, 'cookie_data'):
+                logger.debug(f"清理上下文资源: {context.live_name}")
+        except Exception as e:
+            logger.warning(f"清理上下文资源时发生错误: {e}", exc_info=True)
