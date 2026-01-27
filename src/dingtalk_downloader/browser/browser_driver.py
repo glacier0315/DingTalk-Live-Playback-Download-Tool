@@ -199,7 +199,7 @@ class BrowserDriver(ABC):
         """
         return self.driver
 
-    def extract_m3u8_links_from_logs(self, logs: List[dict]) -> List[str]:
+    def extract_m3u8_links_from_logs(self, logs: List[dict], live_uuid: str) -> List[str]:
         """
         从浏览器日志中提取m3u8链接。
 
@@ -220,12 +220,21 @@ class BrowserDriver(ABC):
                 else:
                     log_message = str(log)
 
-                logger.info(f"从日志中提取到消息: {log_message}")
+                
                 if ".m3u8" in log_message:
                     start_idx = log_message.find('url":"') + len('url":"')
                     end_idx = log_message.find('"', start_idx)
                     m3u8_url = log_message[start_idx:end_idx]
-                    logger.info(f"从日志中提取到 m3u8 链接: {m3u8_url}")
+                    # 过滤掉非当前直播的m3u8链接
+                    if live_uuid not in m3u8_url:
+                        continue
+
+                    # 过滤掉重复的m3u8链接
+                    if m3u8_url in m3u8_links:
+                        continue
+
+                    logger.debug(f"从日志中提取到消息: {log_message}")
+                    logger.debug(f"从日志中提取到 m3u8 链接: {m3u8_url}")
                     m3u8_links.append(m3u8_url)
             except Exception as e:
                 logger.error(f"提取m3u8链接时发生错误: {e}", exc_info=True)

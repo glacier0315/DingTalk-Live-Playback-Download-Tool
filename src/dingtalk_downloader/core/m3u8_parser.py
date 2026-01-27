@@ -79,19 +79,23 @@ class M3u8Parser:
 
         for attempt in range(self.max_retries):
             try:
+                logger.debug(f"第 {attempt + 1} 次尝试获取到 m3u8 链接")
                 self._refresh_page()
                 logs = self.browser.get_log(LOG_TYPE_PERFORMANCE)
                 logger.info(f"从浏览器日志中提取到 {len(logs)} 个 性能日志")
-                m3u8_links = self.browser.extract_m3u8_links_from_logs(logs)
-                logger.info(f"从浏览器日志中提取到 {len(m3u8_links)} 个 m3u8 链接")
-                for m3u8_url in m3u8_links:
-                    if live_uuid in m3u8_url:
-                        logger.debug(f"获取到m3u8链接: {m3u8_url}")
-                        return [m3u8_url]
-
-                logger.debug(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接，重试中")
+                m3u8_links = self.browser.extract_m3u8_links_from_logs(logs, live_uuid)
+                if not m3u8_links:
+                    logger.warning(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接")
+                    continue
+                
+                logger.info(f"提取到 {len(m3u8_links)} 个 m3u8 链接")
+                logger.info(f"提取到的 m3u8 链接: {m3u8_links}")
+                # 预期仅 1 个 m3u8 链接，返回最后一个
+                if len(m3u8_links) >= 1:
+                    logger.warning(f"提取到 {len(m3u8_links)} 个 m3u8 链接，预期仅 1 个, 返回最后一个链接: {m3u8_links[-1]}")
+                    return [m3u8_links[-1]]
             except Exception as e:
-                logger.error(f"获取 m3u8 链接时发生错误: {e}", exc_info=True)
+                logger.error(f"第 {attempt + 1} 次尝试获取 m3u8 链接时发生错误: {e}", exc_info=True)
 
         logger.warning(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
         return None
