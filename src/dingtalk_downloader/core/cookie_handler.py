@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 class CookieHandler:
     """
     Cookie 处理类，负责获取和管理 Cookie。
-
     该类封装了 Cookie 获取、请求头获取、直播名称获取的逻辑。
+    支持上下文管理器，确保资源正确释放。
 
     Attributes:
         browser: 浏览器实例
@@ -47,12 +47,32 @@ class CookieHandler:
         self.header_manager = HeaderManager()
         logger.debug(f"Cookie 处理器初始化 - 浏览器类型: {browser_type}")
 
+    def __enter__(self):
+        """
+        上下文管理器入口。
+
+        Returns:
+            self: CookieHandler实例
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        上下文管理器出口，确保资源正确释放。
+
+        Args:
+            exc_type: 异常类型
+            exc_val: 异常值
+            exc_tb: 异常追踪
+        """
+        self.close()
+        return False
+
     def _collect_browser_data(
         self,
     ) -> Tuple[CookieData, HeadersData, str]:
         """
         从浏览器收集数据（请求头、Cookie、直播名称）。
-
         该方法提取了重复的数据收集逻辑，包括：
         - 获取直播名称
         - 获取Cookie字典
