@@ -8,6 +8,7 @@
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
+    - 2026-01-27: 重写-适配新的架构，使用VideoDownloadManager
 """
 
 import sys
@@ -20,198 +21,197 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 from dingtalk_downloader.core.downloader import Downloader
 from dingtalk_downloader.config.constants import (
     BROWSER_TYPE_EDGE,
+    BROWSER_TYPE_CHROME,
+    BROWSER_TYPE_FIREFOX,
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
 )
+from dingtalk_downloader.utils.models import VideoDownloadContext
 
 
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_init(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
-    """测试初始化下载器"""
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_downloader_init_edge_default(mock_video_manager_class):
+    """测试Edge浏览器默认模式初始化"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
+
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
     assert downloader.browser_type == BROWSER_TYPE_EDGE
     assert downloader.save_mode == SAVE_MODE_DEFAULT
-    assert downloader.cookie_handler is not None
-    assert downloader.n_m3u8dl_re is not None
+    assert downloader.video_manager == mock_video_manager
+    mock_video_manager_class.assert_called_once_with(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
 
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_close(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_downloader_init_chrome_manual(mock_video_manager_class):
+    """测试Chrome浏览器手动模式初始化"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
+
+    downloader = Downloader(BROWSER_TYPE_CHROME, SAVE_MODE_MANUAL)
+
+    assert downloader.browser_type == BROWSER_TYPE_CHROME
+    assert downloader.save_mode == SAVE_MODE_MANUAL
+    assert downloader.video_manager == mock_video_manager
+    mock_video_manager_class.assert_called_once_with(BROWSER_TYPE_CHROME, SAVE_MODE_MANUAL)
+
+
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_downloader_init_firefox_manual(mock_video_manager_class):
+    """测试Firefox浏览器手动模式初始化"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
+
+    downloader = Downloader(BROWSER_TYPE_FIREFOX, SAVE_MODE_MANUAL)
+
+    assert downloader.browser_type == BROWSER_TYPE_FIREFOX
+    assert downloader.save_mode == SAVE_MODE_MANUAL
+    assert downloader.video_manager == mock_video_manager
+    mock_video_manager_class.assert_called_once_with(BROWSER_TYPE_FIREFOX, SAVE_MODE_MANUAL)
+
+
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_downloader_close(mock_video_manager_class):
     """测试关闭下载器"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
+
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
     downloader.close()
 
-    mock_cookie_handler.return_value.close.assert_called_once()
+    mock_video_manager.close.assert_called_once()
 
 
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_get_default_download_dir(
-    mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
-):
-    """测试获取默认下载目录"""
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
-    save_dir = downloader._get_default_download_dir()
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_download_single_video_success(mock_video_manager_class):
+    """测试单个视频下载成功"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
 
-    assert "Downloads" in save_dir
-    assert os.path.isabs(save_dir)
+    mock_context = Mock(spec=VideoDownloadContext)
+    mock_context.live_name = "测试直播"
+    mock_video_manager.initialize_download.return_value = mock_context
+    mock_video_manager.process_video.return_value = True
 
-
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_get_manual_download_dir(
-    mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
-):
-    """测试获取手动选择的下载目录"""
-    with patch("dingtalk_downloader.core.downloader.tk.Tk") as mock_tk, patch(
-        "dingtalk_downloader.core.downloader.filedialog.askdirectory"
-    ) as mock_askdirectory:
-        mock_root = MagicMock()
-        mock_tk.return_value = mock_root
-        mock_askdirectory.return_value = "/custom/path"
-
-        downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_MANUAL)
-        save_dir = downloader._get_manual_download_dir()
-
-        assert save_dir == "/custom/path"
-        mock_root.withdraw.assert_called_once()
-        mock_root.destroy.assert_called_once()
-        mock_askdirectory.assert_called_once_with(title="选择保存视频的目录")
-
-
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_get_manual_download_dir_cancelled(
-    mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
-):
-    """测试用户取消选择下载目录"""
-    with patch("dingtalk_downloader.core.downloader.tk.Tk") as mock_tk, patch(
-        "dingtalk_downloader.core.downloader.filedialog.askdirectory"
-    ) as mock_askdirectory:
-        mock_root = MagicMock()
-        mock_tk.return_value = mock_root
-        mock_askdirectory.return_value = ""
-
-        downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_MANUAL)
-        save_dir = downloader._get_manual_download_dir()
-
-        assert save_dir == ""
-        mock_root.withdraw.assert_called_once()
-        mock_root.destroy.assert_called_once()
-        mock_askdirectory.assert_called_once_with(title="选择保存视频的目录")
-
-
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_download_video_default_mode(
-    mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
-):
-    """测试默认模式下载视频"""
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    mock_cookies = {"session": "test"}
-    mock_headers = {"User-Agent": "test"}
-    mock_n_m3u8dl_re.return_value.download.return_value = True
+    with patch("builtins.input", return_value="q"):
+        downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
-    result = downloader._download_video(
-        "test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers
-    )
-
-    mock_n_m3u8dl_re.return_value.download.assert_called_once()
-    assert result is True
+    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_video_manager.process_video.assert_called_once_with(mock_context)
 
 
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_download_video_invalid_mode(
-    mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
-):
-    """测试无效的保存模式"""
-    downloader = Downloader(BROWSER_TYPE_EDGE, "invalid_mode")
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_download_single_video_failure(mock_video_manager_class):
+    """测试单个视频下载失败"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
 
-    mock_cookies = {"session": "test"}
-    mock_headers = {"User-Agent": "test"}
+    mock_context = Mock(spec=VideoDownloadContext)
+    mock_context.live_name = "测试直播"
+    mock_video_manager.initialize_download.return_value = mock_context
+    mock_video_manager.process_video.return_value = False
 
-    result = downloader._download_video(
-        "test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers
-    )
-
-    mock_n_m3u8dl_re.return_value.download.assert_not_called()
-    assert result is False
-
-
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_download_video_success(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
-    """测试下载成功"""
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    mock_cookies = {"session": "test"}
-    mock_headers = {"User-Agent": "test"}
-    mock_n_m3u8dl_re.return_value.download.return_value = True
+    with patch("builtins.input", return_value="q"):
+        downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
-    result = downloader._download_video(
-        "test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers
-    )
-
-    assert result is True
-    assert downloader.saved_path is not None
-    assert "Downloads" in downloader.saved_path
+    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_video_manager.process_video.assert_called_once_with(mock_context)
 
 
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_download_video_failure(mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler):
-    """测试下载失败"""
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_download_single_video_exit(mock_video_manager_class):
+    """测试退出"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
+
+    mock_context = Mock(spec=VideoDownloadContext)
+    mock_context.live_name = "测试直播"
+    mock_video_manager.initialize_download.return_value = mock_context
+    mock_video_manager.process_video.return_value = True
+
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    mock_cookies = {"session": "test"}
-    mock_headers = {"User-Agent": "test"}
-    mock_n_m3u8dl_re.return_value.download.return_value = False
+    with patch("builtins.input", return_value="q"):
+        downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
-    result = downloader._download_video(
-        "test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers
-    )
-
-    assert result is False
-    assert downloader.saved_path is None
+    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_video_manager.process_video.assert_called_once_with(mock_context)
 
 
-@patch("dingtalk_downloader.core.downloader.CookieHandler")
-@patch("dingtalk_downloader.core.downloader.M3u8Parser")
-@patch("dingtalk_downloader.core.downloader.NM3u8DLRE")
-def test_downloader_download_video_cancelled(
-    mock_n_m3u8dl_re, mock_m3u8_parser, mock_cookie_handler
-):
-    """测试用户取消目录选择"""
-    with patch("dingtalk_downloader.core.downloader.tk.Tk") as mock_tk, patch(
-        "dingtalk_downloader.core.downloader.filedialog.askdirectory"
-    ) as mock_askdirectory:
-        mock_root = MagicMock()
-        mock_tk.return_value = mock_root
-        mock_askdirectory.return_value = ""
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_download_batch_videos_success(mock_video_manager_class):
+    """测试批量下载成功"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
 
-        downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_MANUAL)
+    mock_context1 = Mock(spec=VideoDownloadContext)
+    mock_context1.live_name = "测试直播1"
+    mock_context2 = Mock(spec=VideoDownloadContext)
+    mock_context2.live_name = "测试直播2"
 
-        mock_cookies = {"session": "test"}
-        mock_headers = {"User-Agent": "test"}
+    mock_video_manager.initialize_download.return_value = mock_context1
+    mock_video_manager.repeat_get_context.return_value = mock_context2
+    mock_video_manager.process_video.return_value = True
 
-        result = downloader._download_video(
-            "test.m3u8", "test_video", "https://test.com", mock_cookies, mock_headers
-        )
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-        assert result is False
-        assert downloader.saved_path is None
-        mock_n_m3u8dl_re.return_value.download.assert_not_called()
+    urls = {0: "https://n.dingtalk.com/test1?liveUuid=abc", 1: "https://n.dingtalk.com/test2?liveUuid=def"}
+
+    with patch("builtins.input", return_value="q"):
+        downloader.download_batch_videos(urls)
+
+    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test1?liveUuid=abc")
+    assert mock_video_manager.process_video.call_count == 2
+
+
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_download_batch_videos_failure(mock_video_manager_class):
+    """测试批量下载失败"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
+
+    mock_context = Mock(spec=VideoDownloadContext)
+    mock_context.live_name = "测试直播"
+    mock_video_manager.initialize_download.return_value = mock_context
+    mock_video_manager.process_video.return_value = False
+
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+
+    urls = {0: "https://n.dingtalk.com/test1?liveUuid=abc", 1: "https://n.dingtalk.com/test2?liveUuid=def"}
+
+    with patch("builtins.input", return_value="q"):
+        downloader.download_batch_videos(urls)
+
+    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test1?liveUuid=abc")
+    assert mock_video_manager.process_video.call_count == 2
+
+
+@patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
+def test_download_batch_videos_continue(mock_video_manager_class):
+    """测试批量下载继续"""
+    mock_video_manager = Mock()
+    mock_video_manager_class.return_value = mock_video_manager
+
+    mock_context1 = Mock(spec=VideoDownloadContext)
+    mock_context1.live_name = "测试直播1"
+    mock_context2 = Mock(spec=VideoDownloadContext)
+    mock_context2.live_name = "测试直播2"
+
+    mock_video_manager.initialize_download.return_value = mock_context1
+    mock_video_manager.repeat_get_context.return_value = mock_context2
+    mock_video_manager.process_video.return_value = True
+
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+
+    urls = {0: "https://n.dingtalk.com/test1?liveUuid=abc", 1: "https://n.dingtalk.com/test2?liveUuid=def"}
+
+    with patch("builtins.input", side_effect=["q"]):
+        downloader.download_batch_videos(urls)
+
+    mock_video_manager.initialize_download.assert_called_once()
+    assert mock_video_manager.process_video.call_count == 2
