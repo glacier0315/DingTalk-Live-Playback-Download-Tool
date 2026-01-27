@@ -1,1226 +1,967 @@
 # 开发指南
 
-本文档为钉钉直播回放下载工具项目的开发指南，旨在帮助开发者快速上手项目开发，了解开发流程、工具使用和代码质量要求。
+本文档为钉钉直播回放下载工具的开发指南,涵盖环境搭建、开发流程、常用命令及调试技巧,帮助新团队成员快速上手项目开发。
 
 ## 目录
 
 - [一、环境搭建](#一环境搭建)
-- [二、开发流程](#二开发流程)
-- [三、代码质量工具](#三代码质量工具)
-- [四、测试指南](#四测试指南)
-- [五、常见问题](#五常见问题)
+- [二、项目结构](#二项目结构)
+- [三、开发流程](#三开发流程)
+- [四、常用命令](#四常用命令)
+- [五、调试技巧](#五调试技巧)
+- [六、常见问题](#六常见问题)
+- [七、最佳实践](#七最佳实践)
+
+---
 
 ## 一、环境搭建
 
 ### 1.1 系统要求
 
-- **操作系统**：Windows 10/11、macOS 10.14+、Linux (Ubuntu 18.04+)
-- **Python 版本**：Python 3.8 或更高版本
-- **浏览器**：Edge、Chrome 或 Firefox（用于获取 Cookie）
-- **内存**：建议至少 4GB RAM
-- **磁盘空间**：建议至少 2GB 可用空间
+- **操作系统**: Windows 11(推荐)、Windows 10、macOS、Linux
+- **Python版本**: 3.8 或更高版本
+- **浏览器**: Microsoft Edge、Google Chrome、Mozilla Firefox(任选其一)
+- **内存**: 至少 4GB RAM
+- **磁盘空间**: 至少 2GB 可用空间
 
-### 1.2 Python 环境准备
+### 1.2 安装步骤
 
-#### 1.2.1 安装 Python
+#### 1.2.1 安装Python
 
-**Windows 系统**：
-
-1. 访问 [Python 官网](https://www.python.org/downloads/)
-2. 下载 Python 3.8 或更高版本的安装程序
-3. 运行安装程序，**务必勾选 "Add Python to PATH"** 选项
-4. 完成安装后，打开命令提示符验证安装：
+1. 访问 [Python官网](https://www.python.org/downloads/)
+2. 下载 Python 3.8 或更高版本
+3. 运行安装程序,勾选 "Add Python to PATH"
+4. 验证安装:
 
 ```bash
 python --version
-pip --version
 ```
 
-**macOS 系统**：
-
-使用 Homebrew 安装：
+#### 1.2.2 克隆项目
 
 ```bash
-# 安装 Homebrew（如果未安装）
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# 安装 Python
-brew install python@3.9
-```
-
-**Linux 系统**：
-
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install python3.9 python3-pip python3-venv
-
-# CentOS/RHEL
-sudo yum install python39 python39-pip
-```
-
-#### 1.2.2 创建虚拟环境（推荐）
-
-创建虚拟环境可以隔离项目依赖，避免与系统 Python 环境冲突：
-
-```bash
-# 创建虚拟环境
-python -m venv venv
-
-# 激活虚拟环境
-# Windows
-venv\Scripts\activate
-
-# macOS/Linux
-source venv/bin/activate
-```
-
-激活后，命令提示符前会显示 `(venv)` 标识。
-
-### 1.3 克隆项目
-
-```bash
-# 克隆项目仓库
 git clone https://github.com/glacier0315/DingTalk-Live-Playback-Download-Tool.git
-
-# 进入项目目录
 cd DingTalk-Live-Playback-Download-Tool
 ```
 
-### 1.4 安装依赖
+#### 1.2.3 安装依赖
 
-#### 1.4.1 升级 pip
-
-```bash
-# 升级 pip 到最新版本
-pip install --upgrade pip
-```
-
-#### 1.4.2 安装项目依赖
+**方式一: 使用pip安装**
 
 ```bash
-# 安装项目运行依赖
 pip install -r requirements.txt
 ```
 
-**requirements.txt 包含的主要依赖**：
-
-- `selenium`: 浏览器自动化
-- `requests`: HTTP 请求
-- `pandas`: 数据处理
-- `openpyxl`: Excel 文件处理
-- `webdriver-manager`: 浏览器驱动管理
-
-#### 1.4.3 安装开发依赖
+**方式二: 使用pipenv安装**
 
 ```bash
-# 安装开发依赖（包含 Black、pytest 等工具）
-pip install -r requirements-dev.txt
+pip install pipenv
+pipenv install
 ```
 
-**requirements-dev.txt 包含的主要依赖**：
-
-- `black`: 代码格式化工具
-- `pytest`: 测试框架
-- `pytest-mock`: Mock 测试工具
-- `pytest-cov`: 测试覆盖率工具
-- `mypy`: 类型检查工具
-- `pylint`: 代码质量检查工具
-
-#### 1.4.4 使用国内镜像源（可选）
-
-如果下载速度较慢，可以使用国内镜像源：
+**方式三: 使用poetry安装**
 
 ```bash
-# 使用清华大学镜像源
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-# 使用阿里云镜像源
-pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
-
-# 使用豆瓣镜像源
-pip install -r requirements.txt -i https://pypi.douban.com/simple/
+pip install poetry
+poetry install
 ```
 
-### 1.5 安装浏览器驱动
+#### 1.2.4 安装浏览器驱动
 
-项目使用 Selenium 自动化浏览器，需要安装对应的浏览器驱动。
+项目使用Selenium进行浏览器自动化,需要安装对应的浏览器驱动:
 
-#### 1.5.1 自动安装（推荐）
+**Edge驱动(推荐)**:
 
-项目已集成 `webdriver-manager`，会自动下载和管理浏览器驱动：
+1. 访问 [EdgeDriver下载页面](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
+2. 下载与Edge浏览器版本匹配的驱动
+3. 将驱动放置在系统PATH路径中,或项目根目录
 
-```python
-# Edge 浏览器驱动
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
-from selenium.webdriver.edge.service import Service
+**Chrome驱动**:
 
-service = Service(EdgeChromiumDriverManager().install())
+1. 访问 [ChromeDriver下载页面](https://chromedriver.chromium.org/downloads)
+2. 下载与Chrome浏览器版本匹配的驱动
+3. 将驱动放置在系统PATH路径中,或项目根目录
 
-# Chrome 浏览器驱动
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
+**Firefox驱动**:
 
-service = Service(ChromeDriverManager().install())
+1. 访问 [GeckoDriver下载页面](https://github.com/mozilla/geckodriver/releases)
+2. 下载最新版本的驱动
+3. 将驱动放置在系统PATH路径中,或项目根目录
 
-# Firefox 浏览器驱动
-from webdriver_manager.firefox import GeckoDriverManager
-from selenium.webdriver.firefox.service import Service
+#### 1.2.5 安装N_m3u8DL-RE
 
-service = Service(GeckoDriverManager().install())
-```
+1. 访问 [N_m3u8DL-RE发布页面](https://github.com/nilaoda/N_m3u8DL-RE/releases)
+2. 下载最新版本的二进制文件
+3. 将可执行文件放置在系统PATH路径中,或项目根目录
 
-#### 1.5.2 手动安装
+#### 1.2.6 配置项目
 
-如果自动安装失败，可以手动下载浏览器驱动：
-
-**Edge 浏览器驱动**：
-
-1. 访问 [Edge WebDriver 官网](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/)
-2. 下载与你的 Edge 浏览器版本匹配的驱动
-3. 将驱动文件放到系统 PATH 环境变量包含的目录中
-
-**Chrome 浏览器驱动**：
-
-1. 访问 [ChromeDriver 官网](https://chromedriver.chromium.org/downloads)
-2. 下载与你的 Chrome 浏览器版本匹配的驱动
-3. 将驱动文件放到系统 PATH 环境变量包含的目录中
-
-**Firefox 浏览器驱动**：
-
-1. 访问 [GeckoDriver 官网](https://github.com/mozilla/geckodriver/releases)
-2. 下载与你的操作系统匹配的驱动
-3. 将驱动文件放到系统 PATH 环境变量包含的目录中
-
-#### 1.5.3 验证浏览器驱动安装
-
-```python
-from selenium import webdriver
-
-# 测试 Edge 浏览器
-driver = webdriver.Edge()
-driver.get("https://www.example.com")
-print("Edge 浏览器驱动安装成功")
-driver.quit()
-
-# 测试 Chrome 浏览器
-driver = webdriver.Chrome()
-driver.get("https://www.example.com")
-print("Chrome 浏览器驱动安装成功")
-driver.quit()
-
-# 测试 Firefox 浏览器
-driver = webdriver.Firefox()
-driver.get("https://www.example.com")
-print("Firefox 浏览器驱动安装成功")
-driver.quit()
-```
-
-### 1.6 配置环境变量
-
-#### 1.6.1 创建 .env 文件
+1. 复制配置文件模板:
 
 ```bash
-# 复制示例配置文件
-cp .env.example .env
+copy config\app.yaml.example config\app.yaml
 ```
 
-#### 1.6.2 编辑 .env 文件
+2. 根据实际情况修改配置文件:
 
-编辑 `.env` 文件，配置必要的环境变量（如有需要）：
+```yaml
+app:
+  name: "钉钉直播回放下载工具"
+  version: "1.0.0"
+
+browser:
+  type: "edge" # edge、chrome、firefox
+  headless: false # 是否无头模式
+
+download:
+  save_mode: "1" # 1: 默认路径, 2: 手动选择
+  default_dir: "D:/Downloads"
+
+logging:
+  level: "INFO" # DEBUG、INFO、WARNING、ERROR
+  retention_days: 30
+```
+
+### 1.3 验证安装
+
+运行以下命令验证安装是否成功:
 
 ```bash
-# 浏览器类型（edge、chrome、firefox）
-BROWSER_TYPE=edge
-
-# 下载模式（single、batch）
-DOWNLOAD_MODE=single
-
-# 保存模式（default、manual）
-SAVE_MODE=default
-
-# 下载目录
-DOWNLOAD_DIR=Downloads
-
-# 最大重试次数
-MAX_RETRY_COUNT=5
-
-# 请求超时时间（秒）
-REQUEST_TIMEOUT=30
-```
-
-#### 1.6.3 加载环境变量
-
-项目使用 `python-dotenv` 库加载环境变量，在代码中自动加载 `.env` 文件：
-
-```python
-from dotenv import load_dotenv
-
-load_dotenv()
-```
-
-### 1.7 验证安装
-
-#### 1.7.1 验证 Python 环境
-
-```bash
-# 检查 Python 版本
-python --version
-
-# 检查 pip 版本
-pip --version
-
-# 检查已安装的包
-pip list
-```
-
-#### 1.7.2 验证依赖安装
-
-```bash
-# 检查项目依赖
-pip show selenium requests pandas openpyxl
-
-# 检查开发依赖
-pip show black pytest pytest-mock pytest-cov mypy pylint
-```
-
-#### 1.7.3 验证 Black 配置
-
-```bash
-# 检查 Black 配置
-python -m black --check .
-
-# 如果没有格式问题，会显示 "All done!"
-```
-
-#### 1.7.4 运行测试
-
-```bash
-# 运行所有测试
-pytest
-
-# 运行测试并显示详细输出
-pytest -v
-
-# 运行测试并显示覆盖率
-pytest --cov=src/dingtalk_downloader --cov-report=html
-```
-
-#### 1.7.5 运行项目
-
-```bash
-# 运行主程序
 python -m dingtalk_downloader.main
 ```
 
-### 1.8 常见安装问题
+如果看到欢迎信息,说明安装成功。
 
-#### Q1: Python 安装后命令行找不到 python？
+---
 
-**A**: Windows 系统需要手动添加 Python 到 PATH 环境变量：
+## 二、项目结构
 
-1. 右键"此电脑" → "属性" → "高级系统设置" → "环境变量"
-2. 在"系统变量"中找到"Path"，点击"编辑"
-3. 添加 Python 安装路径（如 `C:\Python39`）和 Scripts 目录（如 `C:\Python39\Scripts`）
-4. 重新打开命令提示符
+### 2.1 目录结构
 
-#### Q2: pip 安装依赖失败？
-
-**A**: 尝试以下解决方案：
-
-1. 升级 pip：`pip install --upgrade pip`
-2. 使用国内镜像源：`pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
-3. 创建虚拟环境后重试
-4. 检查网络连接
-
-#### Q3: 浏览器驱动下载失败？
-
-**A**: 尝试以下解决方案：
-
-1. 检查网络连接
-2. 手动下载浏览器驱动（参考 1.5.2 节）
-3. 使用代理设置（如果需要）
-4. 检查防火墙设置
-
-#### Q4: 虚拟环境激活失败？
-
-**A**: Windows 系统可能需要以管理员身份运行命令提示符，或者使用 PowerShell：
-
-```powershell
-# PowerShell 激活虚拟环境
-.\venv\Scripts\Activate.ps1
+```tree
+DingTalk-Live-Playback-Download-Tool/
+├── config/                          # 配置文件目录
+│   ├── app.yaml                     # 应用配置文件
+│   └── app.yaml.example             # 配置文件模板
+├── docs/                            # 文档目录
+│   ├── architecture.md              # 架构文档
+│   ├── development_guide.md         # 开发指南
+│   └── development_standard.md      # 开发规范
+├── logs/                            # 日志文件目录
+├── src/                             # 源代码目录
+│   └── dingtalk_downloader/         # 主包
+│       ├── __init__.py
+│       ├── main.py                  # 程序入口
+│       ├── browser/                 # 浏览器自动化模块
+│       │   ├── __init__.py
+│       │   ├── browser_factory.py   # 浏览器工厂
+│       │   ├── browser_driver.py    # 浏览器驱动基类
+│       │   ├── edge_driver.py       # Edge驱动
+│       │   ├── chrome_driver.py     # Chrome驱动
+│       │   └── firefox_driver.py   # Firefox驱动
+│       ├── binary/                  # 二进制工具封装模块
+│       │   ├── __init__.py
+│       │   └── n_m3u8dl_re.py      # N_m3u8DL-RE封装
+│       ├── config/                  # 配置管理模块
+│       │   ├── __init__.py
+│       │   ├── yaml_config.py       # YAML配置管理
+│       │   ├── logger_config.py     # 日志配置
+│       │   ├── header_manager.py    # 请求头管理
+│       │   └── constants.py         # 常量定义
+│       ├── core/                    # 核心业务逻辑模块
+│       │   ├── __init__.py
+│       │   ├── downloader.py        # 下载器(外观类)
+│       │   ├── video_download_manager.py  # 视频下载管理器
+│       │   ├── cookie_handler.py    # Cookie处理器
+│       │   ├── m3u8_parser.py      # M3U8解析器
+│       │   ├── m3u8_download_service.py  # M3U8下载服务
+│       │   └── exceptions.py        # 自定义异常
+│       └── utils/                   # 工具函数模块
+│           ├── __init__.py
+│           ├── models.py            # 数据模型
+│           ├── validator.py         # 输入验证
+│           ├── file_reader.py       # 文件读取
+│           ├── path_selector.py     # 路径选择
+│           ├── path_helper.py       # 路径工具
+│           └── m3u8_file_manager.py  # M3U8文件管理
+├── tests/                           # 测试目录
+│   ├── unit/                        # 单元测试
+│   │   ├── test_models.py
+│   │   ├── test_validator.py
+│   │   ├── test_file_reader.py
+│   │   ├── test_path_helper.py
+│   │   └── test_yaml_config.py
+│   └── conftest.py                  # pytest配置
+├── .gitignore                       # Git忽略文件
+├── .trae/                           # Trae配置
+│   └── rules/
+│       └── project_rules.md        # 项目规则
+├── pyproject.toml                   # 项目配置文件
+├── pytest.ini                       # pytest配置文件
+├── README.md                        # 项目说明文档
+└── requirements.txt                 # 依赖列表
 ```
 
-如果遇到执行策略错误，运行以下命令：
+### 2.2 核心模块说明
 
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+| 模块                           | 职责            | 关键类/函数                                             |
+| ------------------------------ | --------------- | ------------------------------------------------------- |
+| main.py                        | 程序入口        | main(), single_mode(), batch_mode()                     |
+| core/downloader.py             | 下载器外观类    | Downloader                                              |
+| core/video_download_manager.py | 视频下载管理器  | VideoDownloadManager                                    |
+| core/cookie_handler.py         | Cookie处理器    | CookieHandler                                           |
+| core/m3u8_parser.py            | M3U8解析器      | M3u8Parser                                              |
+| core/m3u8_download_service.py  | M3U8下载服务    | M3u8DownloadService                                     |
+| browser/browser_factory.py     | 浏览器工厂      | BrowserFactory                                          |
+| browser/browser_driver.py      | 浏览器驱动基类  | BrowserDriver                                           |
+| binary/n_m3u8dl_re.py          | N_m3u8DL-RE封装 | NM3u8DLRE                                               |
+| utils/models.py                | 数据模型        | CookieData, HeadersData, M3u8Link, VideoDownloadContext |
+| utils/validator.py             | 输入验证        | validate_input(), validate_dingtalk_url()               |
+| utils/file_reader.py           | 文件读取        | FileReader                                              |
+| utils/path_selector.py         | 路径选择        | PathSelector                                            |
+| config/yaml_config.py          | YAML配置管理    | YamlConfig                                              |
+| config/logger_config.py        | 日志配置        | LoggerConfig                                            |
+
+---
+
+## 三、开发流程
+
+### 3.1 开发流程概述
+
+```mermaid
+flowchart TD
+    Start([开始]) --> Branch[创建分支]
+    Branch --> Code[编写代码]
+    Code --> Test[编写测试]
+    Test --> RunTest[运行测试]
+    RunTest --> Format[代码格式化]
+    Format --> Lint[代码检查]
+    Lint --> Commit[提交代码]
+    Commit --> Push[推送到远程]
+    Push --> PR[创建Pull Request]
+    PR --> Review[代码审查]
+    Review --> Merge[合并到主分支]
+    Merge --> End([结束])
+
+    style Start fill:#90EE90
+    style End fill:#FFB6C1
+    style Merge fill:#90EE90
 ```
 
-#### Q5: 依赖版本冲突？
+### 3.2 创建分支
 
-**A**: 使用 pip 的依赖解析器：
+#### 3.2.1 分支命名规范
+
+遵循 `<type>/<功能名>` 格式:
+
+- `feature/新功能名称`: 新功能开发
+- `bugfix/问题描述`: Bug修复
+- `docs/文档更新`: 文档更新
+- `refactor/重构描述`: 代码重构
+
+#### 3.2.2 创建分支示例
 
 ```bash
-# 使用 pip 的依赖解析器
-pip install -r requirements.txt --use-deprecated=legacy-resolver
+# 创建功能分支
+git checkout -b feature/add-batch-download
+
+# 创建Bug修复分支
+git checkout -b bugfix/fix-cookie-expiry
+
+# 创建文档更新分支
+git checkout -b docs/update-readme
 ```
 
-或者使用 `pip-tools` 管理依赖：
+### 3.3 编写代码
 
-```bash
-pip install pip-tools
-pip-compile requirements.in
-pip-sync requirements.txt
-```
+#### 3.3.1 代码规范
 
-#### Q6: Windows 系统缺少 Microsoft Visual C++ 运行库？
+遵循项目代码规范,详见 [development_standard.md](development_standard.md)。
 
-**A**: 某些 Python 包需要 Microsoft Visual C++ 运行库，下载并安装：
+#### 3.3.2 代码模板
 
-- [Microsoft Visual C++ Redistributable](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
-
-#### Q7: macOS 系统缺少 Xcode 命令行工具？
-
-**A**: 安装 Xcode 命令行工具：
-
-```bash
-xcode-select --install
-```
-
-#### Q8: Linux 系统缺少系统依赖？
-
-**A**: 安装必要的系统依赖：
-
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install build-essential python3-dev libssl-dev libffi-dev
-
-# CentOS/RHEL
-sudo yum groupinstall "Development Tools"
-sudo yum install python3-devel openssl-devel libffi-devel
-```
-
-## 二、开发流程
-
-### 2.1 开发前准备
-
-1. **拉取最新代码**
-
-```bash
-git pull origin main
-```
-
-2. **创建功能分支**
-
-```bash
-git checkout -b feature/your-feature-name
-```
-
-3. **运行代码格式化检查**
-
-```bash
-python -m black --check .
-```
-
-4. **运行测试**
-
-```bash
-pytest
-```
-
-### 2.2 开发过程
-
-1. **编写代码**
-
-   - 遵循项目开发规范（见 [development_standard.md](development_standard.md)）
-   - 使用有意义的变量和函数名
-   - 添加必要的注释和文档字符串
-
-2. **定期格式化代码**
-
-```bash
-python -m black .
-```
-
-3. **定期运行测试**
-
-```bash
-pytest
-```
-
-4. **提交代码**
-
-```bash
-git add .
-git commit -m "feat: 添加新功能"
-```
-
-### 2.3 提交前检查清单
-
-在提交代码前，请确保完成以下检查：
-
-- [ ] 代码已通过 Black 格式化检查：`python -m black --check .`
-- [ ] 所有测试通过：`pytest`
-- [ ] 代码符合项目开发规范
-- [ ] 添加了必要的注释和文档字符串
-- [ ] 提交信息符合 Git 提交信息规范
-
-### 2.4 提交代码
-
-```bash
-# 添加所有修改
-git add .
-
-# 提交代码（使用规范的提交信息）
-git commit -m "feat: 添加新功能"
-
-# 推送到远程仓库
-git push origin feature/your-feature-name
-```
-
-### 2.5 代码审查
-
-1. **创建 Pull Request**
-
-   - 在 GitHub 上创建 Pull Request
-   - 填写 PR 模板，说明修改内容
-   - 关联相关的 Issue
-
-2. **等待审查**
-
-   - 等待项目维护者审查代码
-   - 根据反馈修改代码
-
-3. **合并代码**
-
-   - 审查通过后，合并代码到主分支
-   - 删除功能分支
-
-## 三、代码质量工具
-
-### 3.1 Black 代码格式化工具
-
-#### 3.1.1 工具介绍
-
-Black 是 Python 社区广泛使用的代码格式化工具，具有以下特点：
-
-- **一致性**：自动统一代码风格，消除代码风格争议
-- **确定性**：相同的代码总是产生相同的格式化结果
-- **自动化**：一键格式化，无需手动调整
-- **标准性**：遵循 PEP 8 规范，是 Python 社区的标准工具
-
-#### 3.1.2 安装和配置
-
-Black 已集成到项目的开发依赖中，通过以下命令安装：
-
-```bash
-pip install -r requirements-dev.txt
-```
-
-配置文件位于项目根目录的 `pyproject.toml`，包含以下关键配置：
-
-```toml
-[tool.black]
-line-length = 100                    # 行长度设置为 100 字符
-target-version = ['py38']            # 目标 Python 版本为 3.8+
-include = '\.pyi?$'                  # 包含 .py 和 .pyi 文件
-exclude = '''                         # 排除目录和文件
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-```
-
-#### 3.1.3 使用方法
-
-##### 格式化当前文件
-
-```bash
-python -m black 文件名.py
-```
-
-##### 格式化整个项目
-
-```bash
-python -m black .
-```
-
-##### 检查代码格式（不修改文件）
-
-```bash
-python -m black --check .
-```
-
-##### 查看格式化差异（不修改文件）
-
-```bash
-python -m black --diff .
-```
-
-##### 格式化指定目录
-
-```bash
-python -m black src/
-python -m black tests/
-```
-
-#### 3.1.4 开发流程集成
-
-##### 代码提交前检查
-
-在提交代码前，必须运行以下命令确保代码格式正确：
-
-```bash
-# 检查代码格式
-python -m black --check .
-
-# 如果检查通过，可以提交代码
-git add .
-git commit -m "feat: 添加新功能"
-```
-
-##### 代码格式化后提交
-
-如果检查失败，运行以下命令格式化代码：
-
-```bash
-# 格式化代码
-python -m black .
-
-# 再次检查
-python -m black --check .
-
-# 提交代码
-git add .
-git commit -m "style: 格式化代码"
-```
-
-#### 3.1.5 代码格式化要求
-
-**强制要求**：
-
-1. **提交前必须格式化**：所有代码在提交前必须通过 Black 格式化检查
-2. **不得手动调整**：格式化后的代码不得手动调整，除非有充分的理由
-3. **CI/CD 检查**：代码合并前必须通过格式化检查（如果配置了 CI/CD）
-
-**推荐实践**：
-
-1. **定期格式化**：开发过程中定期运行格式化命令，保持代码风格一致
-2. **IDE 集成**：配置 IDE 自动格式化，保存时自动运行 Black
-3. **团队协作**：团队成员统一使用 Black，避免代码风格冲突
-
-#### 3.1.6 常见问题
-
-##### Q1: Black 格式化后的代码不符合我的习惯？
-
-**A**: Black 的设计理念是"统一优于个人偏好"。团队统一使用 Black 可以避免代码风格争议，提高代码可读性。建议接受 Black 的格式化结果。
-
-##### Q2: 某些代码不想被格式化怎么办？
-
-**A**: 可以在代码中使用 `# fmt: off` 和 `# fmt: on` 注释来跳过格式化：
+创建新模块时,可以使用以下模板:
 
 ```python
-# fmt: off
-complex_dict = {
-    'key1': 'value1',
-    'key2': 'value2',
-    # ...
-}
-# fmt: on
+"""
+模块描述
+"""
+
+from typing import Optional, List, Dict
+from dataclasses import dataclass
+
+
+class ClassName:
+    """类描述"""
+
+    def __init__(self, param: str):
+        """初始化方法
+
+        Args:
+            param: 参数描述
+        """
+        self.param = param
+
+    def method_name(self, arg1: str, arg2: Optional[int] = None) -> bool:
+        """方法描述
+
+        Args:
+            arg1: 参数1描述
+            arg2: 参数2描述
+
+        Returns:
+            返回值描述
+        """
+        pass
 ```
 
-**注意**：这种用法应该谨慎使用，仅在必要时使用。
+### 3.4 编写测试
 
-##### Q3: Black 改变了代码逻辑怎么办？
+#### 3.4.1 测试文件组织
 
-**A**: Black 只改变代码格式，不会改变代码逻辑。如果发现逻辑变化，请检查代码本身是否有问题。
+测试文件应放在 `tests/unit/` 目录下,命名格式为 `test_<模块名>.py`。
 
-##### Q4: 如何在 IDE 中集成 Black？
-
-**A**: 主流 IDE 都支持 Black 集成：
-
-- **VS Code**: 安装 "Black Formatter" 扩展，配置为默认格式化工具
-- **PyCharm**: 安装 Black 插件，配置为代码格式化工具
-- **Vim/Neovim**: 使用 `black` 插件或配置自动格式化
-
-#### 3.1.7 格式化示例
-
-##### 格式化前
+#### 3.4.2 测试示例
 
 ```python
-def calculate_total(items):
-    total=0
-    for item in items:
-        total+=item['price']*item['quantity']
-    return total
+import pytest
+from dingtalk_downloader.utils.models import CookieData
+
+
+class TestCookieData:
+    """测试CookieData类"""
+
+    def test_create_cookie_data(self):
+        """测试创建CookieData"""
+        cookies = {"key1": "value1", "key2": "value2"}
+        cookie_data = CookieData(cookies)
+
+        assert cookie_data.cookies == cookies
+
+    def test_to_dict(self):
+        """测试to_dict方法"""
+        cookies = {"key1": "value1"}
+        cookie_data = CookieData(cookies)
+
+        result = cookie_data.to_dict()
+
+        assert result == cookies
+        assert result is not cookies  # 确保返回的是副本
 ```
 
-##### 格式化后
-
-```python
-def calculate_total(items):
-    total = 0
-    for item in items:
-        total += item["price"] * item["quantity"]
-    return total
-```
-
-主要变化：
-
-- 运算符周围添加空格
-- 单引号改为双引号
-- 代码缩进和间距统一
-
-### 3.2 Pytest 测试框架
-
-#### 3.2.1 运行测试
+#### 3.4.3 运行测试
 
 ```bash
 # 运行所有测试
 pytest
 
-# 运行指定测试文件
-pytest tests/unit/test_downloader.py
+# 运行特定测试文件
+pytest tests/unit/test_models.py
 
-# 运行指定测试函数
-pytest tests/unit/test_downloader.py::test_download_single_video
+# 运行特定测试函数
+pytest tests/unit/test_models.py::TestCookieData::test_create_cookie_data
 
 # 显示详细输出
 pytest -v
 
-# 显示测试覆盖率
+# 显示覆盖率
 pytest --cov=src/dingtalk_downloader
 ```
 
-#### 3.2.2 编写测试
+### 3.5 代码格式化
 
-测试文件应放在 `tests/` 目录下，文件名以 `test_` 开头：
-
-```python
-import pytest
-from dingtalk_downloader.core.downloader import Downloader
-
-def test_download_single_video():
-    """测试单个视频下载"""
-    downloader = Downloader()
-    result = downloader.download("https://example.com/video.m3u8")
-    assert result is True
-```
-
-### 3.3 其他工具
-
-#### 3.3.1 MyPy 类型检查
+#### 3.5.1 使用Black格式化
 
 ```bash
-# 运行类型检查
-mypy src/dingtalk_downloader
+# 格式化所有Python文件
+black src/ tests/
+
+# 格式化特定文件
+black src/dingtalk_downloader/main.py
+
+# 检查格式(不修改文件)
+black --check src/ tests/
 ```
 
-#### 3.3.2 Pylint 代码检查
+#### 3.5.2 Black配置
+
+在 `pyproject.toml` 中配置Black:
+
+```toml
+[tool.black]
+line-length = 79
+target-version = ['py38']
+include = '\.pyi?$'
+```
+
+### 3.6 代码检查
+
+#### 3.6.1 使用Flake8检查
 
 ```bash
-# 运行代码检查
-pylint src/dingtalk_downloader
+# 检查所有Python文件
+flake8 src/ tests/
+
+# 检查特定文件
+flake8 src/dingtalk_downloader/main.py
+
+# 显示错误代码
+flake8 src/ tests/ --show-source
 ```
 
-## 四、测试指南
+#### 3.6.2 Flake8配置
 
-### 4.1 测试结构
+在 `pyproject.toml` 中配置Flake8:
 
-```
-tests/
-├── unit/           # 单元测试
-│   ├── test_downloader.py
-│   ├── test_cookie_handler.py
-│   └── test_file_reader.py
-├── integration/    # 集成测试
-│   └── test_download_flow.py
-└── fixtures/       # 测试数据
-    ├── sample_links.csv
-    └── sample_links.xlsx
-```
-
-### 4.2 单元测试
-
-单元测试用于测试单个函数或类的功能：
-
-```python
-import pytest
-from dingtalk_downloader.utils.file_reader import FileReader
-
-def test_read_csv_file():
-    """测试读取 CSV 文件"""
-    reader = FileReader()
-    links = reader.read_csv_file("tests/fixtures/sample_links.csv")
-    assert len(links) > 0
-    assert isinstance(links[0], str)
+```toml
+[tool.flake8]
+max-line-length = 79
+exclude = [
+    '.git',
+    '__pycache__',
+    '.pytest_cache',
+    'venv',
+    'env',
+]
+ignore = ['E203', 'W503']
 ```
 
-### 4.3 集成测试
+### 3.7 提交代码
 
-集成测试用于测试多个模块协同工作的功能：
+#### 3.7.1 提交信息规范
 
-```python
-import pytest
-from dingtalk_downloader.core.downloader import Downloader
-from dingtalk_downloader.utils.file_reader import FileReader
+遵循 `<type>(<scope>): <subject>` 格式:
 
-def test_batch_download_flow():
-    """测试批量下载流程"""
-    reader = FileReader()
-    links = reader.read_csv_file("tests/fixtures/sample_links.csv")
+- `feat`: 新功能
+- `fix`: Bug修复
+- `docs`: 文档更新
+- `style`: 代码格式调整(不影响功能)
+- `refactor`: 重构(不新增功能不修复bug)
+- `test`: 补充测试
+- `chore`: 构建/依赖调整
 
-    downloader = Downloader()
-    results = downloader.batch_download(links)
+#### 3.7.2 提交信息示例
 
-    assert all(results)
+```text
+feat(downloader): 添加批量下载功能
+
+- 支持从CSV/Excel文件读取链接
+- 支持批量下载多个视频
+- 添加下载进度显示
 ```
 
-### 4.4 Mock 测试
-
-使用 pytest-mock 进行 Mock 测试：
-
-```python
-import pytest
-from unittest.mock import Mock, patch
-from dingtalk_downloader.core.downloader import Downloader
-
-def test_download_with_mock():
-    """使用 Mock 测试下载功能"""
-    downloader = Downloader()
-
-    with patch.object(downloader, '_download_video') as mock_download:
-        mock_download.return_value = True
-        result = downloader.download("https://example.com/video.m3u8")
-
-        assert result is True
-        mock_download.assert_called_once()
-```
-
-### 4.5 测试覆盖率
-
-运行测试并生成覆盖率报告：
+#### 3.7.3 提交代码步骤
 
 ```bash
-# 生成覆盖率报告
+# 添加文件到暂存区
+git add src/dingtalk_downloader/main.py
+
+# 提交代码
+git commit -m "feat(main): 添加批量下载功能"
+
+# 推送到远程
+git push origin feature/add-batch-download
+```
+
+### 3.8 创建Pull Request
+
+1. 访问项目的GitHub页面
+2. 点击 "Pull requests" → "New pull request"
+3. 选择分支: `feature/add-batch-download` → `main`
+4. 填写PR描述:
+   - 标题: 简洁描述本次变更
+   - 描述: 详细说明变更内容、测试情况等
+5. 提交PR
+
+---
+
+## 四、常用命令
+
+### 4.1 项目管理命令
+
+```bash
+# 查看项目状态
+git status
+
+# 查看分支
+git branch -a
+
+# 创建新分支
+git checkout -b feature/new-feature
+
+# 切换分支
+git checkout main
+
+# 合并分支
+git merge feature/new-feature
+
+# 删除分支
+git branch -d feature/new-feature
+```
+
+### 4.2 依赖管理命令
+
+```bash
+# 安装依赖
+pip install -r requirements.txt
+
+# 安装特定包
+pip install selenium
+
+# 升级包
+pip install --upgrade selenium
+
+# 卸载包
+pip uninstall selenium
+
+# 查看已安装的包
+pip list
+
+# 导出依赖列表
+pip freeze > requirements.txt
+```
+
+### 4.3 测试命令
+
+```bash
+# 运行所有测试
+pytest
+
+# 运行特定测试文件
+pytest tests/unit/test_models.py
+
+# 运行特定测试函数
+pytest tests/unit/test_models.py::TestCookieData::test_create_cookie_data
+
+# 显示详细输出
+pytest -v
+
+# 显示覆盖率
 pytest --cov=src/dingtalk_downloader --cov-report=html
 
-# 查看覆盖率报告
-open htmlcov/index.html
+# 停止在第一个失败
+pytest -x
+
+# 运行标记为slow的测试
+pytest -m slow
 ```
 
-## 五、常见问题
-
-### 5.1 Black 相关问题
-
-#### Q1: Black 命令找不到？
-
-**A**: 确保已安装 Black 并使用 `python -m black` 命令：
+### 4.4 代码质量命令
 
 ```bash
-pip install -r requirements-dev.txt
-python -m black --check .
+# 格式化代码
+black src/ tests/
+
+# 检查代码格式
+black --check src/ tests/
+
+# 代码检查
+flake8 src/ tests/
+
+# 类型检查(如果使用mypy)
+mypy src/dingtalk_downloader/
+
+# 生成覆盖率报告
+pytest --cov=src/dingtalk_downloader --cov-report=html
 ```
 
-#### Q2: Black 格式化后代码无法运行？
+### 4.5 运行程序命令
 
-**A**: Black 只改变代码格式，不会改变代码逻辑。如果代码无法运行，请检查代码本身是否有问题。
+```bash
+# 运行程序
+python -m dingtalk_downloader.main
 
-#### Q3: 如何跳过某些文件的格式化？
+# 运行特定模块
+python -m dingtalk_downloader.core.downloader
 
-**A**: 在 `pyproject.toml` 的 `exclude` 配置中添加要排除的文件或目录。
+# 调试模式运行
+python -m pdb dingtalk_downloader/main.py
+```
 
-### 5.2 测试相关问题
+### 4.6 日志查看命令
 
-#### Q1: 测试运行失败怎么办？
+```bash
+# 查看最新日志
+tail -f logs/app.log
 
-**A**: 按照以下步骤排查：
+# 查看错误日志
+grep ERROR logs/app.log
 
-1. 查看错误信息，确定失败原因
-2. 检查测试代码是否正确
-3. 检查被测试的代码是否有问题
-4. 使用 `-v` 参数查看详细输出
+# 查看最近100行日志
+tail -n 100 logs/app.log
 
-#### Q2: 如何调试测试？
+# 清空日志
+> logs/app.log
+```
 
-**A**: 使用 `pdb` 或 `ipdb` 进行调试：
+---
+
+## 五、调试技巧
+
+### 5.1 日志调试
+
+#### 5.1.1 配置日志级别
+
+在 `config/app.yaml` 中修改日志级别:
+
+```yaml
+logging:
+  level: "DEBUG" # DEBUG、INFO、WARNING、ERROR
+```
+
+#### 5.1.2 添加日志
 
 ```python
-import pytest
+import logging
 
-def test_example():
-    import pdb; pdb.set_trace()
-    # 测试代码
+logger = logging.getLogger(__name__)
+
+def some_function():
+    logger.debug("调试信息")
+    logger.info("普通信息")
+    logger.warning("警告信息")
+    logger.error("错误信息")
 ```
 
-或者使用 pytest 的调试功能：
+#### 5.1.3 查看日志
 
 ```bash
-pytest --pdb
+# 实时查看日志
+tail -f logs/app.log
+
+# 查看特定级别的日志
+grep ERROR logs/app.log
+grep DEBUG logs/app.log
 ```
 
-### 5.3 环境相关问题
+### 5.2 断点调试
 
-#### Q1: 依赖安装失败怎么办？
+#### 5.2.1 使用pdb调试
 
-**A**: 尝试以下解决方案：
+```python
+import pdb
 
-1. 升级 pip：`pip install --upgrade pip`
-2. 使用国内镜像源：`pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
-3. 创建虚拟环境：`python -m venv venv`
-
-#### Q2: 浏览器驱动下载失败怎么办？
-
-**A**: 手动下载浏览器驱动：
-
-- Edge: https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/
-- Chrome: https://chromedriver.chromium.org/downloads
-- Firefox: https://github.com/mozilla/geckodriver/releases
-
-### 5.4 其他问题
-
-#### Q1: 如何贡献代码？
-
-**A**: 按照以下步骤贡献代码：
-
-1. Fork 项目仓库
-2. 创建功能分支
-3. 编写代码和测试
-4. 运行 Black 格式化检查
-5. 运行测试确保通过
-6. 提交 Pull Request
-
-#### Q2: 如何报告 Bug？
-
-**A**: 在 GitHub Issues 中创建新的 Issue，包含以下信息：
-
-- Bug 描述
-- 复现步骤
-- 期望行为
-- 实际行为
-- 环境信息（操作系统、Python 版本等）
-
-#### Q3: 如何提出新功能建议？
-
-**A**: 在 GitHub Issues 中创建新的 Issue，描述你的功能建议和使用场景。
-
-## 六、项目结构说明
-
-### 6.1 完整项目目录结构
-
-```markdown
-DingTalk-Live-Playback-Download-Tool/
-├── src/                                    # 源代码目录
-│   └── dingtalk_downloader/                # 项目包名
-│       ├── __init__.py
-│       ├── main.py                         # 程序入口文件
-│       ├── core/                           # 核心业务逻辑模块
-│       ├── utils/                          # 工具函数模块
-│       ├── binary/                         # 二进制程序调用模块
-│       ├── browser/                        # 浏览器自动化模块
-│       └── config/                         # 配置管理模块
-├── tests/                                  # 测试代码目录
-│   ├── unit/                               # 单元测试
-│   ├── integration/                        # 集成测试
-│   └── fixtures/                           # 测试数据
-│       ├── sample_links.csv
-│       └── sample_links.xlsx
-├── assets/                                 # 静态资源目录
-│   ├── bin/                                # 外部二进制程序目录
-│   │   ├── N_m3u8DL-RE.exe                 # N_m3u8DL-RE可执行文件(Windows)
-│   │   ├── N_m3u8DL-RE                     # N_m3u8DL-RE可执行文件(Linux/macOS)
-│   │   ├── ffmpeg.exe                      # FFmpeg可执行文件(Windows)
-│   │   └── ffmpeg                          # FFmpeg可执行文件(Linux/macOS)
-│   ├── template/                           # 模板文件目录
-│   │   └── 批量下载模板.xlsx               # 批量下载模板文件
-│   └── ICO/                                # 图标资源目录
-│       ├── icon-512x512.png
-│       ├── icon.ico
-│       └── icon.png
-├── docs/                                   # 文档目录
-│   ├── development_standard.md             # 开发规范
-│   ├── development_guide.md               # 开发指南
-│   └── project_status.md                  # 项目现状记录
-├── scripts/                                # 辅助脚本目录
-├── requirements.txt                        # 依赖清单
-├── requirements-dev.txt                    # 开发依赖清单
-├── .gitignore                              # Git忽略文件
-├── .env.example                            # 环境变量示例文件
-├── README.md                               # 项目说明
-├── LICENSE                                 # 许可证
-├── pyproject.toml                          # 项目配置文件
-└── setup.cfg                               # 安装配置文件
+def some_function():
+    pdb.set_trace()  # 设置断点
+    # 代码会在这里暂停
+    x = 1
+    y = 2
+    return x + y
 ```
 
-### 6.2 文件路径说明
-
-#### 外部二进制文件路径
-
-**外部二进制文件标准路径**: `assets/bin/`
-
-**N_m3u8DL-RE工具路径**:
-- Windows: `assets/bin/N_m3u8DL-RE.exe`
-- Linux/macOS: `assets/bin/N_m3u8DL-RE`
-
-**FFmpeg工具路径**:
-- Windows: `assets/bin/ffmpeg.exe`
-- Linux/macOS: `assets/bin/ffmpeg`
-
-#### 批量下载模板路径
-
-**批量下载模板标准路径**: `assets/template/批量下载模板.xlsx`
-
-该模板文件用于批量下载模式,用户可以填写钉钉直播回放链接,程序会自动读取并批量下载。
-
-#### ICO文件夹路径
-
-**ICO文件夹标准路径**: `assets/ICO/`
-
-**图标文件路径**:
-- `assets/ICO/icon-512x512.png`
-- `assets/ICO/icon.ico`
-- `assets/ICO/icon.png`
-
-该目录存放项目图标和图片资源,用于应用程序的界面展示。
-
-## 六、模块文档编写指南
-
-### 6.1 模块文档的重要性
-
-模块文档是项目可维护性的重要组成部分，它帮助开发者快速理解模块的功能和使用方法，降低学习成本，提高开发效率。
-
-### 6.2 模块文档位置
-
-每个模块目录下必须包含完整的 README.md 文件：
-
-```
-src/dingtalk_downloader/
-├── README.md                    # 主程序入口模块文档
-├── core/
-│   └── README.md                # 核心业务模块文档
-├── utils/
-│   └── README.md                # 工具模块文档
-├── binary/
-│   └── README.md                # 二进制工具封装模块文档
-├── browser/
-│   └── README.md                # 浏览器驱动模块文档
-└── config/
-    └── README.md                # 配置管理模块文档
-```
-
-### 6.3 模块文档编写流程
-
-#### 6.3.1 编写时机
-
-- **新建模块时**：在创建模块的同时编写 README.md
-- **修改模块时**：修改功能后同步更新文档
-- **重构模块时**：重构完成后更新文档结构
-- **定期审查**：每季度审查一次文档准确性
-
-#### 6.3.2 编写步骤
-
-1. **分析模块功能**
-   - 列出模块提供的所有功能
-   - 确定模块的核心职责
-   - 识别模块的依赖关系
-
-2. **编写文档草稿**
-   - 按照模板结构编写文档
-   - 添加必要的代码示例
-   - 绘制流程图和数据流图
-
-3. **审查文档内容**
-   - 检查文档是否准确
-   - 验证代码示例是否可运行
-   - 确保链接可正常访问
-
-4. **同行评审**
-   - 邀请团队成员审查文档
-   - 根据反馈修改文档
-   - 确保文档质量达标
-
-5. **提交文档**
-   - 将 README.md 提交到版本控制
-   - 在提交信息中说明文档更新
-   - 关联相关的 Issue 或 PR
-
-### 6.4 模块文档最佳实践
-
-#### 6.4.1 文档内容
-
-- **保持简洁**：避免冗余信息，突出重点
-- **使用图表**：用流程图、架构图辅助说明
-- **提供示例**：提供实用的代码示例
-- **标注版本**：说明文档适用的代码版本
-
-#### 6.4.2 文档维护
-
-- **同步更新**：代码修改时同步更新文档
-- **定期审查**：定期检查文档的准确性
-- **版本标记**：使用标签标记文档版本
-- **变更记录**：记录文档的重要变更
-
-#### 6.4.3 文档质量
-
-- **准确性**：确保文档内容与代码一致
-- **完整性**：覆盖所有公共接口和功能
-- **清晰性**：使用简洁明了的语言
-- **实用性**：提供实用的使用指南
-
-### 6.5 模块文档检查清单
-
-在提交模块文档前，请确保完成以下检查：
-
-- [ ] 模块目录下包含 README.md 文件
-- [ ] README.md 包含所有必需章节
-- [ ] 文档内容与代码实际行为一致
-- [ ] 示例代码可以正常运行
-- [ ] 接口说明准确无误
-- [ ] 流程图清晰易懂
-- [ ] 链接可正常访问
-- [ ] 指定了维护责任人
-- [ ] 更新了最后更新日期
-- [ ] 通过了文档审查
-
-### 6.6 模块文档示例
-
-#### 6.6.1 主程序入口模块文档示例
-
-```markdown
-# 主程序入口模块
-
-## 模块概述
-
-本模块是钉钉直播回放下载工具的程序入口，负责协调各子模块的工作，提供用户交互界面，并管理整个下载流程。
-
-## 功能描述
-
-### 核心功能
-
-1. **程序启动与初始化**
-   - 显示欢迎信息和版本号
-   - 初始化日志系统
-   - 获取用户选择的下载模式
-
-2. **单个视频下载模式**
-   - 获取用户输入的钉钉直播回放链接
-   - 支持选择保存模式（默认路径/手动选择）
-   - 支持选择浏览器类型（Edge/Chrome/Firefox）
-   - 调用下载器执行下载
-   - 支持继续输入新链接进行下载
-
-## 核心实现原理
-
-### 程序流程
-
-```
-程序启动
-  ↓
-初始化日志系统
-  ↓
-显示欢迎信息
-  ↓
-获取下载模式选择
-  ↓
-┌─────────────┬─────────────┐
-│ 单个下载模式 │ 批量下载模式 │
-└─────────────┴─────────────┘
-  ↓              ↓
-获取链接        读取文件
-  ↓              ↓
-创建下载器      创建下载器
-  ↓              ↓
-执行下载        批量下载
-  ↓              ↓
-继续/退出       继续/退出
-```
-
-## 使用方法
-
-### 直接运行
+#### 5.2.2 pdb常用命令
 
 ```bash
-python -m dingtalk_downloader.main
+# 进入调试模式后,可以使用以下命令:
+
+n  # 执行下一行
+s  # 进入函数
+c  # 继续执行
+p  # 打印变量
+l  # 列出代码
+q  # 退出调试
 ```
 
-## 接口参数说明
+#### 5.2.3 使用IDE调试
 
-### 函数：single_mode()
+推荐使用VS Code或PyCharm进行调试:
 
-**功能**：单个视频下载模式
+**VS Code**:
 
-**参数**：无
+1. 在代码行号左侧点击设置断点
+2. 按 F5 开始调试
+3. 使用调试工具栏控制执行
 
-**返回值**：无
+**PyCharm**:
 
-**用户输入**：
-- `dingtalk_url`：钉钉直播回放分享链接
-- `save_mode`：保存模式（1：默认路径，2：手动选择）
-- `browser_option`：浏览器选项（1：Edge，2：Chrome，3：Firefox）
+1. 在代码行号左侧点击设置断点
+2. 点击 Debug 按钮
+3. 使用调试工具栏控制执行
 
-## 维护责任人
+### 5.3 单元测试调试
 
-- **主要维护者**：项目团队
-- **最后更新日期**：2025-01-15
+#### 5.3.1 调试单个测试
 
-## 相关文档
+```bash
+# 使用pdb调试单个测试
+pytest --pdb tests/unit/test_models.py::TestCookieData::test_create_cookie_data
 
-- [核心业务模块 - Downloader](../core/README.md)
-- [工具模块 - Validator](../utils/README.md)
+# 使用IDE调试
+# 在测试代码中设置断点,然后右键选择"Debug"
 ```
 
-### 6.7 常见问题
+#### 5.3.2 查看测试输出
 
-#### Q1: 模块文档应该多详细？
+```bash
+# 显示详细输出
+pytest -v
 
-**A**: 模块文档应该足够详细，让新开发者能够快速理解和使用模块，但不应过于冗长。重点放在：
-- 模块的核心功能和职责
-- 公共接口的使用方法
-- 常见使用场景和示例
-- 注意事项和最佳实践
+# 显示print输出
+pytest -s
 
-#### Q2: 如何保持文档与代码同步？
+# 显示局部变量
+pytest --tb=long
+```
 
-**A**: 建议采用以下方法：
-- 在代码审查时同步审查文档
-- 使用自动化工具检查文档覆盖率
-- 定期进行文档审查会议
-- 将文档更新纳入开发流程
+### 5.4 浏览器自动化调试
 
-#### Q3: 文档中应该包含哪些代码示例？
+#### 5.4.1 使用有头模式
 
-**A**: 代码示例应该：
-- 展示最常见的使用场景
-- 包含必要的注释说明
-- 可以直接运行和测试
-- 涵盖主要功能和接口
+在 `config/app.yaml` 中设置:
 
-#### Q4: 如何处理过时的文档？
+```yaml
+browser:
+  headless: false # 显示浏览器窗口
+```
 
-**A**: 过时的文档应该：
-- 及时更新或删除
-- 在文档中标注适用版本
-- 使用版本控制追踪文档变更
-- 定期审查文档的时效性
+#### 5.4.2 添加延迟
 
-## 七、资源链接
+在关键操作后添加延迟:
 
-- [项目开发规范](development_standard.md)
-- [Black 官方文档](https://black.readthedocs.io/)
-- [Pytest 官方文档](https://docs.pytest.org/)
-- [PEP 8 编码规范](https://www.python.org/dev/peps/pep-0008/)
-- [Git 提交信息规范](https://www.conventionalcommits.org/)
+```python
+import time
 
-## 七、联系方式
+def some_function():
+    time.sleep(2)  # 等待2秒
+```
 
-如有疑问或建议，请联系项目维护者或在 Issue 中讨论。
+#### 5.4.3 截图调试
+
+```python
+def some_function():
+    driver.save_screenshot("debug.png")
+```
+
+### 5.5 性能分析
+
+#### 5.5.1 使用cProfile
+
+```bash
+python -m cProfile -o profile.stats -m dingtalk_downloader.main
+```
+
+#### 5.5.2 查看性能报告
+
+```python
+import pstats
+
+p = pstats.Stats('profile.stats')
+p.sort_stats('cumulative')
+p.print_stats(10)  # 显示前10个最耗时的函数
+```
+
+### 5.6 内存分析
+
+#### 5.6.1 使用memory_profiler
+
+```bash
+pip install memory_profiler
+```
+
+```python
+from memory_profiler import profile
+
+@profile
+def some_function():
+    pass
+```
+
+```bash
+python -m memory_profiler dingtalk_downloader/main.py
+```
+
+---
+
+## 六、常见问题
+
+### 6.1 安装问题
+
+#### 问题1: pip安装失败
+
+**症状**:
+
+```text
+ERROR: Could not find a version that satisfies the requirement xxx
+```
+
+**解决方案**:
+
+```bash
+# 升级pip
+python -m pip install --upgrade pip
+
+# 使用国内镜像源
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+#### 问题2: 浏览器驱动不匹配
+
+**症状**:
+
+```text
+selenium.common.exceptions.SessionNotCreatedException: Message: session not created
+```
+
+**解决方案**:
+
+1. 检查浏览器版本
+2. 下载对应版本的驱动
+3. 将驱动放置在系统PATH路径中
+
+### 6.2 运行问题
+
+#### 问题3: Cookie获取失败
+
+**症状**:
+
+```text
+Cookie获取失败,请检查是否已登录
+```
+
+**解决方案**:
+
+1. 确保在浏览器中已登录钉钉账号
+2. 检查网络连接
+3. 查看日志文件了解详细错误
+
+#### 问题4: M3U8链接提取失败
+
+**症状**:
+
+```text
+无法从页面中提取M3U8链接
+```
+
+**解决方案**:
+
+1. 刷新页面重试
+2. 检查网络连接
+3. 查看浏览器日志
+
+### 6.3 测试问题
+
+#### 问题5: 测试失败
+
+**症状**:
+
+```text
+FAILED tests/unit/test_models.py::TestCookieData::test_create_cookie_data
+```
+
+**解决方案**:
+
+```bash
+# 查看详细错误信息
+pytest tests/unit/test_models.py::TestCookieData::test_create_cookie_data -v
+
+# 使用pdb调试
+pytest --pdb tests/unit/test_models.py::TestCookieData::test_create_cookie_data
+```
+
+#### 问题6: 覆盖率不达标
+
+**症状**:
+
+```text
+Coverage: 80%
+```
+
+**解决方案**:
+
+1. 查看覆盖率报告
+2. 为未覆盖的代码编写测试
+3. 使用 `pytest --cov-report=html` 查看HTML报告
+
+### 6.4 性能问题
+
+#### 问题7: 下载速度慢
+
+**症状**:
+下载速度很慢
+
+**解决方案**:
+
+1. 检查网络连接
+2. 使用多线程下载
+3. 优化N_m3u8DL-RE参数
+
+#### 问题8: 内存占用高
+
+**症状**:
+程序运行时内存占用很高
+
+**解决方案**:
+
+1. 使用内存分析工具找出内存泄漏
+2. 及时释放不需要的资源
+3. 使用生成器代替列表
+
+---
+
+## 七、最佳实践
+
+### 7.1 代码编写
+
+1. **遵循PEP 8规范**: 使用Black自动格式化代码
+2. **添加类型提示**: 提高代码可读性和可维护性
+3. **编写文档字符串**: 为函数和类添加docstring
+4. **使用有意义的命名**: 变量、函数、类名要清晰表达意图
+5. **保持函数简短**: 单个函数不超过50行
+6. **避免重复代码**: 抽取公共逻辑为函数或类
+
+### 7.2 测试编写
+
+1. **编写单元测试**: 为每个函数编写测试
+2. **使用pytest框架**: pytest功能强大,易于使用
+3. **测试边界条件**: 测试正常情况和异常情况
+4. **使用Mock**: 隔离外部依赖
+5. **保持测试独立**: 每个测试应该独立运行
+6. **提高覆盖率**: 目标覆盖率90%以上
+
+### 7.3 版本控制
+
+1. **频繁提交**: 小步快跑,频繁提交代码
+2. **清晰的提交信息**: 遵循提交信息规范
+3. **使用分支**: 每个功能使用独立分支
+4. **代码审查**: 提交前进行代码审查
+5. **保持主分支稳定**: 主分支应该始终可运行
+
+### 7.4 文档维护
+
+1. **及时更新文档**: 代码变更后同步更新文档
+2. **使用Markdown**: Markdown格式易读易写
+3. **添加示例**: 为复杂功能添加使用示例
+4. **保持文档简洁**: 避免冗余内容
+5. **定期审查**: 定期检查文档的准确性
+
+### 7.5 性能优化
+
+1. **避免过早优化**: 先保证正确性,再优化性能
+2. **使用性能分析工具**: 使用cProfile、memory_profiler等工具
+3. **优化热点代码**: 优化最耗时的部分
+4. **使用缓存**: 避免重复计算
+5. **使用异步IO**: 对于IO密集型任务使用异步
+
+### 7.6 安全实践
+
+1. **不要硬编码密码**: 使用环境变量或配置文件
+2. **验证输入**: 对用户输入进行验证
+3. **使用HTTPS**: 使用安全的通信协议
+4. **定期更新依赖**: 及时更新第三方库
+5. **最小权限原则**: 只给程序必要的权限
+
+---
+
+## 总结
+
+本文档提供了钉钉直播回放下载工具的开发指南,包括环境搭建、开发流程、常用命令及调试技巧。遵循本文档的指导,新团队成员可以快速上手项目开发,提高开发效率和代码质量。
+
+关键要点:
+
+1. **环境搭建**: 按照步骤安装Python、依赖、浏览器驱动等
+2. **开发流程**: 遵循分支管理、代码编写、测试、提交的流程
+3. **常用命令**: 熟练使用Git、pytest、Black、Flake8等工具
+4. **调试技巧**: 掌握日志、断点、性能分析等调试方法
+5. **最佳实践**: 遵循代码规范、测试规范、版本控制规范
+
+如有疑问,请参考项目其他文档或联系项目维护者。

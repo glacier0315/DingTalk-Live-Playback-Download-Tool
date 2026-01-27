@@ -1,2886 +1,1015 @@
-# 项目开发规范
+# 开发规范
 
-本文档定义了钉钉直播回放下载工具项目的完整开发规范，所有开发人员必须严格遵循，以确保代码质量和项目可维护性。
+本文档定义钉钉直播回放下载工具的开发规范,包括代码风格、命名约定、注释要求、提交信息格式及代码审查标准,确保团队协作的代码质量和一致性。
 
-## 一、命名规范（遵循 PEP 8）
+## 目录
 
-### 1. 文件名/目录名
+- [一、代码风格规范](#一代码风格规范)
+- [二、命名约定](#二命名约定)
+- [三、注释要求](#三注释要求)
+- [四、提交信息格式](#四提交信息格式)
+- [五、代码审查标准](#五代码审查标准)
+- [六、测试规范](#六测试规范)
+- [七、文档规范](#七文档规范)
 
-- **规范**：小写字母+下划线
-- **示例**：
-  - `binary_handler.py` ✅
-  - `core_module/` ✅
-  - `download_manager.py` ✅
-  - `BinaryHandler.py` ❌
-  - `downloadManager.py` ❌
+---
 
-### 2. 变量/函数名
+## 一、代码风格规范
 
-- **规范**：小写字母+下划线（蛇形命名）
-- **示例**：
-  - `binary_file_path` ✅
-  - `execute_binary_task()` ✅
-  - `get_browser_cookie()` ✅
-  - `binaryFilePath` ❌
-  - `executeBinaryTask()` ❌
+### 1.1 基本原则
 
-### 3. 类名
+遵循以下基本原则:
 
-- **规范**：大驼峰命名（PascalCase）
-- **示例**：
-  - `BinaryProcessor` ✅
-  - `DownloadManager` ✅
-  - `CookieHandler` ✅
-  - `binary_processor` ❌
-  - `binaryProcessor` ❌
+1. **可读性优先**: 代码应该像散文一样易读
+2. **一致性**: 整个项目保持一致的代码风格
+3. **简洁性**: 避免不必要的复杂性
+4. **明确性**: 代码意图应该清晰明了
 
-### 4. 常量
+### 1.2 格式规范
 
-- **规范**：全大写+下划线
-- **示例**：
-  - `BINARY_FILE_NAME = "xxx.bin"` ✅
-  - `MAX_RETRY_COUNT = 5` ✅
-  - `DEFAULT_BROWSER_TYPE = "edge"` ✅
-  - `binary_file_name = "xxx.bin"` ❌
-  - `MaxRetryCount = 5` ❌
+#### 1.2.1 行长度
 
-### 5. 私有成员
-
-- **规范**：前缀单下划线表示受保护成员，前缀双下划线表示私有成员
-- **示例**：
-  - `_internal_method()` ✅（受保护）
-  - `__private_method()` ✅（私有）
-  - `public_method()` ✅（公开）
-
-### 6. 避免无意义命名
-
-- **禁止使用**：`a`、`b`、`func1`、`temp`、`data`等无语义命名
-- **推荐使用**：具有描述性的名称
-  - `user_input` ✅
-  - `download_url` ✅
-  - `cookie_dict` ✅
-  - `a` ❌
-  - `func1` ❌
-  - `temp` ❌
-
-### 7. 特殊命名约定
-
-- **布尔变量**：使用`is_`、`has_`、`can_`等前缀
-  - `is_valid` ✅
-  - `has_cookie` ✅
-  - `can_download` ✅
-- **集合变量**：使用复数形式
-  - `links` ✅
-  - `cookies` ✅
-  - `headers` ✅
-- **迭代变量**：在循环中使用有意义的名称
-  - `for idx, link in enumerate(links):` ✅
-  - `for i in range(len(links)):` ❌（除非索引确实需要）
-
-## 二、注释规范
-
-### 1. 模块注释
-
-每个`.py`文件顶部必须添加模块说明，包含以下信息：
-
-- **功能描述**：简要说明模块的功能
-- **作者**：原作者或维护者
-- **依赖**：主要依赖的外部库
-- **创建日期**：文件创建日期
-- **修改历史**：重要修改记录
-
-**示例**：
-
-```python
-"""
-钉钉直播回放下载工具 - 浏览器Cookie处理模块
-
-本模块负责通过Selenium自动化浏览器获取钉钉直播回放的Cookie和请求头信息，
-支持Edge、Chrome、Firefox三种浏览器。
-
-作者：项目团队
-依赖：selenium>=4.6.0
-创建日期：2024-12-18
-修改历史：
-    - 2024-12-18: 初始版本
-    - 2025-01-14: 添加Firefox浏览器支持
-"""
-```
-
-### 2. 类注释
-
-使用 Google 风格文档字符串，包含以下信息：
-
-- **类描述**：类的功能和用途
-- **属性**：重要属性的说明
-- **方法**：主要方法的简要说明
-
-**示例**：
-
-```python
-class BinaryProcessor:
-    """
-    二进制程序处理器，负责调用和管理外部二进制工具。
-
-    该类封装了N_m3u8DL-RE和FFmpeg等二进制程序的调用逻辑，
-    提供统一的接口供上层模块使用。
-
-    Attributes:
-        binary_path (str): 二进制程序的路径
-        binary_name (str): 二进制程序的名称
-        max_retries (int): 最大重试次数
-    """
-
-    def __init__(self, binary_path: str, max_retries: int = 3):
-        """
-        初始化二进制程序处理器。
-
-        Args:
-            binary_path: 二进制程序的绝对路径
-            max_retries: 最大重试次数，默认为3
-
-        Raises:
-            FileNotFoundError: 当二进制程序文件不存在时
-        """
-        pass
-```
-
-### 3. 函数注释
-
-使用 Google 风格文档字符串，包含以下信息：
-
-- **功能描述**：函数的功能和用途
-- **参数（Args）**：每个参数的名称、类型和说明
-- **返回值（Returns）**：返回值的类型和说明
-- **异常（Raises）**：可能抛出的异常及条件
-- **示例（Examples）**：使用示例（可选）
-
-**示例**：
-
-```python
-def get_browser_cookie(url: str, browser_type: str = 'edge') -> tuple:
-    """
-    获取浏览器Cookie和请求头信息。
-
-    通过Selenium自动化浏览器访问指定URL，获取登录后的Cookie和请求头信息，
-    用于后续的m3u8视频流下载。
-
-    Args:
-        url: 钉钉直播回放分享链接
-        browser_type: 浏览器类型，可选值为'edge'、'chrome'、'firefox'，默认为'edge'
-
-    Returns:
-        tuple: 包含四个元素的元组
-            - browser: Selenium浏览器实例
-            - cookie_dict: Cookie字典，格式为{cookie_name: cookie_value}
-            - headers: 请求头字典，包含User-Agent、Referer等
-            - live_name: 直播视频名称
-
-    Raises:
-        Exception: 当浏览器启动失败或获取Cookie失败时
-        TimeoutException: 当页面加载超时时
-
-    Examples:
-        >>> browser, cookies, headers, name = get_browser_cookie(
-        ...     "https://n.dingtalk.com/xxx",
-        ...     browser_type='edge'
-        ... )
-        >>> print(cookies)
-        {'session_id': 'xxx', 'user_token': 'yyy'}
-    """
-    pass
-```
-
-### 4. 行内注释
-
-- **原则**：仅为复杂逻辑添加注释，避免冗余注释
-- **禁止**：注释显而易见的代码（如`a = 1 # 赋值1`）
-- **推荐**：解释"为什么"而不是"是什么"
-
-**示例**：
-
-```python
-# ❌ 错误示例：冗余注释
-count = 0  # 初始化计数器为0
-for link in links:  # 遍历所有链接
-    count += 1  # 计数加1
-
-# ✅ 正确示例：解释复杂逻辑
-# 使用正则表达式从m3u8链接中提取基础URL
-# 用于后续下载时构建完整的资源路径
-pattern = re.compile(r'(https?://[^/]+/live_hp/[0-9a-f-]+)')
-match = pattern.search(m3u8_url)
-base_url = match.group(1) if match else m3u8_url
-```
-
-### 5. 注释语言
-
-- **规范**：使用中文编写注释
-- **例外**：技术术语、API 名称、变量名等保持英文
-- **示例**：
-
-  ```python
-  # 获取浏览器Cookie  ✅
-  # Get browser cookies  ❌（除非是国际化项目）
-  ```
-
-### 6. 注释工具
-
-- **推荐**：借助 Trae IDE GLM-4.7 生成注释
-- **要求**：保证格式统一，风格一致
-- **流程**：
-  1. 编写函数/类的基本逻辑
-  2. 使用 Trae IDE 的 AI 功能生成注释
-  3. 审查并调整注释，确保准确性和完整性
-  4. 保持与现有注释风格一致
-
-### 7. TODO 注释
-
-- **格式**：`# TODO: [描述]`
-- **用途**：标记待完成的功能或需要改进的代码
-- **示例**：
-
-  ```python
-  # TODO: 添加对Safari浏览器的支持
-  # TODO: 优化批量下载性能，考虑使用多线程
-  ```
-
-### 8. FIXME 注释
-
-- **格式**：`# FIXME: [描述]`
-- **用途**：标记需要修复的问题或已知的 bug
-- **示例**：
-
-  ```python
-  # FIXME: 当前重试机制可能导致无限循环，需要添加最大重试次数限制
-  ```
-
-### 9. HACK 注释
-
-- **格式**：`# HACK: [描述]`
-- **用途**：标记临时解决方案或不够优雅的实现
-- **示例**：
-
-  ```python
-  # HACK: 由于钉钉页面结构变化，暂时使用XPath获取直播名称
-  # 后续需要寻找更稳定的方法
-  live_name = browser.find_element(By.XPATH, '//*[@id="live-room"]/div[1]/div[1]/h3').text
-  ```
-
-### 10. 注释位置
-
-- **模块注释**：文件顶部，在 import 语句之前
-- **类注释**：类定义下方，缩进一级
-- **函数注释**：函数定义下方，缩进一级
-- **行内注释**：注释所在行的末尾或上一行，与代码对齐
-
-**示例**：
-
-```python
-"""
-模块注释
-"""
-
-import os
-import sys
-
-
-class MyClass:
-    """类注释"""
-
-    def my_method(self):
-        """方法注释"""
-        # 行内注释
-        pass
-```
-
-## 三、项目结构规范（后续重构目标结构）
-
-### 1. 根目录结构
-
-```markdown
-DingTalk-Live-Playback-Download-Tool/
-├── src/ # 源代码目录（所有业务代码放入此处）
-│ └── dingtalk_downloader/ # 项目包名（与项目名称一致，包含**init**.py）
-│ ├── **init**.py # 包初始化文件，简化导入
-│ ├── main.py # 程序入口文件
-│ ├── core/ # 核心业务逻辑模块
-│ │ ├── **init**.py
-│ │ ├── downloader.py # 下载器核心逻辑
-│ │ ├── cookie_handler.py # Cookie 处理逻辑
-│ │ └── m3u8_parser.py # m3u8 解析逻辑
-│ ├── utils/ # 工具函数模块
-│ │ ├── **init**.py
-│ │ ├── file_reader.py # 文件读取工具
-│ │ ├── validator.py # 输入验证工具
-│ │ └── path_helper.py # 路径处理工具
-│ ├── binary/ # 二进制程序调用模块
-│ │ ├── **init**.py
-│ │ ├── n_m3u8dl_re.py # N_m3u8DL-RE 调用封装
-│ │ └── ffmpeg_wrapper.py # FFmpeg 调用封装
-│ ├── browser/ # 浏览器自动化模块
-│ │ ├── **init**.py
-│ │ ├── browser_factory.py # 浏览器工厂
-│ │ ├── edge_driver.py # Edge 浏览器驱动
-│ │ ├── chrome_driver.py # Chrome 浏览器驱动
-│ │ └── firefox_driver.py # Firefox 浏览器驱动
-│ └── config/ # 配置管理模块
-│ ├── **init**.py
-│ ├── settings.py # 配置项定义
-│ └── constants.py # 常量定义
-├── tests/ # 测试代码目录（与 src 目录结构对应）
-│ ├── **init**.py
-│ ├── unit/ # 单元测试
-│ │ ├── **init**.py
-│ │ ├── test_downloader.py
-│ │ ├── test_cookie_handler.py
-│ │ ├── test_file_reader.py
-│ │ └── test_binary_handler.py
-│ ├── integration/ # 集成测试
-│ │ ├── **init**.py
-│ │ └── test_download_flow.py
-│ └── fixtures/ # 测试数据
-│ ├── sample_links.csv
-│ └── sample_links.xlsx
-├── assets/ # 静态资源目录
-│ ├── bin/ # 外部二进制程序目录
-│ │ ├── N_m3u8DL-RE.exe # N_m3u8DL-RE 可执行文件(Windows)
-│ │ ├── N_m3u8DL-RE # N_m3u8DL-RE 可执行文件(Linux/macOS)
-│ │ ├── ffmpeg.exe # FFmpeg 可执行文件(Windows)
-│ │ └── ffmpeg # FFmpeg 可执行文件(Linux/macOS)
-│ ├── template/ # 模板文件目录
-│ │ └── 批量下载模板.xlsx # 批量下载模板文件
-│ └── ICO/ # 图标资源目录
-│ ├── icon-512x512.png
-│ ├── icon.ico
-│ └── icon.png
-├── scripts/ # 辅助脚本目录（验证、部署等）
-│ ├── setup.py # 安装脚本
-│ ├── validate_dependencies.py # 依赖验证脚本
-│ └── build_exe.py # 打包为 exe 的脚本
-├── docs/ # 文档目录
-│ ├── project_status.md # 项目现状记录
-│ ├── development_standard.md # 开发规范（本文件）
-│ ├── api/ # API 文档
-│ │ └── api_reference.md
-│ ├── user_guide/ # 用户指南
-│ │ └── usage_guide.md
-│ └── foundation/ # 基础文档
-│ ├── N_m3u8DL-RE.md
-│ ├── ffmpeg.md
-│ └── 钉钉视频下载记录.md
-├── requirements.txt # 依赖清单
-├── requirements-dev.txt # 开发依赖清单
-├── .gitignore # Git 忽略文件
-├── .env.example # 环境变量示例文件
-├── README.md # 项目说明
-├── LICENSE # 许可证
-├── pyproject.toml # 项目配置文件（Python 3.6+）
-└── setup.cfg # 安装配置文件
-```
-
-### 2. 目录职责说明
-
-#### src/ 源代码目录
-
-- **职责**：存放所有业务代码
-- **原则**：所有可执行代码必须在 src 目录下
-- **命名**：包名使用小写字母+下划线
-
-#### tests/ 测试代码目录
-
-- **职责**：存放所有测试代码
-- **原则**：测试目录结构与 src 目录对应
-- **命名**：测试文件以`test_`开头
-
-#### assets/ 静态资源目录
-
-- **职责**:存放外部二进制程序、模板文件和静态资源
-- **原则**:所有外部依赖的可执行文件和静态资源统一管理
-- **命名**:保持原始文件名,遵循统一的命名规范
-
-##### assets/bin/ 外部二进制程序目录
-
-- **职责**:存放项目所需的外部二进制程序和可执行文件
-- **原则**:仅存放可执行文件和必要的依赖文件
-- **命名**:使用小写字母、数字、连字符和下划线
-
-##### assets/template/ 模板文件目录
-
-- **职责**:存放项目使用的模板文件
-- **原则**:仅存放模板文件,便于用户下载和使用
-- **命名**:保持原始文件名,支持中文
-
-##### assets/ICO/ 图标资源目录
-
-- **职责**:存放项目图标和图片资源
-- **原则**:仅存放图标和图片文件
-- **命名**:使用描述性文件名
-
-### 外部二进制文件管理规范
-
-#### 标准化存放路径
-
-**外部二进制文件标准路径**: `assets/bin/`
-
-#### 核心用途与职责范围
-
-- 存放项目所需的外部二进制程序和可执行文件
-- 统一管理跨平台的可执行文件(Windows/Linux/macOS)
-- 提供统一的二进制文件访问接口
-- 便于版本管理和依赖控制
-
-#### 允许存放的文件类型
-
-- Windows 平台: `.exe` 可执行文件
-- Linux/macOS 平台: 无扩展名的可执行文件
-- 必要的依赖文件: `.dll`(Windows)、`.so`(Linux)、`.dylib`(macOS)
-
-#### 严格的类型限制
-
-- 仅允许可执行文件和必要的依赖文件
-- 不允许配置文件、数据文件、文档文件
-- 不允许脚本文件(.bat, .sh, .ps1 等)
-- 不允许临时文件和缓存文件
-
-#### 统一的文件命名规范
-
-**命名格式**: 使用小写字母、数字、连字符(-)和下划线(\_)
-
-**长度限制**: 文件名长度不超过 255 个字符
-
-**特殊字符规则**:
-
-- 允许: a-z, 0-9, -, \_
-- 不允许: 空格, @, #, $, %, ^, &, \*, (, ), +, =, {, }, [, ], |, \, :, ;, ", ', <, >, ?, /
+- **默认规则**: 单行长度不超过79字符
+- **例外情况**:
+  - 长字符串(如SQL、多行文档字符串)
+  - 不可拆分的导入路径
+  - URL链接
+- **换行方式**: 使用括号隐式换行,禁止使用反斜杠
 
 **示例**:
 
-- ✅ `n_m3u8dl-re.exe`
-- ✅ `ffmpeg.exe`
-- ❌ `N_m3u8DL-RE.exe`(大写字母)
-- ❌ `n m3u8dl re.exe`(空格)
-- ❌ `n_m3u8dl-re@v1.0.exe`(特殊字符)
+```python
+# 好的示例: 使用括号隐式换行
+result = (
+    some_function_with_long_name(
+        arg1, arg2, arg3
+    )
+)
 
-#### 标准路径展示
+# 不好的示例: 使用反斜杠换行
+result = some_function_with_long_name( \
+    arg1, arg2, arg3)
+```
 
-**N_m3u8DL-RE 工具路径**:
+#### 1.2.2 缩进
 
-- Windows: `assets/bin/N_m3u8DL-RE.exe`
-- Linux/macOS: `assets/bin/N_m3u8DL-RE`
+- **缩进方式**: 4个空格,禁止使用Tab键
+- **缩进层级**: 每层缩进4个空格
 
-**FFmpeg 工具路径**:
+**示例**:
 
-- Windows: `assets/bin/ffmpeg.exe`
-- Linux/macOS: `assets/bin/ffmpeg`
+```python
+# 好的示例: 使用4个空格缩进
+def some_function():
+    if condition:
+        do_something()
+        if another_condition:
+            do_another_thing()
 
-### 批量下载模板路径规范
+# 不好的示例: 使用Tab缩进
+def some_function():
+	if condition:
+		do_something()
+```
 
-**批量下载模板标准路径**: `assets/template/批量下载模板.xlsx`
+#### 1.2.3 空行
 
-该模板文件用于批量下载模式,用户可以填写钉钉直播回放链接,程序会自动读取并批量下载。
+- **顶级定义之间**: 空两行
+- **类内方法定义之间**: 空一行
+- **函数内逻辑段落之间**: 空一行
 
-### ICO 文件夹路径规范
+**示例**:
 
-**ICO 文件夹标准路径**: `assets/ICO/`
+```python
+# 好的示例: 适当的空行
+class MyClass:
+    def method1(self):
+        pass
 
-**图标文件路径**:
+    def method2(self):
+        pass
 
-- `assets/ICO/icon-512x512.png`
-- `assets/ICO/icon.ico`
-- `assets/ICO/icon.png`
 
-该目录存放项目图标和图片资源,用于应用程序的界面展示。
+def function1():
+    pass
 
-#### scripts/ 辅助脚本目录
 
-- **职责**：存放辅助脚本（安装、部署、验证等）
-- **原则**：脚本命名清晰，功能单一
-- **命名**：使用动词开头，如`setup.py`、`validate.py`
+def function2():
+    pass
+```
 
-#### docs/ 文档目录
+#### 1.2.4 空格
 
-- **职责**：存放所有项目文档
-- **原则**：文档分类清晰，易于查找
-- **命名**：使用小写字母+下划线
+- **二元运算符前后**: 添加空格
+- **逗号后**: 添加空格
+- **冒号后**: 添加空格(字典、切片等)
+- **函数参数**: 逗号后添加空格
+- **括号内**: 不添加空格
 
-### 3. 模块组织原则
+**示例**:
 
-#### 单一职责原则
+```python
+# 好的示例: 适当的空格
+x = a + b
+result = func(arg1, arg2)
+my_dict = {"key": "value"}
+my_list[1:3]
 
-- 每个模块只负责一个功能领域
-- 模块内部函数和类职责明确
-- 避免模块间过度耦合
+# 不好的示例: 不当的空格
+x=a+b
+result = func ( arg1 , arg2 )
+my_dict = {"key" : "value"}
+my_list[ 1 : 3 ]
+```
 
-#### 依赖倒置原则
+### 1.3 导入规范
 
-- 高层模块不依赖低层模块，都依赖抽象
-- 通过接口定义模块间交互
-- 便于单元测试和模块替换
+#### 1.3.1 导入顺序
 
-#### 开闭原则
-
-- 对扩展开放，对修改关闭
-- 通过继承和接口扩展功能
-- 避免修改已有代码
-
-### 4. 导入规范
-
-#### 导入顺序
+按照以下顺序导入:
 
 1. 标准库导入
 2. 第三方库导入
 3. 本地应用/库导入
 
-#### 导入分组
-
-- 每组导入之间用空行分隔
-- 同组导入按字母顺序排列
-
-#### 示例
+**示例**:
 
 ```python
-# 标准库导入
+# 好的示例: 正确的导入顺序
 import os
 import sys
-from pathlib import Path
+from typing import Optional, List
 
-# 第三方库导入
-import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-
-# 本地应用导入
-from dingtalk_downloader.core.downloader import Downloader
-from dingtalk_downloader.utils.file_reader import FileReader
-```
-
-#### 避免使用通配符导入
-
-```python
-# ❌ 错误示例
-from module import *
-
-# ✅ 正确示例
-from module import function1, function2
-```
-
-#### 避免循环导入
-
-- 通过重构模块结构解决循环导入
-- 使用延迟导入（在函数内部导入）
-
-### 5. 模块文档规范
-
-#### 5.1 强制要求
-
-每个模块目录下必须包含完整的 README.md 文件，确保文档与代码同步更新。
-
-#### 5.2 README.md 内容要求
-
-每个模块的 README.md 文件必须包含以下章节：
-
-##### 模块概述
-
-- 清晰描述模块的职责和定位
-- 说明模块在项目中的作用
-- 列出模块的主要功能
-
-##### 功能描述
-
-- 详细列出模块提供的所有功能
-- 按功能分类组织内容
-- 说明每个功能的作用
-
-##### 核心实现原理
-
-- 深入分析关键算法和实现逻辑
-- 使用流程图展示数据流转过程
-- 说明设计模式和架构选择
-
-##### 使用方法
-
-- 提供实用的代码示例
-- 展示常见使用场景
-- 说明初始化和配置方法
-
-##### 接口参数说明
-
-- 详细说明所有公共接口的参数和返回值
-- 使用表格或列表形式展示
-- 说明参数类型、默认值和约束条件
-
-##### 依赖关系
-
-- 明确列出依赖的模块和外部库
-- 说明被依赖的模块
-- 使用依赖图展示模块间关系
-
-##### 数据流程
-
-- 用流程图展示数据流转过程
-- 说明关键节点的处理逻辑
-- 标注可能的异常情况
-
-##### 注意事项
-
-- 列出使用时需要注意的关键点
-- 说明常见问题和解决方案
-- 提供最佳实践建议
-
-##### 扩展方向
-
-- 提供未来可能的改进方向
-- 说明可以扩展的功能点
-- 列出技术债务和待优化项
-
-##### 相关文档
-
-- 提供相关模块的文档链接
-- 链接到 API 文档和用户指南
-- 引用相关的设计文档
-
-#### 5.3 文档格式规范
-
-##### 标题层级
-
-- 使用 Markdown 标题语法
-- 一级标题：`# 模块名称`
-- 二级标题：`## 章节名称`
-- 三级标题：`### 小节名称`
-
-##### 代码示例
-
-- 使用代码块展示代码
-- 指定代码语言类型
-- 添加必要的注释说明
-
-```python
-from dingtalk_downloader.core.downloader import Downloader
-
-# 创建下载器
-downloader = Downloader("edge", "1")
-
-# 下载视频
-downloader.download_single_video("https://n.dingtalk.com/xxx")
-```
-
-##### 流程图
-
-- 使用 Mermaid 语法绘制流程图
-- 确保流程图清晰易懂
-- 标注关键节点和决策点
-
-```mermaid
-graph TD
-    A[开始] --> B[初始化]
-    B --> C[执行操作]
-    C --> D[结束]
-```
-
-##### 表格
-
-- 使用 Markdown 表格展示结构化数据
-- 确保表头清晰
-- 对齐表格内容
-
-| 参数名  | 类型 | 说明           | 默认值 |
-| ------- | ---- | -------------- | ------ |
-| url     | str  | 下载链接       | 无     |
-| timeout | int  | 超时时间（秒） | 30     |
-
-##### 链接
-
-- 使用相对路径链接到项目内文档
-- 使用绝对路径链接到外部资源
-- 确保链接可访问
-
-[相关模块](../core/README.md)
-[API 文档](https://example.com/api)
-
-#### 5.4 文档维护要求
-
-##### 维护责任人
-
-- 每个模块必须指定维护责任人
-- 在 README.md 中明确标注
-- 负责人需确保文档与代码同步
-
-**示例**：
-
-```markdown
-## 维护责任人
-
-- **主要维护者**：张三 (zhangsan@example.com)
-- **备选维护者**：李四 (lisi@example.com)
-- **最后更新日期**：2025-01-15
-```
-
-##### 更新时机
-
-- 新增功能时必须更新文档
-- 修改接口时必须更新文档
-- 修复 bug 时检查是否需要更新文档
-- 定期审查文档准确性
-
-##### 文档审查
-
-- 代码审查时同步审查文档
-- 文档更新后进行同行评审
-- 定期进行文档质量检查
-
-#### 5.5 文档质量标准
-
-##### 准确性
-
-- 文档内容必须与代码实际行为一致
-- 示例代码必须可以运行
-- 接口说明必须准确无误
-
-##### 完整性
-
-- 覆盖所有公共接口
-- 说明所有重要功能
-- 提供必要的上下文信息
-
-##### 清晰性
-
-- 使用简洁明了的语言
-- 避免歧义和模糊表述
-- 使用图表辅助说明复杂概念
-
-##### 实用性
-
-- 提供实用的代码示例
-- 说明常见使用场景
-- 列出常见问题和解决方案
-
-#### 5.6 文档模板
-
-每个模块的 README.md 应遵循以下模板结构：
-
-````markdown
-# 模块名称
-
-## 模块概述
-
-本模块负责...
-
-## 功能描述
-
-### 功能 1
-
-**功能**：
-
-- 功能点 1
-- 功能点 2
-
-### 功能 2
-
-**功能**：
-
-- 功能点 1
-- 功能点 2
-
-## 核心实现原理
-
-### 实现原理 1
-
-```python
-# 代码示例
-```
-````
-
-### 实现原理 2
-
-```python
-# 代码示例
-```
-
-## 使用方法
-
-### 使用示例 1
-
-```python
-from module import Class
-
-# 创建实例
-instance = Class()
-
-# 调用方法
-result = instance.method()
-```
-
-## 接口参数说明
-
-### 类名
-
-#### 方法名
-
-**参数**：
-
-- `param1`：参数说明
-- `param2`：参数说明
-
-**返回值**：
-
-- 返回值类型和说明
-
-**功能**：方法功能描述
-
-## 依赖关系
-
-### 依赖的模块
-
-1. `module1` - 模块说明
-2. `module2` - 模块说明
-
-### 被依赖的模块
-
-1. `module3` - 模块说明
-2. `module4` - 模块说明
-
-## 数据流程
-
-```
-流程图
-```
-
-## 注意事项
-
-1. 注意事项 1
-2. 注意事项 2
-
-## 扩展方向
-
-1. 扩展方向 1
-2. 扩展方向 2
-
-## 维护责任人
-
-- **主要维护者**：姓名 (邮箱)
-- **备选维护者**：姓名 (邮箱)
-- **最后更新日期**：YYYY-MM-DD
-
-## 相关文档
-
-- [相关模块 1](../module1/README.md)
-- [相关模块 2](../module2/README.md)
-
-````
-
-#### 5.7 文档检查清单
-
-在提交代码前，请确保完成以下检查：
-
-- [ ] 模块目录下包含 README.md 文件
-- [ ] README.md 包含所有必需章节
-- [ ] 文档内容与代码实际行为一致
-- [ ] 示例代码可以正常运行
-- [ ] 接口说明准确无误
-- [ ] 流程图清晰易懂
-- [ ] 链接可正常访问
-- [ ] 指定了维护责任人
-- [ ] 更新了最后更新日期
-- [ ] 通过了文档审查
-
-#### 5.8 违规处理
-
-如果发现模块缺少 README.md 或文档不符合规范：
-
-1. **代码审查阶段**：审查者应拒绝合并，要求补充文档
-2. **代码提交阶段**：提交者应主动补充文档后再提交
-3. **定期检查**：项目维护者定期检查所有模块文档完整性
-
-#### 5.9 文档工具推荐
-
-- **Markdown 编辑器**：Typora、VS Code、Obsidian
-- **流程图工具**：Mermaid Live Editor、Draw.io
-- **文档生成工具**：Sphinx、MkDocs
-- **文档审查工具**：markdownlint、vale
-
-### 6. 文件组织原则
-
-#### 文件大小限制
-
-- 单个 Python 文件不超过 500 行
-- 超过 500 行考虑拆分为多个模块
-- 保持文件职责单一
-
-#### 类和函数组织
-
-- 类定义按字母顺序排列
-- 公共方法在前，私有方法在后
-- 函数按逻辑分组，使用注释分隔
-
-**示例**：
-
-```python
-class MyClass:
-    """类文档字符串"""
-
-    def __init__(self):
-        """初始化方法"""
-        pass
-
-    # 公共方法
-    def public_method1(self):
-        """公共方法1"""
-        pass
-
-    def public_method2(self):
-        """公共方法2"""
-        pass
-
-    # 私有方法
-    def _private_method1(self):
-        """私有方法1"""
-        pass
-
-    def _private_method2(self):
-        """私有方法2"""
-        pass
-````
-
-## 四、Git 提交信息规范（遵循 Conventional Commits）
-
-### 1. 格式规范
-
-```markdown
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
-```
-
-### 2. Type（类型）可选值
-
-#### refactor：重构
-
-- **定义**：结构/代码优化，无功能变化
-- **示例**：
-  - `refactor(core): 拆分下载器模块，提高代码可维护性`
-  - `refactor(utils): 提取文件读取逻辑到独立模块`
-  - `refactor(binary): 统一二进制程序调用接口`
-
-#### docs：文档修改
-
-- **定义**：文档的添加、修改或删除
-- **示例**：
-  - `docs: 添加项目开发规范文档`
-  - `docs(readme): 更新安装说明和使用指南`
-  - `docs(api): 完善API文档`
-
-#### chore：杂项操作
-
-- **定义**：依赖、配置等不改变代码逻辑的操作
-- **示例**：
-  - `chore: 更新requirements.txt依赖版本`
-  - `chore: 添加.gitignore规则`
-  - `chore: 配置代码格式化工具`
-
-#### test：添加/修改测试代码
-
-- **定义**：测试代码的添加、修改或删除
-- **示例**：
-  - `test: 添加下载器单元测试`
-  - `test(core): 修复Cookie处理测试用例`
-  - `test(integration): 添加批量下载集成测试`
-
-#### fix：修复 bug
-
-- **定义**：修复代码中的 bug 或错误
-- **示例**：
-  - `fix(core): 修复m3u8链接提取失败问题`
-  - `fix(browser): 解决Firefox浏览器兼容性问题`
-  - `fix(utils): 修复Excel文件编码解析错误`
-
-#### feat：新功能
-
-- **定义**：添加新功能或特性
-- **示例**：
-  - `feat: 添加Firefox浏览器支持`
-  - `feat(core): 实现断点续传功能`
-  - `feat(utils): 支持从剪贴板读取链接`
-
-#### style：代码风格修改
-
-- **定义**：不影响代码逻辑的格式修改
-- **示例**：
-  - `style: 统一代码缩进和空格`
-  - `style: 调整导入顺序`
-  - `style: 优化注释格式`
-
-#### perf：性能优化
-
-- **定义**：提高代码性能的修改
-- **示例**：
-  - `perf: 优化批量下载速度`
-  - `perf(core): 减少不必要的网络请求`
-  - `perf(browser): 优化浏览器启动时间`
-
-#### revert：回滚提交
-
-- **定义**：回滚之前的提交
-- **示例**：
-  - `revert: 回滚feat: 添加Firefox浏览器支持`
-
-### 3. Scope（范围）
-
-- **定义**：提交影响的模块或功能区域
-- **可选值**：
-  - `core`：核心业务逻辑
-  - `utils`：工具函数
-  - `binary`：二进制程序调用
-  - `browser`：浏览器自动化
-  - `config`：配置管理
-  - `test`：测试代码
-  - `docs`：文档
-  - `scripts`：辅助脚本
-
-### 4. Description（描述）
-
-- **语言**：使用中文
-- **长度**：不超过 50 字
-- **原则**：简洁明了，描述做了什么
-- **示例**：
-  - `refactor(core): 拆分下载器模块，提高代码可维护性` ✅
-  - `fix(browser): 修复Edge浏览器Cookie获取失败问题` ✅
-  - `docs: 添加API文档` ✅
-  - `refactor(core): 修改了代码结构` ❌（太笼统）
-  - `fix: 修复bug` ❌（太笼统）
-
-### 5. Body（正文）
-
-- **用途**：详细描述提交内容
-- **格式**：每行不超过 72 个字符
-- **内容**：
-  - 修改原因
-  - 修改内容
-  - 影响范围
-  - 注意事项
-
-**示例**：
-
-```markdown
-refactor(core): 拆分下载器模块，提高代码可维护性
-
-将原有的单文件下载器拆分为多个子模块：
-
-- downloader.py: 核心下载逻辑
-- cookie_handler.py: Cookie 处理逻辑
-- m3u8_parser.py: m3u8 解析逻辑
-
-主要改进：
-
-1. 降低模块耦合度
-2. 提高代码可测试性
-3. 便于后续功能扩展
-
-影响范围：
-
-- 所有导入下载器的代码需要更新导入路径
-- 单元测试需要相应调整
-```
-
-### 6. Footer（脚注）
-
-- **用途**：关联 Issue、Breaking Change 等
-- **格式**：
-  - 关联 Issue：`Closes #123` 或 `Refs #123`
-  - 破坏性变更：`BREAKING CHANGE: 详细描述`
-
-**示例**：
-
-```markdown
-feat(core): 实现断点续传功能
-
-添加断点续传支持，允许从中断处继续下载。
-
-Closes #45
-```
-
-```markdown
-refactor(api): 重构下载器接口
-
-BREAKING CHANGE: 下载器接口参数顺序已调整，所有调用代码需要更新。
-```
-
-### 7. 完整示例
-
-#### 示例 1：重构提交
-
-```markdown
-refactor(core): 拆分下载器模块，提高代码可维护性
-
-将原有的单文件下载器拆分为多个子模块：
-
-- downloader.py: 核心下载逻辑
-- cookie_handler.py: Cookie 处理逻辑
-- m3u8_parser.py: m3u8 解析逻辑
-
-主要改进：
-
-1. 降低模块耦合度
-2. 提高代码可测试性
-3. 便于后续功能扩展
-
-影响范围：
-
-- 所有导入下载器的代码需要更新导入路径
-- 单元测试需要相应调整
-```
-
-#### 示例 2：修复提交
-
-```markdown
-fix(browser): 修复 Firefox 浏览器 Cookie 获取失败问题
-
-问题原因：
-
-- Firefox 浏览器的日志获取方式与 Chrome/Edge 不同
-- 原有代码未正确处理 Firefox 的日志格式
-
-解决方案：
-
-- 使用 execute_script 获取 performance entries
-- 通过正则表达式提取 m3u8 链接
-
-测试验证：
-
-- 在 Firefox 浏览器上测试通过
-- Chrome 和 Edge 浏览器功能正常
-
-Closes #78
-```
-
-#### 示例 3：功能提交
-
-```markdown
-feat(core): 实现断点续传功能
-
-新增功能：
-
-1. 支持从中断处继续下载
-2. 自动检测已下载的分片
-3. 跳过已完成的分片
-
-实现方式：
-
-- 在下载目录创建临时文件记录进度
-- 每次下载前检查临时文件
-- 根据进度恢复下载
-
-用户体验：
-
-- 减少重复下载时间
-- 提高下载成功率
-- 支持网络中断后继续
-
-Closes #45
-```
-
-#### 示例 4：文档提交
-
-```markdown
-docs: 添加项目开发规范文档
-
-新增文档：
-
-- development_standard.md: 完整的开发规范
-- 包含命名规范、注释规范、项目结构规范等
-
-目的：
-
-- 统一团队开发标准
-- 提高代码质量
-- 便于新成员快速上手
-```
-
-#### 示例 5：测试提交
-
-```markdown
-test(core): 添加下载器单元测试
-
-新增测试用例：
-
-1. test_download_single_video: 测试单个视频下载
-2. test_download_batch_videos: 测试批量下载
-3. test_resume_download: 测试断点续传
-
-测试覆盖率：
-
-- 下载器核心逻辑：85%
-- Cookie 处理：90%
-- m3u8 解析：80%
-
-使用工具：
-
-- pytest
-- pytest-cov
-- pytest-mock
-```
-
-### 8. 提交频率
-
-- **原则**：小步提交，频繁提交
-- **粒度**：每次提交只做一件事
-- **时机**：
-  - 完成一个功能点
-  - 修复一个 bug
-  - 完成一次重构
-  - 添加/修改测试
-
-### 9. 提交检查清单
-
-提交前请确认：
-
-- [ ] 提交信息符合格式规范
-- [ ] 提交信息描述清晰准确
-- [ ] 代码通过所有测试
-- [ ] 代码符合开发规范
-- [ ] 无敏感信息（如 API 密钥、密码等）
-- [ ] 无调试代码和注释掉的代码
-- [ ] 无不必要的文件（如临时文件、日志文件）
-
-### 10. 分支管理规范
-
-#### 分支命名
-
-- `main`：主分支，用于生产环境
-- `dev`：开发分支，用于集成开发
-- `feature/<feature-name>`：功能分支
-- `fix/<bug-name>`：修复分支
-- `refactor/<refactor-name>`：重构分支
-
-#### 分支策略
-
-- 从`dev`分支创建功能分支
-- 功能开发完成后合并回`dev`
-- 定期将`dev`合并到`main`
-- 使用 Pull Request 进行代码审查
-
-**示例**：
-
-```markdown
-feature/add-firefox-support
-fix/cookie-getting-failure
-refactor/module-structure-optimization
-```
-
-## 五、代码质量规范
-
-### 1. 代码格式化
-
-- **工具**：使用`black`进行代码格式化
-- **配置**：遵循默认配置
-- **命令**：`black src/ tests/`
-
-### 2. 代码检查
-
-- **工具**：使用`flake8`进行代码检查
-- **配置**：遵循 PEP 8 规范
-- **命令**：`flake8 src/ tests/`
-
-### 3. 类型检查
-
-- **工具**：使用`mypy`进行类型检查
-- **配置**：启用严格模式
-- **命令**：`mypy src/`
-
-### 4. 代码复杂度
-
-- **工具**：使用`radon`检查代码复杂度
-- **标准**：
-  - 圈复杂度 <= 10
-  - 认知复杂度 <= 15
-- **命令**：`radon cc src/ -a`
-
-### 5. 测试覆盖率
-
-- **工具**：使用`pytest-cov`检查测试覆盖率
-- **标准**：核心模块覆盖率 >= 80%
-- **命令**：`pytest --cov=src --cov-report=html`
-
-## 六、版本管理规范
-
-### 1. 版本号格式
-
-遵循语义化版本规范（Semantic Versioning）：
-
-```markdown
-MAJOR.MINOR.PATCH
-```
-
-- **MAJOR**：不兼容的 API 修改
-- **MINOR**：向后兼容的功能性新增
-- **PATCH**：向后兼容的问题修正
-
-### 2. 版本发布流程
-
-1. 更新版本号
-2. 更新 CHANGELOG.md
-3. 创建 Git 标签
-4. 推送标签到远程仓库
-5. 发布新版本
-
-### 3. 示例
-
-```markdown
-1.0.0 -> 1.1.0 (新增功能)
-1.1.0 -> 1.1.1 (修复 bug)
-1.1.1 -> 2.0.0 (不兼容的 API 修改)
-```
-
-## 七、安全规范
-
-### 1. 敏感信息管理
-
-- **禁止**：将 API 密钥、密码等敏感信息提交到 Git
-- **使用**：`.env`文件管理环境变量
-- **示例**：`.env.example`提供模板
-
-### 2. 依赖安全
-
-- **定期**：检查依赖漏洞
-- **工具**：使用`pip-audit`或`safety`
-- **命令**：`pip-audit` 或 `safety check`
-
-### 3. 输入验证
-
-- **原则**：所有用户输入必须验证
-- **内容**：
-  - 文件路径验证
-  - URL 格式验证
-  - 参数范围验证
-- **示例**：
-
-  ```python
-  def validate_url(url: str) -> bool:
-      """验证URL格式"""
-      if not url.startswith("https://n.dingtalk.com"):
-          raise ValueError("无效的钉钉直播链接")
-      return True
-  ```
-
-## 八、总结
-
-本开发规范旨在：
-
-1. **统一代码风格**：提高代码可读性和可维护性
-2. **规范开发流程**：降低协作成本，提高开发效率
-3. **保证代码质量**：通过规范和工具确保代码质量
-4. **便于团队协作**：新成员快速上手，减少沟通成本
-
-**重要提醒**：
-
-- 所有开发人员必须严格遵循本规范
-- 定期审查代码，确保规范执行
-- 持续改进规范，适应项目发展
-- 使用工具辅助规范执行（如 black、flake8 等）
-
-**联系方式**：
-
-## 五、代码格式化规范
-
-### 1. Black 代码格式化工具
-
-#### 1.1 工具介绍
-
-Black 是 Python 社区广泛使用的代码格式化工具，具有以下特点：
-
-- **一致性**：自动统一代码风格，消除代码风格争议
-- **确定性**：相同的代码总是产生相同的格式化结果
-- **自动化**：一键格式化，无需手动调整
-- **标准性**：遵循 PEP 8 规范，是 Python 社区的标准工具
-
-#### 1.2 安装和配置
-
-Black 已集成到项目的开发依赖中，通过以下命令安装：
-
-```bash
-pip install -r requirements-dev.txt
-```
-
-配置文件位于项目根目录的 `pyproject.toml`，包含以下关键配置：
-
-```toml
-[tool.black]
-line-length = 100                    # 行长度设置为 100 字符
-target-version = ['py38']            # 目标 Python 版本为 3.8+
-include = '\.pyi?$'                  # 包含 .py 和 .pyi 文件
-exclude = '''                         # 排除目录和文件
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-```
-
-#### 1.3 使用方法
-
-##### 格式化当前文件
-
-```bash
-python -m black 文件名.py
-```
-
-##### 格式化整个项目
-
-```bash
-python -m black .
-```
-
-##### 检查代码格式（不修改文件）
-
-```bash
-python -m black --check .
-```
-
-##### 查看格式化差异（不修改文件）
-
-```bash
-python -m black --diff .
-```
-
-##### 格式化指定目录
-
-```bash
-python -m black src/
-python -m black tests/
-```
-
-#### 1.4 开发流程集成
-
-##### 代码提交前检查
-
-在提交代码前，必须运行以下命令确保代码格式正确：
-
-```bash
-# 检查代码格式
-python -m black --check .
-
-# 如果检查通过，可以提交代码
-git add .
-git commit -m "feat: 添加新功能"
-```
-
-##### 代码格式化后提交
-
-如果检查失败，运行以下命令格式化代码：
-
-```bash
-# 格式化代码
-python -m black .
-
-# 再次检查
-python -m black --check .
-
-# 提交代码
-git add .
-git commit -m "style: 格式化代码"
-```
-
-#### 1.5 代码格式化要求
-
-**强制要求**：
-
-1. **提交前必须格式化**：所有代码在提交前必须通过 Black 格式化检查
-2. **不得手动调整**：格式化后的代码不得手动调整，除非有充分的理由
-3. **CI/CD 检查**：代码合并前必须通过格式化检查（如果配置了 CI/CD）
-
-**推荐实践**：
-
-1. **定期格式化**：开发过程中定期运行格式化命令，保持代码风格一致
-2. **IDE 集成**：配置 IDE 自动格式化，保存时自动运行 Black
-3. **团队协作**：团队成员统一使用 Black，避免代码风格冲突
-
-#### 1.6 常见问题
-
-##### Q1: Black 格式化后的代码不符合我的习惯？
-
-**A**: Black 的设计理念是"统一优于个人偏好"。团队统一使用 Black 可以避免代码风格争议，提高代码可读性。建议接受 Black 的格式化结果。
-
-##### Q2: 某些代码不想被格式化怎么办？
-
-**A**: 可以在代码中使用 `# fmt: off` 和 `# fmt: on` 注释来跳过格式化：
-
-```python
-# fmt: off
-complex_dict = {
-    'key1': 'value1',
-    'key2': 'value2',
-    # ...
-}
-# fmt: on
-```
-
-**注意**：这种用法应该谨慎使用，仅在必要时使用。
-
-##### Q3: Black 改变了代码逻辑怎么办？
-
-**A**: Black 只改变代码格式，不会改变代码逻辑。如果发现逻辑变化，请检查代码本身是否有问题。
-
-##### Q4: 如何在 IDE 中集成 Black？
-
-**A**: 主流 IDE 都支持 Black 集成：
-
-- **VS Code**: 安装 "Black Formatter" 扩展，配置为默认格式化工具
-- **PyCharm**: 安装 Black 插件，配置为代码格式化工具
-- **Vim/Neovim**: 使用 `black` 插件或配置自动格式化
-
-#### 1.7 格式化示例
-
-##### 格式化前
-
-```python
-def calculate_total(items):
-    total=0
-    for item in items:
-        total+=item['price']*item['quantity']
-    return total
-```
-
-##### 格式化后
-
-```python
-def calculate_total(items):
-    total = 0
-    for item in items:
-        total += item["price"] * item["quantity"]
-    return total
-```
-
-主要变化：
-
-- 运算符周围添加空格
-- 单引号改为双引号
-- 代码缩进和间距统一
-
-### 2. 代码质量检查流程
-
-#### 2.1 开发前检查
-
-在开始开发新功能或修复 bug 前：
-
-1. 拉取最新代码：`git pull`
-2. 运行格式化检查：`python -m black --check .`
-3. 运行测试：`pytest`
-
-#### 2.2 开发中检查
-
-在开发过程中：
-
-1. 定期运行格式化：`python -m black .`
-2. 定期运行测试：`pytest`
-3. 确保代码符合项目规范
-
-#### 2.3 提交前检查
-
-在提交代码前：
-
-1. 运行格式化：`python -m black .`
-2. 运行格式化检查：`python -m black --check .`
-3. 运行测试：`pytest`
-4. 确保所有检查通过
-
-#### 2.4 提交信息规范
-
-提交信息应遵循 Git 提交信息规范（见第四部分），格式化相关的提交使用 `style` 类型：
-
-```bash
-git commit -m "style: 格式化代码"
-```
-
-如有疑问或建议，请联系项目维护者或在 Issue 中讨论。
-
-## 五、代码质量检查流程
-
-### 5.1 开发前检查
-
-在开始开发新功能或修复 bug 前：
-
-1. 拉取最新代码：`git pull`
-2. 运行格式化检查：`python -m black --check .`
-3. 运行测试：`pytest`
-
-### 5.2 开发中检查
-
-在开发过程中：
-
-1. 定期运行格式化：`python -m black .`
-2. 定期运行测试：`pytest`
-3. 确保代码符合项目规范
-
-### 5.3 提交前检查
-
-在提交代码前：
-
-1. 运行格式化：`python -m black .`
-2. 运行格式化检查：`python -m black --check .`
-3. 运行测试：`pytest`
-4. 确保所有检查通过
-
-### 5.4 提交信息规范
-
-提交信息应遵循 Git 提交信息规范（见第四部分），格式化相关的提交使用 `style` 类型：
-
-```bash
-git commit -m "style: 格式化代码"
-```
-
-## 六、代码审查流程
-
-### 6.1 审查前准备
-
-#### 6.1.1 提交者准备
-
-在提交 Pull Request 前，确保：
-
-1. **代码质量**
-
-   - [ ] 代码已通过 Black 格式化检查
-   - [ ] 代码符合项目开发规范
-   - [ ] 添加了必要的注释和文档字符串
-   - [ ] 变量和函数命名清晰明确
-
-2. **测试覆盖**
-
-   - [ ] 编写了单元测试
-   - [ ] 所有测试通过
-   - [ ] 测试覆盖率不低于 80%
-   - [ ] 添加了边界条件测试
-
-3. **文档更新**
-
-   - [ ] 更新了 API 文档（如有 API 变更）
-   - [ ] 更新了用户指南（如有功能变更）
-   - [ ] 更新了 README（如有重大变更）
-
-4. **提交信息**
-   - [ ] 提交信息符合规范
-   - [ ] 提交信息描述清晰
-   - [ ] 关联了相关 Issue（如有）
-
-#### 6.1.2 创建 Pull Request
-
-1. **标题格式**：使用规范的提交信息格式
-
-   ```markdown
-   feat(core): 实现断点续传功能
-   ```
-
-2. **描述模板**：
-
-   ```markdown
-   ## 变更说明
-
-   简要描述本次变更的内容和目的。
-
-   ## 变更类型
-
-   - [ ] 新功能
-   - [ ] Bug 修复
-   - [ ] 重构
-   - [ ] 文档更新
-   - [ ] 性能优化
-
-   ## 测试情况
-
-   - [ ] 单元测试通过
-   - [ ] 集成测试通过
-   - [ ] 手动测试通过
-
-   ## 相关 Issue
-
-   Closes #123
-
-   ## 截图（如有）
-
-   （添加相关截图）
-
-   ## 检查清单
-
-   - [ ] 代码符合项目规范
-   - [ ] 添加了必要的测试
-   - [ ] 更新了相关文档
-   - [ ] 提交信息符合规范
-   ```
-
-### 6.2 审查过程
-
-#### 6.2.1 审查者检查清单
-
-审查者应从以下方面审查代码：
-
-1. **代码质量**
-
-   - [ ] 代码风格符合项目规范
-   - [ ] 变量和函数命名清晰明确
-   - [ ] 代码逻辑清晰易懂
-   - [ ] 没有明显的代码坏味道
-
-2. **功能正确性**
-
-   - [ ] 功能实现符合需求
-   - [ ] 边界条件处理正确
-   - [ ] 异常处理完善
-   - [ ] 没有引入新的 bug
-
-3. **测试覆盖**
-
-   - [ ] 测试用例充分
-   - [ ] 测试覆盖率达标
-   - [ ] 测试用例有效
-   - [ ] 包含边界条件测试
-
-4. **文档完整性**
-
-   - [ ] API 文档更新完整
-   - [ ] 代码注释清晰
-   - [ ] 用户指南更新完整
-   - [ ] README 更新完整
-
-5. **性能影响**
-
-   - [ ] 没有明显的性能问题
-   - [ ] 资源使用合理
-   - [ ] 没有内存泄漏
-   - [ ] 没有不必要的计算
-
-6. **安全性**
-   - [ ] 没有安全漏洞
-   - [ ] 敏感信息处理正确
-   - [ ] 输入验证完善
-   - [ ] 错误信息不泄露敏感信息
-
-#### 6.2.2 审查反馈
-
-审查者应提供清晰、具体的反馈：
-
-**好的反馈示例**：
-
-```markdown
-### 代码风格
-
-- 第 45 行：函数名 `get_data` 不够具体，建议改为 `get_user_data`
-- 第 78 行：缺少函数文档字符串
-
-### 功能实现
-
-- 第 120 行：当 `user_id` 为 None 时，应该抛出异常而不是返回空列表
-- 第 135 行：这里使用了硬编码的值，建议提取为常量
-
-### 测试覆盖
-
-- 缺少对边界条件的测试（如空列表、None 值）
-- 建议添加对异常情况的测试
-
-### 文档
-
-- API 文档缺少参数类型说明
-- 用户指南需要更新使用示例
-```
-
-**不好的反馈示例**：
-
-```markdown
-代码有问题，需要修改。
-```
-
-### 6.3 审查后处理
-
-#### 6.3.1 提交者处理反馈
-
-1. **理解反馈**
-
-   - 仔细阅读审查者的反馈
-   - 不理解的地方及时提问
-   - 讨论有争议的地方
-
-2. **修改代码**
-
-   - 根据反馈修改代码
-   - 确保所有问题都得到解决
-   - 运行测试确保没有引入新问题
-
-3. **更新 PR**
-   - 提交修改后的代码
-   - 在 PR 中说明修改内容
-   - 请求审查者重新审查
-
-#### 6.3.2 审查者确认
-
-1. **重新审查**
-
-   - 检查修改是否解决了所有问题
-   - 确认没有引入新问题
-   - 运行测试确保通过
-
-2. **批准合并**
-
-   - 确认代码质量达标
-   - 确认功能实现正确
-   - 确认文档更新完整
-
-3. **合并代码**
-   - 使用 Squash and Merge 合并
-   - 删除功能分支
-   - 关闭相关 Issue
-
-### 6.4 审查最佳实践
-
-#### 6.4.1 提交者最佳实践
-
-1. **保持 PR 小而专注**
-
-   - 每个 PR 只解决一个问题
-   - 避免大规模重构
-   - 便于审查和测试
-
-2. **及时响应反馈**
-
-   - 收到反馈后及时处理
-   - 不理解的地方及时提问
-   - 保持良好的沟通
-
-3. **自我审查**
-   - 提交前自我审查代码
-   - 确保代码质量达标
-   - 减少审查者的负担
-
-#### 6.4.2 审查者最佳实践
-
-1. **及时审查**
-
-   - 收到 PR 后及时审查
-   - 避免长时间等待
-   - 保持项目开发节奏
-
-2. **建设性反馈**
-
-   - 提供清晰、具体的反馈
-   - 解释为什么需要修改
-   - 给出改进建议
-
-3. **尊重和鼓励**
-   - 尊重提交者的工作
-   - 鼓励改进和学习
-   - 保持良好的团队氛围
-
-## 七、分支管理策略
-
-### 7.1 分支模型
-
-项目采用 **GitHub Flow** 分支模型：
-
-```mermaid
-gitGraph
-    commit
-    branch feature-branch
-    checkout feature-branch
-    commit
-    commit
-    checkout main
-    merge feature-branch
-    commit
-```
-
-### 7.2 主要分支
-
-#### 7.2.1 main 分支
-
-- **用途**：主分支，始终保持可部署状态
-- **保护规则**：
-  - 禁止直接推送
-  - 必须通过 Pull Request 合并
-  - 必须通过 CI 检查
-  - 必须至少一人审查通过
-
-#### 7.2.2 develop 分支（可选）
-
-- **用途**：开发分支，用于集成功能
-- **使用场景**：当项目需要多个功能集成测试时使用
-- **合并规则**：
-  - 功能分支合并到 develop
-  - develop 测试通过后合并到 main
-
-### 7.3 功能分支
-
-#### 7.3.1 命名规范
-
-功能分支命名格式：`<type>/<short-description>`
-
-**类型（type）**：
-
-- `feat`：新功能
-- `fix`：Bug 修复
-- `refactor`：重构
-- `docs`：文档更新
-- `test`：测试相关
-- `chore`：杂项操作
-
-**示例**：
-
-- `feat/resume-download`
-- `fix/cookie-handler`
-- `refactor/downloader-module`
-- `docs/api-reference`
-- `test/unit-tests`
-- `chore/update-dependencies`
-
-#### 7.3.2 创建功能分支
-
-```bash
-# 1. 拉取最新代码
-git checkout main
-git pull origin main
-
-# 2. 创建功能分支
-git checkout -b feat/resume-download
-
-# 3. 开发功能
-# ... 编写代码 ...
-
-# 4. 提交代码
-git add .
-git commit -m "feat(core): 实现断点续传功能"
-
-# 5. 推送到远程仓库
-git push origin feat/resume-download
-```
-
-#### 7.3.3 功能分支生命周期
-
-```mermaid
-stateDiagram-v2
-    [*] --> 创建: git checkout -b feat/xxx
-    创建 --> 开发: 编写代码
-    开发 --> 测试: 本地测试
-    测试 --> 提交: git commit
-    提交 --> 推送: git push
-    推送 --> 审查: 创建 PR
-    审查 --> 修改: 需要修改
-    修改 --> 测试: 修改后测试
-    审查 --> 合并: 审查通过
-    合并 --> 删除: 合并到 main
-    删除 --> [*]
-```
-
-### 7.4 分支操作流程
-
-#### 7.4.1 开发新功能
-
-```bash
-# 1. 切换到 main 分支并拉取最新代码
-git checkout main
-git pull origin main
-
-# 2. 创建功能分支
-git checkout -b feat/new-feature
-
-# 3. 开发功能
-# ... 编写代码 ...
-
-# 4. 提交代码
-git add .
-git commit -m "feat: 添加新功能"
-
-# 5. 推送到远程仓库
-git push origin feat/new-feature
-
-# 6. 创建 Pull Request
-# 在 GitHub 上创建 PR，请求合并到 main 分支
-```
-
-#### 7.4.2 修复 Bug
-
-```bash
-# 1. 切换到 main 分支并拉取最新代码
-git checkout main
-git pull origin main
-
-# 2. 创建修复分支
-git checkout -b fix/bug-description
-
-# 3. 修复 Bug
-# ... 修复代码 ...
-
-# 4. 提交代码
-git add .
-git commit -m "fix: 修复 xxx 问题"
-
-# 5. 推送到远程仓库
-git push origin fix/bug-description
-
-# 6. 创建 Pull Request
-# 在 GitHub 上创建 PR，请求合并到 main 分支
-```
-
-#### 7.4.3 重构代码
-
-```bash
-# 1. 切换到 main 分支并拉取最新代码
-git checkout main
-git pull origin main
-
-# 2. 创建重构分支
-git checkout -b refactor/module-name
-
-# 3. 重构代码
-# ... 重构代码 ...
-
-# 4. 提交代码
-git add .
-git commit -m "refactor: 重构 xxx 模块"
-
-# 5. 推送到远程仓库
-git push origin refactor/module-name
-
-# 6. 创建 Pull Request
-# 在 GitHub 上创建 PR，请求合并到 main 分支
-```
-
-### 7.5 分支合并策略
-
-#### 7.5.1 合并方式
-
-**推荐使用 Squash and Merge**：
-
-- **优点**：
-
-  - 保持 main 分支历史清晰
-  - 将多个提交合并为一个
-  - 便于回滚
-
-- **使用场景**：
-  - 功能分支有多个提交
-  - 需要保持主分支历史简洁
-
-**Merge Commit**：
-
-- **优点**：
-
-  - 保留完整的提交历史
-  - 清晰显示分支合并关系
-
-- **使用场景**：
-  - 需要保留详细的开发历史
-  - 功能分支提交较少
-
-#### 7.5.2 合并前检查
-
-在合并到 main 分支前，确保：
-
-1. **代码质量**
-
-   - [ ] 代码已通过 Black 格式化检查
-   - [ ] 代码符合项目开发规范
-   - [ ] 没有明显的代码坏味道
-
-2. **测试通过**
-
-   - [ ] 所有单元测试通过
-   - [ ] 所有集成测试通过
-   - [ ] 测试覆盖率达标
-
-3. **文档完整**
-
-   - [ ] API 文档更新完整
-   - [ ] 用户指南更新完整
-   - [ ] README 更新完整
-
-4. **审查通过**
-   - [ ] 至少一人审查通过
-   - [ ] 所有审查意见已解决
-   - [ ] 没有未解决的问题
-
-### 7.6 分支清理
-
-#### 7.6.1 本地分支清理
-
-```bash
-# 查看所有分支
-git branch -a
-
-# 删除已合并的本地分支
-git branch -d feat/new-feature
-
-# 强制删除未合并的本地分支
-git branch -D feat/new-feature
-
-# 清理已删除的远程分支引用
-git remote prune origin
-```
-
-#### 7.6.2 远程分支清理
-
-```bash
-# 删除远程分支
-git push origin --delete feat/new-feature
-
-# 或者使用简写
-git push origin :feat/new-feature
-```
-
-### 7.7 分支管理最佳实践
-
-1. **保持分支生命周期短**
-
-   - 功能分支应在 1-2 周内完成
-   - 避免长期存在的功能分支
-   - 及时合并或删除过期的分支
-
-2. **定期同步主分支**
-
-   - 每天拉取主分支最新代码
-   - 及时合并主分支的变更
-   - 避免分支差异过大
-
-3. **保持分支专注**
-
-   - 每个分支只解决一个问题
-   - 避免在分支中混入不相关的修改
-   - 保持分支目的明确
-
-4. **及时清理分支**
-   - 合并后及时删除功能分支
-   - 定期清理过期的分支
-   - 保持仓库整洁
-
-## 八、常见问题解决方案
-
-### 8.1 开发环境问题
-
-#### Q1: Python 环境配置失败？
-
-**A**: 按照以下步骤排查：
-
-1. 检查 Python 版本是否满足要求（Python 3.8+）
-2. 检查 pip 是否正常工作
-3. 尝试使用虚拟环境
-4. 检查网络连接和防火墙设置
-
-**解决方案**：
-
-```bash
-# 检查 Python 版本
-python --version
-
-# 升级 pip
-pip install --upgrade pip
-
-# 创建虚拟环境
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# 或
-venv\Scripts\activate  # Windows
-
-# 重新安装依赖
-pip install -r requirements.txt
-```
-
-#### Q2: 依赖安装失败？
-
-**A**: 尝试以下解决方案：
-
-1. 使用国内镜像源
-2. 升级 pip 到最新版本
-3. 检查网络连接
-4. 使用虚拟环境
-
-**解决方案**：
-
-```bash
-# 使用清华大学镜像源
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-# 升级 pip
-pip install --upgrade pip
-
-# 使用虚拟环境
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-#### Q3: 浏览器驱动安装失败？
-
-**A**: 尝试以下解决方案：
-
-1. 检查网络连接
-2. 手动下载浏览器驱动
-3. 使用代理设置
-4. 检查防火墙设置
-
-**解决方案**：
-
-```python
-# 使用 webdriver-manager 自动下载
-from webdriver_manager.chrome import ChromeDriverManager
+import requests
 from selenium import webdriver
 
-driver = webdriver.Chrome(ChromeDriverManager().install())
-
-# 手动下载并指定路径
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-
-service = Service('/path/to/chromedriver')
-driver = webdriver.Chrome(service=service)
+from dingtalk_downloader.utils.models import CookieData
+from dingtalk_downloader.config.yaml_config import YamlConfig
 ```
 
-### 8.2 代码质量问题
+#### 1.3.2 导入格式
 
-#### Q1: Black 格式化检查失败？
+- **每个顶级导入单独一行**
+- **从同一模块导入多个成员**: 可使用括号隐式换行
+- **禁止使用通配符导入**: `from module import *`
 
-**A**: 按照以下步骤修复：
-
-1. 运行 Black 格式化代码
-2. 检查格式化结果
-3. 确认没有逻辑变化
-4. 提交格式化后的代码
-
-**解决方案**：
-
-```bash
-# 格式化代码
-python -m black .
-
-# 检查格式化结果
-python -m black --check .
-
-# 提交代码
-git add .
-git commit -m "style: 格式化代码"
-```
-
-#### Q2: 测试失败？
-
-**A**: 按照以下步骤排查：
-
-1. 查看错误信息
-2. 检查测试代码
-3. 检查被测试的代码
-4. 使用调试工具
-
-**解决方案**：
-
-```bash
-# 运行测试并显示详细输出
-pytest -v
-
-# 运行测试并进入调试模式
-pytest --pdb
-
-# 运行特定测试
-pytest tests/unit/test_downloader.py::test_download_single_video
-```
-
-#### Q3: 代码覆盖率不达标？
-
-**A**: 按照以下步骤提高覆盖率：
-
-1. 识别未覆盖的代码
-2. 编写相应的测试用例
-3. 测试边界条件和异常情况
-4. 优化代码结构
-
-**解决方案**：
-
-```bash
-# 生成覆盖率报告
-pytest --cov=src/dingtalk_downloader --cov-report=html
-
-# 查看覆盖率报告
-open htmlcov/index.html
-
-# 查看未覆盖的代码行
-pytest --cov=src/dingtalk_downloader --cov-report=term-missing
-```
-
-### 8.3 Git 操作问题
-
-#### Q1: 合并冲突？
-
-**A**: 按照以下步骤解决：
-
-1. 拉取最新代码
-2. 解决冲突
-3. 测试代码
-4. 提交合并
-
-**解决方案**：
-
-```bash
-# 拉取最新代码
-git pull origin main
-
-# 解决冲突（手动编辑冲突文件）
-# ... 编辑冲突文件 ...
-
-# 标记冲突已解决
-git add .
-
-# 提交合并
-git commit -m "fix: 解决合并冲突"
-
-# 推送到远程仓库
-git push origin feature-branch
-```
-
-#### Q2: 提交信息不规范？
-
-**A**: 按照以下步骤修复：
-
-1. 修改最后一次提交信息
-2. 确保符合规范
-3. 推送到远程仓库
-
-**解决方案**：
-
-```bash
-# 修改最后一次提交信息
-git commit --amend
-
-# 修改多次提交信息（交互式变基）
-git rebase -i HEAD~n
-
-# 推送到远程仓库（强制推送）
-git push origin feature-branch --force
-```
-
-#### Q3: 分支管理混乱？
-
-**A**: 按照以下步骤清理：
-
-1. 查看所有分支
-2. 删除已合并的分支
-3. 清理过期的分支
-4. 保持仓库整洁
-
-**解决方案**：
-
-```bash
-# 查看所有分支
-git branch -a
-
-# 删除已合并的本地分支
-git branch -d feat/new-feature
-
-# 删除远程分支
-git push origin --delete feat/new-feature
-
-# 清理已删除的远程分支引用
-git remote prune origin
-```
-
-### 8.4 性能问题
-
-#### Q1: 下载速度慢？
-
-**A**: 尝试以下优化方案：
-
-1. 使用多线程下载
-2. 优化网络请求
-3. 减少不必要的请求
-4. 使用缓存
-
-**解决方案**：
+**示例**:
 
 ```python
-# 使用多线程下载
-import concurrent.futures
+# 好的示例: 单独一行导入
+import os
+import sys
 
-def download_video(url):
-    # 下载逻辑
+# 好的示例: 使用括号合并导入
+from os import (
+    path,
+    listdir,
+    mkdir
+)
+
+# 不好的示例: 多个导入在一行
+import os, sys
+
+# 不好的示例: 通配符导入
+from os import *
+```
+
+### 1.4 表达式和语句
+
+#### 1.4.1 布尔判断
+
+- **判断None值**: 使用 `is/is not`,避免使用 `==`
+- **判断布尔值**: 避免使用 `== True/False`
+- **判断容器**: 优先使用 `if not container`,而非 `if len(container) == 0`
+
+**示例**:
+
+```python
+# 好的示例: 正确的布尔判断
+if value is None:
     pass
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-    executor.map(download_video, urls)
+if value:
+    pass
+
+if not my_list:
+    pass
+
+# 不好的示例: 错误的布尔判断
+if value == None:
+    pass
+
+if value == True:
+    pass
+
+if len(my_list) == 0:
+    pass
 ```
 
-#### Q2: 内存占用高？
+#### 1.4.2 条件表达式
 
-**A**: 尝试以下优化方案：
+- **简化逻辑**: 使用提前返回优化
+- **复杂条件**: 拆分为布尔变量
 
-1. 及时释放资源
-2. 使用生成器代替列表
-3. 优化数据结构
-4. 分批处理数据
-
-**解决方案**：
+**示例**:
 
 ```python
-# 使用生成器
-def read_large_file(file_path):
-    with open(file_path, 'r') as f:
-        for line in f:
-            yield line
-
-# 及时释放资源
+# 好的示例: 提前返回
 def process_data(data):
-    result = process(data)
-    del data
+    if not data:
+        return None
+
+    result = do_something(data)
+    return result
+
+# 好的示例: 拆分复杂条件
+is_valid = condition1 and condition2
+is_ready = condition3 or condition4
+
+if is_valid and is_ready:
+    do_something()
+
+# 不好的示例: 深层嵌套
+def process_data(data):
+    if data:
+        if condition1:
+            if condition2:
+                result = do_something(data)
+                return result
+```
+
+#### 1.4.3 列表推导
+
+- **简单场景**: 使用列表推导
+- **复杂逻辑**: 使用for循环
+
+**示例**:
+
+```python
+# 好的示例: 简单的列表推导
+squares = [x ** 2 for x in range(10)]
+
+# 好的示例: 复杂逻辑使用for循环
+result = []
+for item in items:
+    if condition1(item):
+        processed = process(item)
+        if condition2(processed):
+            result.append(processed)
+
+# 不好的示例: 复杂的列表推导
+result = [
+    process(item)
+    for item in items
+    if condition1(item)
+    if condition2(process(item))
+]
+```
+
+### 1.5 异常处理
+
+#### 1.5.1 异常捕获
+
+- **捕获具体异常**: 避免捕获所有异常
+- **提供错误信息**: 包含有用的错误信息
+- **使用finally**: 确保资源释放
+
+**示例**:
+
+```python
+# 好的示例: 捕获具体异常
+try:
+    result = some_function()
+except ValueError as e:
+    logger.error(f"值错误: {e}")
+    return None
+except ConnectionError as e:
+    logger.error(f"连接错误: {e}")
+    return None
+
+# 不好的示例: 捕获所有异常
+try:
+    result = some_function()
+except Exception as e:
+    logger.error(f"错误: {e}")
+    return None
+```
+
+#### 1.5.2 异常抛出
+
+- **使用自定义异常**: 定义业务相关的异常
+- **提供错误信息**: 包含有用的错误信息
+
+**示例**:
+
+```python
+# 好的示例: 使用自定义异常
+class CookieError(Exception):
+    """Cookie相关异常"""
+    pass
+
+
+def get_cookie():
+    if not cookie:
+        raise CookieError("Cookie获取失败")
+    return cookie
+
+# 不好的示例: 使用通用异常
+def get_cookie():
+    if not cookie:
+        raise Exception("Cookie获取失败")
+    return cookie
+```
+
+---
+
+## 二、命名约定
+
+### 2.1 命名风格
+
+| 类型     | 命名风格                      | 示例                  |
+| -------- | ----------------------------- | --------------------- |
+| 模块名   | 全小写,可包含下划线           | `cookie_handler.py`   |
+| 包名     | 全小写,不包含下划线           | `dingtalk_downloader` |
+| 类名     | 大驼峰命名法(PascalCase)      | `CookieHandler`       |
+| 函数名   | 蛇形命名法(snake_case)        | `get_cookie`          |
+| 变量名   | 蛇形命名法(snake_case)        | `cookie_data`         |
+| 常量     | 全大写加下划线(CONSTANT_CASE) | `MAX_RETRY_COUNT`     |
+| 私有成员 | 单下划线前缀                  | `_private_method`     |
+| 魔术方法 | 双下划线前缀和后缀            | `__init__`            |
+
+### 2.2 命名原则
+
+#### 2.2.1 清晰性
+
+- **使用有意义的名称**: 名称应该表达意图
+- **避免缩写**: 除非是广泛接受的缩写
+- **避免单字母**: 除了循环变量
+
+**示例**:
+
+```python
+# 好的示例: 清晰的命名
+def get_user_by_id(user_id: int) -> User:
+    pass
+
+cookie_data = CookieData(cookies)
+
+# 不好的示例: 不清晰的命名
+def get_u(uid: int) -> User:
+    pass
+
+cd = CookieData(cookies)
+```
+
+#### 2.2.2 一致性
+
+- **保持命名风格一致**: 同类事物使用相同的命名风格
+- **遵循Python惯例**: 使用Python社区接受的命名方式
+
+**示例**:
+
+```python
+# 好的示例: 一致的命名
+class CookieHandler:
+    def get_cookie(self):
+        pass
+
+    def set_cookie(self):
+        pass
+
+# 不好的示例: 不一致的命名
+class CookieHandler:
+    def get_cookie(self):
+        pass
+
+    def SetCookie(self):
+        pass
+```
+
+#### 2.2.3 避免保留字
+
+- **避免使用Python保留字**: 如`class`、`def`、`return`等
+- **避免使用内置函数名**: 如`list`、`dict`、`str`等
+
+**示例**:
+
+```python
+# 好的示例: 避免保留字
+class MyClass:
+    pass
+
+def my_function():
+    pass
+
+# 不好的示例: 使用保留字
+class = MyClass
+def = my_function
+```
+
+---
+
+## 三、注释要求
+
+### 3.1 注释原则
+
+1. **解释为什么,而不是什么**: 代码应该自解释,注释解释原因
+2. **保持注释更新**: 代码变更时同步更新注释
+3. **避免冗余注释**: 不要重复代码已经表达的内容
+4. **使用中文注释**: 便于团队理解
+
+### 3.2 文档字符串
+
+#### 3.2.1 模块文档字符串
+
+每个模块都应该有文档字符串:
+
+```python
+"""
+Cookie处理器模块
+
+本模块负责通过浏览器自动化获取Cookie和请求头信息。
+"""
+
+from typing import Dict, List
+```
+
+#### 3.2.2 类文档字符串
+
+每个类都应该有文档字符串:
+
+```python
+class CookieHandler:
+    """Cookie处理器
+
+    通过浏览器自动化获取Cookie和请求头信息。
+
+    Attributes:
+        browser_type: 浏览器类型
+        driver: 浏览器驱动实例
+    """
+
+    def __init__(self, browser_type: str):
+        pass
+```
+
+#### 3.2.3 函数文档字符串
+
+每个公共函数都应该有文档字符串,遵循Google风格:
+
+```python
+def get_cookie(self, url: str) -> CookieData:
+    """获取Cookie和请求头
+
+    通过浏览器自动化获取指定URL的Cookie和请求头信息。
+
+    Args:
+        url: 目标URL
+
+    Returns:
+        CookieData: 包含Cookie和请求头的数据对象
+
+    Raises:
+        CookieError: Cookie获取失败时抛出
+
+    Examples:
+        >>> handler = CookieHandler("edge")
+        >>> cookie_data = handler.get_cookie("https://example.com")
+        >>> print(cookie_data.cookies)
+    """
+    pass
+```
+
+### 3.3 行内注释
+
+#### 3.3.1 块注释
+
+- **使用完整的句子**: 首字母大写
+- **与代码对齐**: 缩进与代码相同
+- **注释前空一行**: 与代码之间空一行
+
+**示例**:
+
+```python
+# 好的示例: 块注释
+def process_data(data):
+    # 验证数据格式
+    if not isinstance(data, dict):
+        raise ValueError("数据必须是字典类型")
+
+    # 处理数据
+    result = transform(data)
     return result
 ```
 
-#### Q3: 浏览器启动慢？
+#### 3.3.2 行内注释
 
-**A**: 尝试以下优化方案：
+- **与代码间隔两个空格**
+- **解释复杂逻辑**
+- **避免显而易见的注释**
 
-1. 使用轻量级浏览器选项
-2. 禁用不必要的功能
-3. 重用浏览器实例
-4. 使用无头模式
-
-**解决方案**：
+**示例**:
 
 ```python
-# 使用无头模式
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+# 好的示例: 行内注释
+result = x * y + z  # 计算加权平均值
 
-options = Options()
-options.add_argument('--headless')
-options.add_argument('--disable-gpu')
-options.add_argument('--no-sandbox')
-
-driver = webdriver.Chrome(options=options)
+# 不好的示例: 显而易见的注释
+result = x + y  # 相加
 ```
 
-### 8.5 安全问题
+### 3.4 TODO注释
 
-#### Q1: 敏感信息泄露？
-
-**A**: 按照以下步骤修复：
-
-1. 检查代码中的敏感信息
-2. 使用环境变量存储敏感信息
-3. 添加 .gitignore 规则
-4. 撤销已提交的敏感信息
-
-**解决方案**：
+使用TODO注释标记待办事项:
 
 ```python
-# 使用环境变量
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-api_key = os.getenv('API_KEY')
+# TODO: 添加重试机制
+# FIXME: 修复内存泄漏问题
+# XXX: 需要优化性能
+# HACK: 临时解决方案,需要重构
 ```
 
-```bash
-# .gitignore
-.env
-*.key
-*.pem
+---
+
+## 四、提交信息格式
+
+### 4.1 提交信息格式
+
+遵循 `<type>(<scope>): <subject>` 格式:
+
+```text
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
 ```
 
-#### Q2: 输入验证不足？
+### 4.2 Type类型
 
-**A**: 按照以下步骤修复：
+| Type     | 说明                      | 示例                               |
+| -------- | ------------------------- | ---------------------------------- |
+| feat     | 新功能                    | feat(downloader): 添加批量下载功能 |
+| fix      | Bug修复                   | fix(cookie): 修复Cookie过期问题    |
+| docs     | 文档更新                  | docs(readme): 更新使用说明         |
+| style    | 代码格式调整(不影响功能)  | style(format): 统一代码格式        |
+| refactor | 重构(不新增功能不修复bug) | refactor(parser): 重构M3U8解析器   |
+| test     | 补充测试                  | test(models): 添加CookieData测试   |
+| chore    | 构建/依赖调整             | chore(deps): 升级selenium版本      |
 
-1. 添加输入验证
-2. 使用白名单验证
-3. 处理异常输入
-4. 记录异常情况
+### 4.3 Scope范围
 
-**解决方案**：
+Scope填写模块名、功能名,简洁明了:
+
+- `downloader`: 下载器
+- `cookie`: Cookie处理
+- `parser`: M3U8解析
+- `browser`: 浏览器自动化
+- `config`: 配置管理
+- `utils`: 工具函数
+
+### 4.4 Subject主题
+
+- **首字母小写**
+- **末尾无标点**
+- **长度控制在50字符以内**
+- **描述具体变更内容**
+
+### 4.5 Body正文
+
+- **详细说明变更内容**
+- **使用列表说明**
+- **每行不超过72字符**
+
+### 4.6 Footer页脚
+
+- **关联Issue**: `Closes #123`
+- **破坏性变更**: `BREAKING CHANGE:`
+
+### 4.7 提交信息示例
+
+#### 示例1: 新功能
+
+```text
+feat(downloader): 添加批量下载功能
+
+- 支持从CSV/Excel文件读取链接
+- 支持批量下载多个视频
+- 添加下载进度显示
+- 优化错误处理机制
+
+Closes #45
+```
+
+#### 示例2: Bug修复
+
+```text
+fix(cookie): 修复Cookie过期导致下载失败的问题
+
+- 检测Cookie有效期
+- 自动刷新过期Cookie
+- 添加重试机制
+
+Fixes #67
+```
+
+#### 示例3: 文档更新
+
+```text
+docs(readme): 更新安装说明
+
+- 添加Windows安装步骤
+- 更新依赖版本要求
+- 补充常见问题解答
+```
+
+#### 示例4: 重构
+
+```text
+refactor(parser): 重构M3U8解析器
+
+- 提取公共逻辑为独立方法
+- 优化错误处理
+- 提高代码可读性
+```
+
+---
+
+## 五、代码审查标准
+
+### 5.1 审查原则
+
+1. **建设性**: 提供建设性的反馈
+2. **及时性**: 及时响应审查请求
+3. **全面性**: 全面审查代码变更
+4. **礼貌性**: 保持礼貌和尊重
+
+### 5.2 审查检查清单
+
+#### 5.2.1 功能性
+
+- [ ] 功能是否正确实现
+- [ ] 是否满足需求
+- [ ] 边界条件是否处理
+- [ ] 异常情况是否处理
+
+#### 5.2.2 代码质量
+
+- [ ] 代码风格是否一致
+- [ ] 命名是否清晰
+- [ ] 注释是否充分
+- [ ] 是否有重复代码
+- [ ] 是否有代码坏味道
+
+#### 5.2.3 测试
+
+- [ ] 是否有单元测试
+- [ ] 测试覆盖率是否达标
+- [ ] 测试是否充分
+- [ ] 是否有集成测试
+
+#### 5.2.4 性能
+
+- [ ] 是否有性能问题
+- [ ] 是否有内存泄漏
+- [ ] 是否有优化空间
+
+#### 5.2.5 安全
+
+- [ ] 是否有安全漏洞
+- [ ] 是否有敏感信息泄露
+- [ ] 输入是否验证
+
+### 5.3 审查流程
+
+#### 5.3.1 提交审查
+
+1. 提交Pull Request
+2. 填写PR描述
+3. 指定审查者
+
+#### 5.3.2 审查代码
+
+1. 查看代码变更
+2. 运行测试
+3. 检查代码质量
+4. 提供审查意见
+
+#### 5.3.3 修改代码
+
+1. 根据审查意见修改代码
+2. 更新测试
+3. 提交修改
+
+#### 5.3.4 合并代码
+
+1. 确认所有审查意见已解决
+2. 确认测试通过
+3. 合并到主分支
+
+### 5.4 审查意见示例
+
+#### 示例1: 建议改进
+
+```text
+建议:
+- 函数名可以更清晰,建议改为`get_cookie_with_retry`
+- 添加异常处理,避免程序崩溃
+- 补充单元测试
+```
+
+#### 示例2: 必须修改
+
+```text
+必须修改:
+- 存在安全漏洞,需要验证输入
+- 测试覆盖率不足,需要补充测试
+- 代码风格不一致,需要调整
+```
+
+#### 示例3: 赞扬
+
+```text
+做得好:
+- 代码结构清晰,易于理解
+- 测试覆盖充分
+- 文档完善
+```
+
+---
+
+## 六、测试规范
+
+### 6.1 测试原则
+
+1. **测试驱动开发**: 先写测试,再写代码
+2. **独立测试**: 每个测试应该独立运行
+3. **快速测试**: 测试应该快速执行
+4. **可读性**: 测试代码应该易于理解
+
+### 6.2 测试组织
+
+#### 6.2.1 测试文件组织
+
+- **测试文件**: 放在 `tests/unit/` 目录下
+- **命名格式**: `test_<模块名>.py`
+- **测试类**: `Test<类名>`
+- **测试方法**: `test_<方法名>`
+
+**示例**:
 
 ```python
-def validate_url(url):
-    """验证 URL 格式"""
-    import re
-    pattern = re.compile(r'^https?://')
-    if not pattern.match(url):
-        raise ValueError('无效的 URL 格式')
-    return url
+# tests/unit/test_models.py
+import pytest
+from dingtalk_downloader.utils.models import CookieData
 
-def process_input(user_input):
-    """处理用户输入"""
-    try:
-        validated_input = validate_url(user_input)
-        # 处理逻辑
-    except ValueError as e:
-        print(f'输入验证失败: {e}')
-        return None
+
+class TestCookieData:
+    """测试CookieData类"""
+
+    def test_create_cookie_data(self):
+        """测试创建CookieData"""
+        cookies = {"key1": "value1"}
+        cookie_data = CookieData(cookies)
+        assert cookie_data.cookies == cookies
+
+    def test_to_dict(self):
+        """测试to_dict方法"""
+        cookies = {"key1": "value1"}
+        cookie_data = CookieData(cookies)
+        result = cookie_data.to_dict()
+        assert result == cookies
 ```
 
-## 九、最佳实践
+#### 6.2.2 测试分类
 
-### 9.1 编码最佳实践
+- **单元测试**: 测试单个函数或类
+- **集成测试**: 测试多个模块的集成
+- **端到端测试**: 测试整个流程
 
-#### 9.1.1 保持代码简洁
+### 6.3 测试编写
 
-- **原则**：代码应该简洁明了，易于理解
-- **方法**：
-  - 避免过度设计
-  - 使用简单直接的实现
-  - 避免不必要的抽象
+#### 6.3.1 测试结构
 
-**示例**：
+使用AAA模式(Arrange-Act-Assert):
 
 ```python
-# ❌ 过度设计
-class DataProcessorFactory:
-    @staticmethod
-    def create_processor(data_type):
-        if data_type == 'csv':
-            return CSVDataProcessor()
-        elif data_type == 'json':
-            return JSONDataProcessor()
-        # ...
+def test_function():
+    # Arrange: 准备测试数据
+    input_data = {"key": "value"}
 
-# ✅ 简洁实现
-def get_processor(data_type):
-    processors = {
-        'csv': CSVDataProcessor,
-        'json': JSONDataProcessor,
-    }
-    return processors.get(data_type)()
+    # Act: 执行被测试的代码
+    result = process(input_data)
+
+    # Assert: 验证结果
+    assert result == expected
 ```
 
-#### 9.1.2 遵循 DRY 原则
+#### 6.3.2 测试覆盖
 
-- **原则**：不要重复自己（Don't Repeat Yourself）
-- **方法**：
-  - 提取重复代码为函数
-  - 使用继承和组合
-  - 使用模板方法模式
+- **正常情况**: 测试正常输入
+- **边界情况**: 测试边界值
+- **异常情况**: 测试异常输入
 
-**示例**：
+**示例**:
 
 ```python
-# ❌ 重复代码
-def process_csv(file_path):
-    with open(file_path, 'r') as f:
-        data = f.read()
-    # 处理逻辑
-    return data
+class TestCalculator:
+    """测试计算器"""
 
-def process_json(file_path):
-    with open(file_path, 'r') as f:
-        data = f.read()
-    # 处理逻辑
-    return data
+    def test_add_normal(self):
+        """测试正常加法"""
+        result = add(1, 2)
+        assert result == 3
 
-# ✅ 提取重复代码
-def read_file(file_path):
-    with open(file_path, 'r') as f:
-        return f.read()
+    def test_add_zero(self):
+        """测试加零"""
+        result = add(5, 0)
+        assert result == 5
 
-def process_csv(file_path):
-    data = read_file(file_path)
-    # 处理逻辑
-    return data
+    def test_add_negative(self):
+        """测试负数加法"""
+        result = add(-1, -2)
+        assert result == -3
 
-def process_json(file_path):
-    data = read_file(file_path)
-    # 处理逻辑
-    return data
+    def test_add_invalid_input(self):
+        """测试无效输入"""
+        with pytest.raises(TypeError):
+            add("a", "b")
 ```
 
-#### 9.1.3 遵循 SOLID 原则
+#### 6.3.3 使用Mock
 
-- **单一职责原则（SRP）**：一个类只负责一个功能
-- **开闭原则（OCP）**：对扩展开放，对修改关闭
-- **里氏替换原则（LSP）**：子类可以替换父类
-- **接口隔离原则（ISP）**：不应该依赖不需要的接口
-- **依赖倒置原则（DIP）**：依赖抽象而不是具体实现
-
-**示例**：
+隔离外部依赖:
 
 ```python
-# ✅ 单一职责原则
-class FileReader:
-    """负责读取文件"""
-    def read(self, file_path):
-        pass
-
-class DataParser:
-    """负责解析数据"""
-    def parse(self, data):
-        pass
-
-class DataProcessor:
-    """负责处理数据"""
-    def process(self, parsed_data):
-        pass
-
-# ✅ 依赖倒置原则
-class Downloader:
-    def __init__(self, browser: BrowserInterface):
-        self.browser = browser
-
-class BrowserInterface(ABC):
-    @abstractmethod
-    def get_cookies(self):
-        pass
-```
-
-### 9.2 测试最佳实践
-
-#### 9.2.1 测试驱动开发（TDD）
-
-- **原则**：先写测试，再写代码
-- **流程**：
-  1. 编写失败的测试
-  2. 编写最简单的代码使测试通过
-  3. 重构代码
-  4. 重复以上步骤
-
-**示例**：
-
-```python
-# 1. 编写失败的测试
-def test_calculate_total():
-    items = [{'price': 10, 'quantity': 2}]
-    result = calculate_total(items)
-    assert result == 20
-
-# 2. 编写最简单的代码使测试通过
-def calculate_total(items):
-    return 20
-
-# 3. 重构代码
-def calculate_total(items):
-    total = 0
-    for item in items:
-        total += item['price'] * item['quantity']
-    return total
-```
-
-#### 9.2.2 测试覆盖率
-
-- **目标**：测试覆盖率不低于 80%
-- **方法**：
-  - 覆盖所有主要功能
-  - 测试边界条件
-  - 测试异常情况
-
-**示例**：
-
-```python
-def test_calculate_total():
-    # 正常情况
-    items = [{'price': 10, 'quantity': 2}]
-    assert calculate_total(items) == 20
-
-    # 边界条件
-    items = []
-    assert calculate_total(items) == 0
-
-    # 异常情况
-    items = [{'price': -10, 'quantity': 2}]
-    with pytest.raises(ValueError):
-        calculate_total(items)
-```
-
-#### 9.2.3 Mock 测试
-
-- **原则**：隔离外部依赖
-- **方法**：
-  - 使用 mock 对象替代真实对象
-  - 验证方法调用
-  - 模拟异常情况
-
-**示例**：
-
-```python
+import pytest
 from unittest.mock import Mock, patch
 
-def test_download_with_mock():
-    downloader = Downloader()
 
-    with patch.object(downloader, '_download_video') as mock_download:
-        mock_download.return_value = True
-        result = downloader.download('https://example.com/video.m3u8')
+class TestCookieHandler:
+    """测试CookieHandler"""
 
-        assert result is True
-        mock_download.assert_called_once_with('https://example.com/video.m3u8')
+    @patch('dingtalk_downloader.core.cookie_handler.webdriver')
+    def test_get_cookie_success(self, mock_webdriver):
+        """测试成功获取Cookie"""
+        mock_driver = Mock()
+        mock_webdriver.Chrome.return_value = mock_driver
+        mock_driver.get_cookies.return_value = [
+            {"name": "key1", "value": "value1"}
+        ]
+
+        handler = CookieHandler("chrome")
+        cookie_data = handler.get_cookie("https://example.com")
+
+        assert cookie_data.cookies == {"key1": "value1"}
 ```
 
-### 9.3 文档最佳实践
+### 6.4 测试运行
 
-#### 9.3.1 文档即代码
+#### 6.4.1 运行测试
 
-- **原则**：文档与代码同步更新
-- **方法**：
-  - 使用代码注释生成文档
-  - 使用自动化工具生成文档
-  - 定期审查文档
+```bash
+# 运行所有测试
+pytest
 
-**示例**：
+# 运行特定测试文件
+pytest tests/unit/test_models.py
+
+# 运行特定测试函数
+pytest tests/unit/test_models.py::TestCookieData::test_create_cookie_data
+
+# 显示详细输出
+pytest -v
+
+# 显示覆盖率
+pytest --cov=src/dingtalk_downloader
+```
+
+#### 6.4.2 测试覆盖率
+
+- **目标覆盖率**: 90%以上
+- **查看覆盖率报告**: `pytest --cov-report=html`
+- **提高覆盖率**: 为未覆盖的代码编写测试
+
+---
+
+## 七、文档规范
+
+### 7.1 文档原则
+
+1. **及时更新**: 代码变更后同步更新文档
+2. **准确无误**: 确保文档内容准确
+3. **易于理解**: 使用清晰的语言
+4. **结构清晰**: 文档结构清晰,易于导航
+
+### 7.2 文档类型
+
+#### 7.2.1 README.md
+
+项目说明文档,包含:
+
+- 项目简介
+- 功能特性
+- 安装步骤
+- 使用方法
+- 常见问题
+- 贡献指南
+
+#### 7.2.2 API文档
+
+API接口文档,包含:
+
+- 接口说明
+- 参数说明
+- 返回值说明
+- 使用示例
+- 异常说明
+
+#### 7.2.3 架构文档
+
+系统架构文档,包含:
+
+- 系统架构图
+- 模块划分
+- 核心组件交互
+- 技术栈选型
+
+#### 7.2.4 开发指南
+
+开发指南文档,包含:
+
+- 环境搭建
+- 开发流程
+- 常用命令
+- 调试技巧
+
+### 7.3 文档编写
+
+#### 7.3.1 使用Markdown
+
+使用Markdown格式编写文档:
+
+````markdown
+# 标题
+
+## 二级标题
+
+### 三级标题
+
+- 列表项1
+- 列表项2
+
+1. 有序列表项1
+2. 有序列表项2
+
+**粗体文本**
+_斜体文本_
+
+`代码`
 
 ```python
-def download_video(url: str, save_path: str) -> bool:
-    """
-    下载视频文件。
-
-    Args:
-        url: 视频文件的 URL
-        save_path: 保存路径
-
-    Returns:
-        下载成功返回 True，失败返回 False
-
-    Raises:
-        ValueError: URL 或保存路径无效时
-        ConnectionError: 网络连接失败时
-
-    Examples:
-        >>> download_video('https://example.com/video.mp4', '/path/to/save')
-        True
-    """
-    pass
+代码块
 ```
+````
 
-#### 9.3.2 文档结构
+[链接文本](https://example.com)
 
-- **原则**：文档结构清晰，易于查找
-- **方法**：
-  - 使用目录和索引
-  - 分类组织文档
-  - 提供搜索功能
+````
 
-**示例**：
+#### 7.3.2 添加示例
 
-```markdown
-# API 文档
+为复杂功能添加使用示例:
 
-## 目录
+```python
+# 示例: 获取Cookie
+from dingtalk_downloader.core.cookie_handler import CookieHandler
 
-- [概述](#概述)
-- [快速开始](#快速开始)
-- [API 参考](#api-参考)
-  - [Core 模块](#core-模块)
-  - [Utils 模块](#utils-模块)
-  - [Binary 模块](#binary-模块)
-- [示例](#示例)
-- [常见问题](#常见问题)
-```
+handler = CookieHandler("edge")
+cookie_data = handler.get_cookie("https://example.com")
+print(cookie_data.cookies)
+````
 
-### 9.4 版本控制最佳实践
+#### 7.3.3 保持简洁
 
-#### 9.4.1 频繁提交
+- **避免冗余**: 删除不必要的内容
+- **突出重点**: 使用加粗、列表等方式突出重点
+- **结构清晰**: 使用标题、列表等组织内容
 
-- **原则**：小步快跑，频繁提交
-- **方法**：
-  - 每完成一个小功能就提交
-  - 提交信息清晰明确
-  - 保持提交历史清晰
+---
 
-**示例**：
+## 总结
 
-```bash
-# 完成一个小功能就提交
-git add .
-git commit -m "feat: 添加 URL 验证功能"
+本文档定义了钉钉直播回放下载工具的开发规范,包括代码风格、命名约定、注释要求、提交信息格式及代码审查标准。遵循这些规范可以确保团队协作的代码质量和一致性。
 
-# 再完成另一个小功能就提交
-git add .
-git commit -m "feat: 添加文件路径验证功能"
-```
+关键要点:
 
-#### 9.4.2 使用分支
+1. **代码风格**: 遵循PEP 8规范,使用Black自动格式化
+2. **命名约定**: 使用有意义的名称,保持一致性
+3. **注释要求**: 解释为什么,而不是什么
+4. **提交信息**: 遵循`<type>(<scope>): <subject>`格式
+5. **代码审查**: 全面审查代码变更,提供建设性反馈
+6. **测试规范**: 编写充分的测试,目标覆盖率90%以上
+7. **文档规范**: 及时更新文档,保持准确和清晰
 
-- **原则**：每个功能使用独立分支
-- **方法**：
-  - 从 main 分支创建功能分支
-  - 在功能分支上开发
-  - 完成后合并到 main 分支
-
-**示例**：
-
-```bash
-# 创建功能分支
-git checkout -b feat/url-validation
-
-# 开发功能
-# ... 编写代码 ...
-
-# 提交代码
-git add .
-git commit -m "feat: 添加 URL 验证功能"
-
-# 推送到远程仓库
-git push origin feat/url-validation
-
-# 创建 Pull Request
-```
-
-#### 9.4.3 代码审查
-
-- **原则**：所有代码必须经过审查
-- **方法**：
-  - 创建 Pull Request
-  - 请求团队成员审查
-  - 根据反馈修改代码
-
-**示例**：
-
-```bash
-# 创建 Pull Request
-# 在 GitHub 上创建 PR，请求合并到 main 分支
-
-# 等待审查
-# 团队成员审查代码
-
-# 根据反馈修改代码
-# ... 修改代码 ...
-
-# 提交修改
-git add .
-git commit -m "fix: 根据审查意见修改代码"
-
-# 推送到远程仓库
-git push origin feat/url-validation
-
-# 等待审查通过后合并
-```
-
-## 十、资源链接
-
-### 10.1 官方文档
-
-- [Python 官方文档](https://docs.python.org/zh-cn/3/)
-- [PEP 8 编码规范](https://www.python.org/dev/peps/pep-0008/)
-- [Selenium 官方文档](https://www.selenium.dev/documentation/)
-- [Pytest 官方文档](https://docs.pytest.org/)
-- [Black 官方文档](https://black.readthedocs.io/)
-
-### 10.2 工具和库
-
-- [Selenium](https://www.selenium.dev/)
-- [Requests](https://requests.readthedocs.io/)
-- [Pandas](https://pandas.pydata.org/)
-- [OpenPyXL](https://openpyxl.readthedocs.io/)
-- [Webdriver Manager](https://github.com/SergeyPirogov/webdriver_manager)
-
-### 10.3 学习资源
-
-- [Python 编程入门](https://www.liaoxuefeng.com/wiki/1016959663602400)
-- [Selenium 自动化测试](https://www.selenium.dev/documentation/webdriver/)
-- [Git 版本控制](https://git-scm.com/book/zh/v2)
-- [测试驱动开发](https://www.agilealliance.org/glossary/tdd/)
-
-### 10.4 社区资源
-
-- [Python 中文社区](https://www.python.org.cn/)
-- [Stack Overflow](https://stackoverflow.com/questions/tagged/python)
-- [GitHub](https://github.com/)
-
-## 十一、联系方式
-
-如有疑问或建议，请联系项目维护者或在 Issue 中讨论。
+遵循这些规范,可以提高代码质量,促进团队协作,降低维护成本。

@@ -1,626 +1,1355 @@
-# 项目架构图和流程图
+# 项目架构文档
 
-本文档包含 DingTalk-Live-Playback-Download-Tool 项目的各种架构图和流程图，帮助开发者和用户更好地理解系统结构和工作流程。
+本文档详细描述钉钉直播回放下载工具的系统架构、模块划分、核心组件交互流程及技术栈选型依据。
 
 ## 目录
 
-- [1. 项目整体架构图](#1-项目整体架构图)
-- [2. 核心业务流程图](#2-核心业务流程图)
-- [3. 批量处理流程图](#3-批量处理流程图)
-- [4. 模块依赖关系图](#4-模块依赖关系图)
-- [5. 数据流向图](#5-数据流向图)
-- [6. Cookie 获取流程图](#6-cookie获取流程图)
-- [7. M3U8 解析流程图](#7-m3u8解析流程图)
-- [8. 视频下载流程图](#8-视频下载流程图)
+- [一、系统架构概述](#一系统架构概述)
+- [二、技术栈选型](#二技术栈选型)
+- [三、模块划分与职责](#三模块划分与职责)
+- [四、核心组件交互流程](#四核心组件交互流程)
+- [五、数据流程设计](#五数据流程设计)
+- [六、设计模式应用](#六设计模式应用)
+- [七、关键技术实现](#七关键技术实现)
+- [八、架构演进方向](#八架构演进方向)
 
 ---
 
-## 1. 项目整体架构图
+## 一、系统架构概述
+
+### 1.1 架构设计原则
+
+项目遵循以下架构设计原则:
+
+1. **分层架构**: 将系统划分为清晰的层次,每层职责明确
+2. **单一职责**: 每个模块只负责一个功能领域
+3. **依赖倒置**: 高层模块不依赖低层模块,都依赖抽象
+4. **开闭原则**: 对扩展开放,对修改关闭
+5. **接口隔离**: 通过接口定义模块间交互
+
+### 1.2 整体架构图
 
 ```mermaid
 graph TB
-    subgraph "用户界面层"
-        A[用户输入<br/>钉钉链接/Excel文件]
-        B[命令行界面<br/>main.py]
+    subgraph "用户交互层"
+        MAIN[main.py<br/>程序入口]
     end
 
-    subgraph "核心业务层"
-        C[下载器<br/>Downloader]
-        D[Cookie处理器<br/>CookieHandler]
-        E[M3U8解析器<br/>M3u8Parser]
+    subgraph "业务逻辑层"
+        DOWNLOADER[Downloader<br/>外观类]
+        VIDEO_MGR[VideoDownloadManager<br/>视频下载管理器]
+        COOKIE_HDL[CookieHandler<br/>Cookie处理器]
+        M3U8_SVC[M3u8DownloadService<br/>M3U8下载服务]
+        M3U8_PARSER[M3u8Parser<br/>M3U8解析器]
     end
 
     subgraph "浏览器自动化层"
-        F[浏览器工厂<br/>BrowserFactory]
-        G[Edge驱动<br/>EdgeDriver]
-        H[Chrome驱动<br/>ChromeDriver]
-        I[Firefox驱动<br/>FirefoxDriver]
+        BROWSER_FACTORY[BrowserFactory<br/>浏览器工厂]
+        BROWSER_DRIVER[BrowserDriver<br/>浏览器驱动基类]
+        EDGE[EdgeDriver]
+        CHROME[ChromeDriver]
+        FIREFOX[FirefoxDriver]
     end
 
     subgraph "工具层"
-        J[文件读取器<br/>FileReader]
-        K[路径工具<br/>PathUtils]
-        L[字符串工具<br/>StringUtils]
-        M[验证器<br/>Validator]
+        VALIDATOR[Validator<br/>输入验证]
+        FILE_READER[FileReader<br/>文件读取]
+        PATH_SELECTOR[PathSelector<br/>路径选择]
+        PATH_HELPER[PathHelper<br/>路径工具]
     end
 
     subgraph "二进制工具层"
-        N[N_m3u8DL-RE<br/>M3U8下载器]
-        O[FFmpeg<br/>视频处理工具]
+        NM3U8DL[NM3u8DLRE<br/>N_m3u8DL-RE封装]
     end
 
     subgraph "配置层"
-        P[常量定义<br/>constants.py]
-        Q[配置管理<br/>settings.py]
+        YAML_CONFIG[YamlConfig<br/>配置管理(单例)]
+        LOGGER_CONFIG[LoggerConfig<br/>日志配置]
+        HEADER_MGR[HeaderManager<br/>请求头管理]
+        CONSTANTS[Constants<br/>常量定义]
     end
 
-    subgraph "外部依赖"
-        R[钉钉网站]
-        S[本地文件系统]
+    subgraph "数据模型层"
+        MODELS[Models<br/>数据模型]
+        COOKIE_DATA[CookieData<br/>Cookie值对象]
+        HEADERS_DATA[HeadersData<br/>请求头值对象]
+        M3U8_LINK[M3u8Link<br/>M3U8链接值对象]
+        VIDEO_CTX[VideoDownloadContext<br/>视频下载上下文]
     end
 
-    A --> B
-    B --> C
-    B --> J
-
-    C --> D
-    C --> E
-    C --> N
-    C --> O
-
-    D --> F
-    F --> G
-    F --> H
-    F --> I
-    D --> R
-
-    E --> N
-
-    J --> M
-    C --> K
-    C --> L
-
-    N --> S
-    O --> S
-
-    C --> P
-    C --> Q
-
-    style A fill:#e1f5ff
-    style B fill:#e1f5ff
-    style C fill:#fff4e1
-    style D fill:#fff4e1
-    style E fill:#fff4e1
-    style F fill:#f0e1ff
-    style G fill:#f0e1ff
-    style H fill:#f0e1ff
-    style I fill:#f0e1ff
-    style J fill:#e1ffe1
-    style K fill:#e1ffe1
-    style L fill:#e1ffe1
-    style M fill:#e1ffe1
-    style N fill:#ffe1e1
-    style O fill:#ffe1e1
-    style P fill:#ffe1f0
-    style Q fill:#ffe1f0
-```
-
-### 架构说明
-
-项目采用分层架构设计，共分为 6 个主要层次：
-
-1. **用户界面层**：负责接收用户输入和提供命令行交互
-2. **核心业务层**：实现下载、Cookie 处理、M3U8 解析等核心功能
-3. **浏览器自动化层**：提供浏览器驱动管理和自动化操作
-4. **工具层**：提供文件操作、路径处理、字符串处理等通用功能
-5. **二进制工具层**：集成 N_m3u8DL-RE 和 FFmpeg 等专业工具
-6. **配置层**：管理项目配置和常量定义
-
----
-
-## 2. 核心业务流程图
-
-```mermaid
-flowchart TD
-    Start([开始]) --> Input[用户输入钉钉直播回放链接]
-    Input --> ValidateLink{验证链接格式}
-    ValidateLink -->|无效| Error1[显示错误信息]
-    Error1 --> End([结束])
-
-    ValidateLink -->|有效| CheckCookie{检查Cookie}
-    CheckCookie -->|Cookie存在| ParseM3U8[解析M3U8视频流]
-    CheckCookie -->|Cookie不存在| GetCookie[获取Cookie]
-
-    GetCookie --> LaunchBrowser[启动浏览器]
-    LaunchBrowser --> Navigate[导航到钉钉页面]
-    Navigate --> Login{用户登录?}
-    Login -->|未登录| WaitLogin[等待用户手动登录]
-    WaitLogin --> ExtractCookie[提取Cookie]
-    Login -->|已登录| ExtractCookie
-
-    ExtractCookie --> SaveCookie[保存Cookie到本地]
-    SaveCookie --> ParseM3U8
-
-    ParseM3U8 --> CheckM3U8{M3U8解析成功?}
-    CheckM3U8 -->|失败| Error2[显示解析错误]
-    Error2 --> End
-
-    CheckM3U8 -->|成功| DownloadVideo[下载视频]
-    DownloadVideo --> UseNM3u8DL[使用N_m3u8DL-RE下载]
-    UseNM3u8DL --> CheckDownload{下载完成?}
-
-    CheckDownload -->|失败| Error3[显示下载错误]
-    Error3 --> End
-
-    CheckDownload -->|成功| MergeVideo[合并视频片段]
-    MergeVideo --> UseFFmpeg[使用FFmpeg合并]
-    UseFFmpeg --> CheckMerge{合并成功?}
-
-    CheckMerge -->|失败| Error4[显示合并错误]
-    Error4 --> End
-
-    CheckMerge -->|成功| Success[显示下载成功]
-    Success --> End
-
-    style Start fill:#90EE90
-    style End fill:#FFB6C1
-    style Error1 fill:#FFB6C1
-    style Error2 fill:#FFB6C1
-    style Error3 fill:#FFB6C1
-    style Error4 fill:#FFB6C1
-    style Success fill:#90EE90
-```
-
-### 流程说明
-
-核心业务流程包含以下关键步骤：
-
-1. **输入验证**：验证用户输入的钉钉链接格式是否正确
-2. **Cookie 管理**：检查本地 Cookie，如不存在则启动浏览器获取
-3. **M3U8 解析**：解析钉钉直播回放的 M3U8 视频流地址
-4. **视频下载**：使用 N_m3u8DL-RE 工具下载视频片段
-5. **视频合并**：使用 FFmpeg 工具将下载的视频片段合并为完整视频
-6. **结果反馈**：向用户显示下载结果或错误信息
-
----
-
-## 3. 批量处理流程图
-
-```mermaid
-flowchart TD
-    Start([开始]) --> SelectMode{选择下载模式}
-
-    SelectMode -->|单个链接| SingleLink[输入单个钉钉链接]
-    SelectMode -->|批量下载| BatchMode[选择批量下载]
-
-    BatchMode --> SelectFile[选择Excel/CSV文件]
-    SelectFile --> ReadFile[读取文件内容]
-    ReadFile --> ValidateFile{文件格式验证}
-
-    ValidateFile -->|失败| Error1[显示文件格式错误]
-    Error1 --> End([结束])
-
-    ValidateFile -->|成功| ExtractLinks[提取所有链接]
-    ExtractLinks --> CountLinks{链接数量}
-
-    CountLinks -->|0| Error2[文件中无有效链接]
-    Error2 --> End
-
-    CountLinks -->|>0| ProcessLoop[开始循环处理]
-
-    ProcessLoop --> GetLink[获取下一个链接]
-    GetLink --> ValidateLink{验证链接}
-
-    ValidateLink -->|无效| SkipLink[跳过该链接]
-    SkipLink --> CheckNext{还有链接?}
-
-    ValidateLink -->|有效| ProcessLink[处理单个链接]
-    ProcessLink --> Download[执行下载流程]
-    Download --> RecordResult[记录下载结果]
-    RecordResult --> CheckNext
-
-    CheckNext -->|是| ProcessLoop
-    CheckNext -->|否| GenerateReport[生成批量下载报告]
-
-    GenerateReport --> ShowSummary[显示下载摘要]
-    ShowSummary --> End
-
-    SingleLink --> ProcessLink
-
-    style Start fill:#90EE90
-    style End fill:#FFB6C1
-    style Error1 fill:#FFB6C1
-    style Error2 fill:#FFB6C1
-    style ShowSummary fill:#90EE90
-```
-
-### 流程说明
-
-批量处理流程支持两种模式：
-
-1. **单个链接模式**：直接处理单个钉钉直播回放链接
-2. **批量下载模式**：从 Excel/CSV 文件中读取多个链接并批量处理
-
-批量处理特点：
-
-- 支持 Excel 和 CSV 文件格式
-- 自动验证文件格式和链接有效性
-- 循环处理每个链接
-- 记录每个链接的处理结果
-- 生成批量下载报告和摘要
-
----
-
-## 4. 模块依赖关系图
-
-```mermaid
-graph TD
-    subgraph "主程序"
-        MAIN[main.py]
-    end
-
-    subgraph "核心模块 core"
-        DOWNLOADER[downloader.py]
-        COOKIE[cookie_handler.py]
-        M3U8[m3u8_parser.py]
-    end
-
-    subgraph "浏览器模块 browser"
-        FACTORY[browser_factory.py]
-        EDGE[edge_driver.py]
-        CHROME[chrome_driver.py]
-        FIREFOX[firefox_driver.py]
-    end
-
-    subgraph "工具模块 utils"
-        FILEREADER[file_reader.py]
-        PATH[path_helper.py]
-        VALIDATOR[validator.py]
-    end
-
-    subgraph "二进制模块 binary"
-        NM3U8DL[n_m3u8dl_re.py]
-        FFMPEG[ffmpeg_wrapper.py]
-    end
-
-    subgraph "配置模块 config"
-        CONSTANTS[constants.py]
-        SETTINGS[settings.py]
+    subgraph "外部系统"
+        DINGTALK[钉钉网站]
+        FILE_SYS[本地文件系统]
     end
 
     MAIN --> DOWNLOADER
-    MAIN --> FILEREADER
     MAIN --> VALIDATOR
+    MAIN --> FILE_READER
 
-    DOWNLOADER --> COOKIE
-    DOWNLOADER --> M3U8
-    DOWNLOADER --> NM3U8DL
-    DOWNLOADER --> FFMPEG
-    DOWNLOADER --> PATH
+    DOWNLOADER --> VIDEO_MGR
+    VIDEO_MGR --> COOKIE_HDL
+    VIDEO_MGR --> M3U8_SVC
+    VIDEO_MGR --> PATH_SELECTOR
+    VIDEO_MGR --> NM3U8DL
 
-    COOKIE --> FACTORY
-    COOKIE --> CONSTANTS
+    COOKIE_HDL --> BROWSER_FACTORY
+    BROWSER_FACTORY --> BROWSER_DRIVER
+    BROWSER_DRIVER --> EDGE
+    BROWSER_DRIVER --> CHROME
+    BROWSER_DRIVER --> FIREFOX
 
-    FACTORY --> EDGE
-    FACTORY --> CHROME
-    FACTORY --> FIREFOX
+    M3U8_SVC --> M3U8_PARSER
+    M3U8_PARSER --> BROWSER_DRIVER
 
-    M3U8 --> NM3U8DL
+    COOKIE_HDL --> HEADER_MGR
+    COOKIE_HDL --> CONSTANTS
 
-    FILEREADER --> VALIDATOR
-    FILEREADER --> PATH
+    VIDEO_MGR --> MODELS
+    COOKIE_HDL --> MODELS
+    M3U8_SVC --> MODELS
 
-    NM3U8DL --> CONSTANTS
-    FFMPEG --> CONSTANTS
+    DOWNLOADER --> YAML_CONFIG
+    MAIN --> YAML_CONFIG
+    MAIN --> LOGGER_CONFIG
 
-    MAIN --> SETTINGS
+    BROWSER_DRIVER --> DINGTALK
+    NM3U8DL --> FILE_SYS
 
-    style MAIN fill:#FFD700
-    style DOWNLOADER fill:#FFA500
-    style COOKIE fill:#FFA500
-    style M3U8 fill:#FFA500
-    style FACTORY fill:#87CEEB
-    style EDGE fill:#87CEEB
-    style CHROME fill:#87CEEB
-    style FIREFOX fill:#87CEEB
-    style FILEREADER fill:#98FB98
-    style PATH fill:#98FB98
-    style VALIDATOR fill:#98FB98
-    style NM3U8DL fill:#FF6B6B
-    style FFMPEG fill:#FF6B6B
-    style CONSTANTS fill:#DDA0DD
-    style SETTINGS fill:#DDA0DD
+    style MAIN fill:#e1f5ff
+    style DOWNLOADER fill:#fff4e1
+    style VIDEO_MGR fill:#fff4e1
+    style COOKIE_HDL fill:#fff4e1
+    style M3U8_SVC fill:#fff4e1
+    style M3U8_PARSER fill:#fff4e1
+    style BROWSER_FACTORY fill:#f0e1ff
+    style BROWSER_DRIVER fill:#f0e1ff
+    style YAML_CONFIG fill:#ffe1f0
+    style MODELS fill:#e1ffe1
 ```
 
-### 依赖说明
+### 1.3 架构层次说明
 
-模块依赖关系遵循以下原则：
+#### 1.3.1 用户交互层
 
-1. **单向依赖**：上层模块依赖下层模块，避免循环依赖
-2. **核心优先**：核心模块（core）是业务逻辑的核心，被其他模块依赖
-3. **工具独立**：工具模块（utils）保持独立性，可被多个模块复用
-4. **配置底层**：配置模块（config）作为最底层，被所有模块依赖
-5. **浏览器封装**：浏览器模块（browser）通过工厂模式统一管理
+- **职责**: 接收用户输入,提供命令行交互界面
+- **组件**: main.py
+- **特点**: 简洁的命令行界面,支持单个和批量下载模式
+
+#### 1.3.2 业务逻辑层
+
+- **职责**: 实现核心业务逻辑,协调各组件完成下载任务
+- **组件**:
+  - Downloader: 外观类,提供统一接口
+  - VideoDownloadManager: 视频下载流程管理
+  - CookieHandler: Cookie获取和管理
+  - M3u8DownloadService: M3U8文件下载
+  - M3u8Parser: M3U8链接解析
+- **特点**: 采用外观模式简化接口,职责清晰
+
+#### 1.3.3 浏览器自动化层
+
+- **职责**: 提供浏览器自动化能力
+- **组件**:
+  - BrowserFactory: 工厂类,创建浏览器实例
+  - BrowserDriver: 抽象基类,定义浏览器驱动接口
+  - EdgeDriver/ChromeDriver/FirefoxDriver: 具体浏览器驱动实现
+- **特点**: 采用工厂模式和抽象工厂模式
+
+#### 1.3.4 工具层
+
+- **职责**: 提供通用工具函数
+- **组件**:
+  - Validator: 输入验证
+  - FileReader: 文件读取(CSV/Excel)
+  - PathSelector: 路径选择
+  - PathHelper: 路径处理
+- **特点**: 独立可复用,无业务逻辑
+
+#### 1.3.5 二进制工具层
+
+- **职责**: 封装外部二进制工具
+- **组件**: NM3u8DLRE
+- **特点**: 统一接口,易于扩展
+
+#### 1.3.6 配置层
+
+- **职责**: 管理项目配置
+- **组件**:
+  - YamlConfig: YAML配置管理(单例模式)
+  - LoggerConfig: 日志配置
+  - HeaderManager: 请求头管理
+  - Constants: 常量定义
+- **特点**: 集中管理,线程安全
+
+#### 1.3.7 数据模型层
+
+- **职责**: 定义数据结构和值对象
+- **组件**: Models模块
+- **特点**: 使用值对象,不可变性,类型安全
 
 ---
 
-## 5. 数据流向图
+## 二、技术栈选型
+
+### 2.1 核心技术栈
+
+| 技术类别     | 技术选型 | 版本要求 | 选型依据                            |
+| ------------ | -------- | -------- | ----------------------------------- |
+| 编程语言     | Python   | 3.8+     | 生态丰富,开发效率高,跨平台支持好    |
+| 浏览器自动化 | Selenium | 4.6.0+   | 成熟稳定,支持多种浏览器,社区活跃    |
+| HTTP请求     | Requests | 2.28.0+  | 简洁易用,功能完善,性能优秀          |
+| 数据处理     | Pandas   | 最新版   | 强大的数据处理能力,支持多种文件格式 |
+| Excel处理    | OpenPyXL | 3.0.0+   | 纯Python实现,功能完善,性能良好      |
+| 配置管理     | PyYAML   | 6.0+     | YAML格式易读,支持复杂配置结构       |
+| 日志管理     | logging  | 标准库   | Python标准库,功能完善,性能优秀      |
+| 代码格式化   | Black    | 23.0+    | 自动化格式化,统一代码风格,社区标准  |
+| 测试框架     | Pytest   | 7.0+     | 功能强大,插件丰富,易于使用          |
+
+### 2.2 外部工具
+
+| 工具名称    | 用途         | 版本   | 选型依据                               |
+| ----------- | ------------ | ------ | -------------------------------------- |
+| N_m3u8DL-RE | M3U8视频下载 | 最新版 | 支持多种流媒体协议,下载速度快,功能强大 |
+| FFmpeg      | 视频处理     | 最新版 | 开源免费,功能强大,支持几乎所有视频格式 |
+
+### 2.3 技术选型详细说明
+
+#### 2.3.1 Python 3.8+
+
+**选型理由**:
+
+1. **类型提示**: Python 3.8+提供了更完善的类型提示支持,提高代码可维护性
+2. **性能优化**: 3.8版本在性能上有显著提升
+3. **生态成熟**: 第三方库支持完善
+4. **长期支持**: 3.8是LTS版本,稳定可靠
+
+**替代方案考虑**:
+
+- Python 3.6+: 类型提示支持较弱
+- Python 3.10+: 部分依赖可能不兼容
+
+#### 2.3.2 Selenium 4.6.0+
+
+**选型理由**:
+
+1. **跨浏览器支持**: 支持Edge、Chrome、Firefox等主流浏览器
+2. **自动化能力**: 可以模拟用户操作,获取Cookie和页面内容
+3. **社区活跃**: 文档完善,问题解决快
+4. **WebDriver标准**: 遵循W3C WebDriver标准,兼容性好
+
+**替代方案考虑**:
+
+- Playwright: 功能更强大,但学习成本较高
+- Requests: 无法处理JavaScript渲染的页面
+
+#### 2.3.3 N_m3u8DL-RE
+
+**选型理由**:
+
+1. **功能强大**: 支持DASH、HLS、MSS等多种流媒体协议
+2. **下载速度快**: 支持多线程下载,自动重试
+3. **跨平台**: 支持Windows、Linux、macOS
+4. **开源免费**: 无需付费,可自由使用
+
+**替代方案考虑**:
+
+- FFmpeg: 功能强大,但配置复杂
+- yt-dlp: 主要用于视频网站下载,对M3U8支持不如N_m3u8DL-RE
+
+#### 2.3.4 PyYAML 6.0+
+
+**选型理由**:
+
+1. **易读性强**: YAML格式比JSON、XML更易读
+2. **支持复杂结构**: 支持列表、字典、嵌套结构
+3. **注释支持**: 支持注释,便于配置说明
+4. **Python原生**: 与Python数据结构对应良好
+
+**替代方案考虑**:
+
+- JSON: 不支持注释,可读性较差
+- INI: 不支持复杂结构,功能有限
+
+#### 2.3.5 Black 23.0+
+
+**选型理由**:
+
+1. **自动化**: 一键格式化,无需手动调整
+2. **一致性**: 统一代码风格,消除争议
+3. **社区标准**: Python社区广泛采用
+4. **确定性**: 相同代码总是产生相同结果
+
+**替代方案考虑**:
+
+- YAPF: 配置复杂,不如Black流行
+- Autopep8: 功能不如Black完善
+
+---
+
+## 三、模块划分与职责
+
+### 3.1 模块组织结构
+
+```tree
+src/dingtalk_downloader/
+├── __init__.py
+├── main.py                          # 程序入口
+├── core/                            # 核心业务逻辑
+│   ├── __init__.py
+│   ├── downloader.py                # 下载器(外观类)
+│   ├── video_download_manager.py    # 视频下载管理器
+│   ├── cookie_handler.py            # Cookie处理器
+│   ├── m3u8_parser.py              # M3U8解析器
+│   ├── m3u8_download_service.py    # M3U8下载服务
+│   └── exceptions.py                # 自定义异常
+├── browser/                         # 浏览器自动化
+│   ├── __init__.py
+│   ├── browser_factory.py           # 浏览器工厂
+│   ├── browser_driver.py            # 浏览器驱动基类
+│   ├── edge_driver.py               # Edge驱动
+│   ├── chrome_driver.py             # Chrome驱动
+│   └── firefox_driver.py           # Firefox驱动
+├── binary/                          # 二进制工具封装
+│   ├── __init__.py
+│   └── n_m3u8dl_re.py              # N_m3u8DL-RE封装
+├── utils/                           # 工具函数
+│   ├── __init__.py
+│   ├── models.py                    # 数据模型
+│   ├── validator.py                 # 输入验证
+│   ├── file_reader.py               # 文件读取
+│   ├── path_selector.py             # 路径选择
+│   ├── path_helper.py               # 路径工具
+│   └── m3u8_file_manager.py       # M3U8文件管理
+└── config/                          # 配置管理
+    ├── __init__.py
+    ├── yaml_config.py               # YAML配置(单例)
+    ├── logger_config.py             # 日志配置
+    ├── header_manager.py            # 请求头管理
+    └── constants.py                 # 常量定义
+```
+
+### 3.2 核心模块职责
+
+#### 3.2.1 main.py - 程序入口
+
+**职责**:
+
+1. 程序启动和初始化
+2. 显示欢迎信息
+3. 获取用户输入(下载模式、链接、浏览器类型等)
+4. 调用下载器执行下载
+5. 异常处理和错误提示
+
+**关键函数**:
+
+- `main()`: 主函数,程序入口
+- `single_mode()`: 单个视频下载模式
+- `batch_mode()`: 批量下载模式
+- `_get_user_inputs()`: 获取用户输入
+- `_create_downloader()`: 创建下载器实例
+
+**设计特点**:
+
+- 简洁的命令行界面
+- 完善的输入验证
+- 友好的错误提示
+
+#### 3.2.2 core/downloader.py - 下载器(外观类)
+
+**职责**:
+
+1. 作为外观类,提供统一的下载接口
+2. 协调VideoDownloadManager等组件
+3. 管理下载流程
+4. 处理用户交互(继续下载、退出等)
+
+**关键类**:
+
+- `Downloader`: 下载器类
+
+**关键方法**:
+
+- `download_single_video()`: 下载单个视频
+- `download_batch_videos()`: 批量下载视频
+- `close()`: 关闭浏览器,释放资源
+
+**设计模式**:
+
+- **外观模式**: 简化接口,隐藏复杂性
+
+#### 3.2.3 core/video_download_manager.py - 视频下载管理器
+
+**职责**:
+
+1. 管理视频下载的整个流程
+2. 协调Cookie获取、M3U8解析、视频下载
+3. 管理下载上下文
+4. 处理下载状态和错误
+
+**关键类**:
+
+- `VideoDownloadManager`: 视频下载管理器
+
+**关键方法**:
+
+- `initialize_download()`: 初始化下载环境
+- `repeat_get_context()`: 重复获取下载上下文
+- `process_video()`: 处理单个视频下载
+- `close()`: 关闭浏览器,释放资源
+
+**设计特点**:
+
+- 职责清晰,专注流程管理
+- 支持单个和批量下载
+- 完善的错误处理
+
+#### 3.2.4 core/cookie_handler.py - Cookie处理器
+
+**职责**:
+
+1. 通过浏览器自动化获取Cookie
+2. 获取请求头信息
+3. 获取直播视频名称
+4. 管理浏览器实例
+
+**关键类**:
+
+- `CookieHandler`: Cookie处理器
+
+**关键方法**:
+
+- `get_cookie()`: 获取Cookie和请求头
+- `repeat_get_cookie()`: 重复获取Cookie
+- `_get_live_name()`: 获取直播名称
+- `close()`: 关闭浏览器
+
+**设计特点**:
+
+- 支持多种浏览器
+- 自动获取请求头
+- 多选择器获取直播名称
+
+#### 3.2.5 core/m3u8_parser.py - M3U8解析器
+
+**职责**:
+
+1. 从浏览器日志中提取M3U8链接
+2. 下载M3U8文件
+3. 提取基础URL
+4. 处理重试逻辑
+
+**关键类**:
+
+- `M3u8Parser`: M3U8解析器
+
+**关键方法**:
+
+- `fetch_m3u8_link()`: 获取M3U8链接
+- `download_m3u8_file()`: 下载M3U8文件
+- `extract_prefix()`: 提取基础URL
+- `_refresh_page()`: 刷新页面
+
+**设计特点**:
+
+- 支持重试机制
+- 从浏览器日志提取链接
+- 使用JavaScript执行fetch请求
+
+#### 3.2.6 core/m3u8_download_service.py - M3U8下载服务
+
+**职责**:
+
+1. 获取并下载M3U8文件
+2. 验证下载结果
+3. 返回M3U8链接对象
+
+**关键类**:
+
+- `M3u8DownloadService`: M3U8下载服务
+
+**关键方法**:
+
+- `fetch_and_download_m3u8()`: 获取并下载M3U8文件
+
+**设计特点**:
+
+- 单一职责,专注M3U8下载
+- 完善的错误处理
+- 返回值对象
+
+#### 3.2.7 browser/browser_factory.py - 浏览器工厂
+
+**职责**:
+
+1. 创建不同类型的浏览器实例
+2. 统一浏览器创建接口
+
+**关键类**:
+
+- `BrowserFactory`: 浏览器工厂类
+
+**关键方法**:
+
+- `create_browser()`: 创建浏览器实例
+
+**设计模式**:
+
+- **工厂模式**: 封装对象创建逻辑
+- **简单工厂**: 根据类型创建不同浏览器
+
+#### 3.2.8 browser/browser_driver.py - 浏览器驱动基类
+
+**职责**:
+
+1. 定义浏览器驱动的抽象接口
+2. 提供通用方法的默认实现
+3. 减少子类代码冗余
+
+**关键类**:
+
+- `BrowserDriver`: 浏览器驱动抽象基类
+
+**关键方法**:
+
+- `create_driver()`: 创建浏览器实例(抽象方法)
+- `get_log()`: 获取浏览器日志(抽象方法)
+- `get_cookies()`: 获取Cookie(通用方法)
+- `navigate()`: 导航到URL(通用方法)
+- `close()`: 关闭浏览器(通用方法)
+
+**设计模式**:
+
+- **模板方法模式**: 定义算法骨架,子类实现具体步骤
+
+#### 3.2.9 binary/n_m3u8dl_re.py - N_m3u8DL-RE封装
+
+**职责**:
+
+1. 封装N_m3u8DL-RE工具的调用
+2. 构建下载命令
+3. 管理下载过程
+4. 处理下载结果
+
+**关键类**:
+
+- `NM3u8DLRE`: N_m3u8DL-RE调用类
+
+**关键方法**:
+
+- `download()`: 下载视频
+- `build_command()`: 构建下载命令
+- `_add_headers_to_command()`: 添加请求头
+
+**设计特点**:
+
+- 统一接口
+- 支持Cookie和请求头
+- 完善的错误处理
+
+#### 3.2.10 utils/models.py - 数据模型
+
+**职责**:
+
+1. 定义数据结构和值对象
+2. 提供类型安全和不可变性
+3. 封装复杂数据
+
+**关键类**:
+
+- `CookieData`: Cookie数据值对象
+- `HeadersData`: 请求头数据值对象
+- `M3u8Link`: M3U8链接值对象
+- `VideoDownloadContext`: 视频下载上下文
+
+**设计特点**:
+
+- 使用dataclass
+- 不可变性(frozen=True)
+- 类型验证
+
+#### 3.2.11 utils/validator.py - 输入验证
+
+**职责**:
+
+1. 验证用户输入
+2. 提供友好的错误提示
+3. 支持自定义验证函数
+
+**关键函数**:
+
+- `validate_input()`: 验证用户输入
+- `validate_required_input()`: 验证必填输入
+- `validate_dingtalk_url()`: 验证钉钉链接
+- `validate_file_path()`: 验证文件路径
+
+**设计特点**:
+
+- 模块化验证逻辑
+- 友好的错误提示
+- 支持自定义验证
+
+#### 3.2.12 utils/file_reader.py - 文件读取
+
+**职责**:
+
+1. 读取CSV和Excel文件
+2. 提取钉钉直播链接
+3. 处理文件编码
+
+**关键类**:
+
+- `FileReader`: 文件读取器
+
+**关键方法**:
+
+- `read_links()`: 读取链接
+- `_read_csv()`: 读取CSV文件
+- `_read_excel()`: 读取Excel文件
+
+**设计特点**:
+
+- 支持多种编码
+- 支持CSV和Excel
+- 完善的错误处理
+
+#### 3.2.13 utils/path_selector.py - 路径选择
+
+**职责**:
+
+1. 根据保存模式选择下载路径
+2. 支持默认路径和手动选择
+
+**关键类**:
+
+- `PathSelector`: 路径选择器
+
+**关键方法**:
+
+- `get_save_dir()`: 获取保存目录
+- `_get_default_download_dir()`: 获取默认下载目录
+- `_get_manual_download_dir()`: 获取手动选择目录
+
+**设计特点**:
+
+- 支持两种保存模式
+- 使用tkinter文件选择对话框
+- 从配置文件读取默认路径
+
+#### 3.2.14 config/yaml_config.py - YAML配置管理
+
+**职责**:
+
+1. 管理YAML配置文件
+2. 提供类型安全的配置访问
+3. 支持配置验证
+4. 线程安全的单例模式
+
+**关键类**:
+
+- `YamlConfig`: YAML配置管理类
+
+**关键方法**:
+
+- `load()`: 加载配置文件
+- `get()`: 获取配置项
+- `get_str()`: 获取字符串类型配置
+- `get_int()`: 获取整数类型配置
+- `validate()`: 验证配置
+
+**设计模式**:
+
+- **单例模式**: 确保全局只有一个配置实例
+- **线程安全**: 使用RLock保证线程安全
+
+**设计特点**:
+
+- 类型安全的访问接口
+- 配置验证机制
+- 支持嵌套配置
+
+#### 3.2.15 config/logger_config.py - 日志配置
+
+**职责**:
+
+1. 配置日志系统
+2. 管理日志文件
+3. 支持日志轮转
+4. 清理过期日志
+
+**关键类**:
+
+- `LoggerConfig`: 日志配置类
+- `CustomFormatter`: 自定义日志格式化器
+- `RotatingFileHandlerWithCleanup`: 带清理功能的文件处理器
+
+**关键方法**:
+
+- `setup_logging()`: 初始化日志系统
+- `get_logger()`: 获取logger实例
+- `clean_old_logs()`: 清理过期日志
+
+**设计特点**:
+
+- 同时输出到控制台和文件
+- 支持日志轮转
+- 自动清理过期日志
+
+---
+
+## 四、核心组件交互流程
+
+### 4.1 单个视频下载流程
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Main as main.py
+    participant Downloader as Downloader
+    participant VideoMgr as VideoDownloadManager
+    participant CookieHdl as CookieHandler
+    participant Browser as BrowserDriver
+    participant M3u8Svc as M3u8DownloadService
+    participant M3u8Parser as M3u8Parser
+    participant NM3u8DL as NM3u8DLRE
+    participant DingTalk as 钉钉网站
+
+    User->>Main: 输入钉钉链接
+    Main->>Main: 验证链接格式
+    Main->>Downloader: 创建下载器
+    Downloader->>VideoMgr: 初始化下载
+
+    VideoMgr->>CookieHdl: 获取Cookie
+    CookieHdl->>Browser: 创建浏览器
+    Browser->>DingTalk: 导航到钉钉页面
+    DingTalk-->>Browser: 返回页面
+    User->>Browser: 登录钉钉账号
+    Browser->>CookieHdl: 返回Cookie和请求头
+
+    VideoMgr->>M3u8Svc: 获取并下载M3U8
+    M3u8Svc->>M3u8Parser: 获取M3U8链接
+    M3u8Parser->>Browser: 刷新页面
+    Browser->>DingTalk: 重新加载页面
+    DingTalk-->>Browser: 返回页面
+    Browser->>M3u8Parser: 返回日志
+    M3u8Parser->>M3u8Svc: 返回M3U8链接
+    M3u8Svc->>M3u8Parser: 下载M3U8文件
+    M3u8Svc-->>VideoMgr: 返回M3U8链接对象
+
+    VideoMgr->>NM3u8DL: 下载视频
+    NM3u8DL->>NM3u8DL: 调用N_m3u8DL-RE
+    NM3u8DL-->>VideoMgr: 返回下载结果
+    VideoMgr-->>Downloader: 返回下载结果
+    Downloader-->>Main: 返回下载结果
+    Main-->>User: 显示下载结果
+```
+
+### 4.2 批量视频下载流程
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Main as main.py
+    participant FileReader as FileReader
+    participant Downloader as Downloader
+    participant VideoMgr as VideoDownloadManager
+    participant CookieHdl as CookieHandler
+    participant M3u8Svc as M3u8DownloadService
+    participant NM3u8DL as NM3u8DLRE
+
+    User->>Main: 输入文件路径
+    Main->>FileReader: 读取文件
+    FileReader-->>Main: 返回链接列表
+
+    loop 每个链接
+        Main->>Downloader: 下载视频
+        Downloader->>VideoMgr: 处理视频
+        VideoMgr->>CookieHdl: 获取Cookie
+        CookieHdl-->>VideoMgr: 返回Cookie
+        VideoMgr->>M3u8Svc: 获取M3U8
+        M3u8Svc-->>VideoMgr: 返回M3U8链接
+        VideoMgr->>NM3u8DL: 下载视频
+        NM3u8DL-->>VideoMgr: 返回结果
+        VideoMgr-->>Downloader: 返回结果
+        Downloader-->>Main: 返回结果
+    end
+
+    Main-->>User: 显示批量下载结果
+```
+
+### 4.3 Cookie获取流程
+
+```mermaid
+flowchart TD
+    Start([开始]) --> CheckBrowser{浏览器实例存在?}
+
+    CheckBrowser -->|否| CreateBrowser[创建浏览器实例]
+    CheckBrowser -->|是| Navigate[导航到URL]
+
+    CreateBrowser --> Navigate
+
+    Navigate --> WaitLogin[等待用户登录]
+    WaitLogin --> CheckLogin{已登录?}
+
+    CheckLogin -->|否| WaitLogin
+    CheckLogin -->|是| CollectData[收集数据]
+
+    CollectData --> GetHeaders[获取请求头]
+    GetHeaders --> GetCookies[获取Cookie]
+    GetCookies --> GetLiveName[获取直播名称]
+
+    GetLiveName --> Return[返回数据]
+    Return --> End([结束])
+
+    style Start fill:#90EE90
+    style End fill:#FFB6C1
+    style Return fill:#90EE90
+```
+
+### 4.4 M3U8解析流程
+
+```mermaid
+flowchart TD
+    Start([开始]) --> ExtractUUID[提取liveUuid]
+    ExtractUUID --> RetryLoop{重试次数<MAX?}
+
+    RetryLoop -->|是| RefreshPage[刷新页面]
+    RefreshPage --> GetLogs[获取浏览器日志]
+    GetLogs --> ExtractLinks[提取M3U8链接]
+
+    ExtractLinks --> CheckLinks{找到链接?}
+
+    CheckLinks -->|否| RetryLoop
+    CheckLinks -->|是| ValidateLinks{链接有效?}
+
+    ValidateLinks -->|否| RetryLoop
+    ValidateLinks -->|是| DownloadM3U8[下载M3U8文件]
+
+    DownloadM3U8 --> ExtractPrefix[提取基础URL]
+    ExtractPrefix --> Return[返回结果]
+    Return --> End([结束])
+
+    RetryLoop -->|否| Error[抛出异常]
+    Error --> End
+
+    style Start fill:#90EE90
+    style End fill:#FFB6C1
+    style Error fill:#FFB6C1
+    style Return fill:#90EE90
+```
+
+---
+
+## 五、数据流程设计
+
+### 5.1 数据流向图
 
 ```mermaid
 flowchart LR
     subgraph "输入数据"
         A[用户输入<br/>钉钉链接]
-        B[Excel/CSV文件<br/>批量链接]
+        B[文件输入<br/>CSV/Excel]
     end
 
-    subgraph "数据处理"
-        C[验证器<br/>Validator]
-        D[文件读取器<br/>FileReader]
-        E[Cookie处理器<br/>CookieHandler]
-        F[M3U8解析器<br/>M3u8Parser]
+    subgraph "验证层"
+        C[Validator<br/>输入验证]
     end
 
-    subgraph "外部交互"
-        G[钉钉网站<br/>获取Cookie和M3U8]
-        H[浏览器<br/>自动化操作]
+    subgraph "业务处理层"
+        D[Downloader<br/>外观类]
+        E[VideoDownloadManager<br/>流程管理]
+        F[CookieHandler<br/>Cookie处理]
+        G[M3u8DownloadService<br/>M3U8下载]
     end
 
-    subgraph "工具处理"
-        I[N_m3u8DL-RE<br/>下载视频片段]
-        J[FFmpeg<br/>合并视频]
+    subgraph "浏览器自动化层"
+        H[BrowserDriver<br/>浏览器驱动]
+        I[钉钉网站<br/>外部系统]
+    end
+
+    subgraph "工具层"
+        J[FileReader<br/>文件读取]
+        K[PathSelector<br/>路径选择]
+    end
+
+    subgraph "二进制工具层"
+        L[NM3u8DLRE<br/>视频下载]
+    end
+
+    subgraph "数据模型层"
+        M[CookieData<br/>Cookie值对象]
+        N[HeadersData<br/>请求头值对象]
+        O[M3u8Link<br/>M3U8链接值对象]
+        P[VideoDownloadContext<br/>下载上下文]
     end
 
     subgraph "输出数据"
-        K[视频文件<br/>.mp4/.ts]
-        L[下载报告<br/>.txt/.json]
-        M[Cookie文件<br/>.txt]
+        Q[视频文件<br/>.mp4/.ts]
+        R[日志文件<br/>.log]
     end
 
     A --> C
-    B --> D
-    D --> C
+    B --> J
+    J --> C
 
-    C --> E
-    E --> H
-    H --> G
-    G --> E
-    E --> M
-
+    C --> D
+    D --> E
     E --> F
-    F --> I
-    I --> J
-    J --> K
+    E --> G
 
-    C --> L
+    F --> H
+    H --> I
+    I --> H
+    H --> F
+
+    F --> M
+    F --> N
+    M --> P
+    N --> P
+
+    G --> H
+    G --> O
+    O --> P
+
+    E --> K
+    E --> L
+    L --> Q
+
+    E --> R
 
     style A fill:#E6F3FF
     style B fill:#E6F3FF
-    style K fill:#FFE6E6
-    style L fill:#FFE6E6
-    style M fill:#FFE6E6
+    style Q fill:#FFE6E6
+    style R fill:#FFE6E6
 ```
 
-### 数据流说明
+### 5.2 数据模型设计
 
-数据流向展示了数据从输入到输出的完整过程：
+#### 5.2.1 CookieData - Cookie值对象
 
-1. **输入阶段**：接收用户输入的单个链接或批量文件
-2. **验证阶段**：使用验证器检查数据格式和有效性
-3. **Cookie 获取**：通过浏览器自动化从钉钉网站获取 Cookie
-4. **M3U8 解析**：解析钉钉直播回放的 M3U8 视频流地址
-5. **视频下载**：使用 N_m3u8DL-RE 下载视频片段
-6. **视频合并**：使用 FFmpeg 将片段合并为完整视频
-7. **输出阶段**：生成视频文件、下载报告和 Cookie 文件
+```python
+@dataclass(frozen=True)
+class CookieData:
+    cookies: Dict[str, str]
+
+    def to_dict(self) -> Dict[str, str]:
+        return self.cookies.copy()
+```
+
+**特点**:
+
+- 不可变性(frozen=True)
+- 类型安全
+- 提供便捷方法
+
+#### 5.2.2 HeadersData - 请求头值对象
+
+```python
+@dataclass(frozen=True)
+class HeadersData:
+    headers: Dict[str, str]
+
+    def to_dict(self) -> Dict[str, str]:
+        return self.headers.copy()
+```
+
+**特点**:
+
+- 不可变性(frozen=True)
+- 类型安全
+- 封装请求头
+
+#### 5.2.3 M3u8Link - M3U8链接值对象
+
+```python
+@dataclass(frozen=True)
+class M3u8Link:
+    url: str
+    prefix: str
+    local_file_path: Optional[str] = None
+```
+
+**特点**:
+
+- 不可变性(frozen=True)
+- 包含URL、基础URL和本地文件路径
+- 类型验证
+
+#### 5.2.4 VideoDownloadContext - 视频下载上下文
+
+```python
+@dataclass
+class VideoDownloadContext:
+    url: str
+    cookie_data: CookieData
+    headers_data: HeadersData
+    live_name: str
+    save_dir: Optional[str] = None
+    save_mode: str = "1"
+
+    def get_cookies_dict(self) -> Dict[str, str]:
+        return self.cookie_data.to_dict()
+
+    def get_headers_dict(self) -> Dict[str, str]:
+        return self.headers_data.to_dict()
+```
+
+**特点**:
+
+- 可变性(非frozen)
+- 封装下载所需的所有信息
+- 提供便捷方法
 
 ---
 
-## 6. Cookie 获取流程图
+## 六、设计模式应用
 
-```mermaid
-flowchart TD
-    Start([开始]) --> CheckLocal{检查本地Cookie}
+### 6.1 外观模式
 
-    CheckLocal -->|存在且有效| UseCookie[使用本地Cookie]
-    UseCookie --> End([结束])
+**应用场景**: [Downloader](src/dingtalk_downloader/core/downloader.py)
 
-    CheckLocal -->|不存在或过期| SelectBrowser{选择浏览器}
+**设计意图**: 为子系统中的一组接口提供一个一致的界面,定义一个高层接口,这个接口使得这一子系统更加容易使用。
 
-    SelectBrowser -->|Edge| InitEdge[初始化Edge驱动]
-    SelectBrowser -->|Chrome| InitChrome[初始化Chrome驱动]
-    SelectBrowser -->|Firefox| InitFirefox[初始化Firefox驱动]
+**实现方式**:
 
-    InitEdge --> LaunchBrowser[启动浏览器]
-    InitChrome --> LaunchBrowser
-    InitFirefox --> LaunchBrowser
+```python
+class Downloader:
+    def __init__(self, browser_type: str, save_mode: str):
+        self.video_manager = VideoDownloadManager(browser_type, save_mode)
 
-    LaunchBrowser --> Navigate[导航到钉钉页面]
-    Navigate --> CheckLogin{检查登录状态}
-
-    CheckLogin -->|已登录| ExtractCookie[提取Cookie]
-    CheckLogin -->|未登录| ShowLoginUI[显示登录界面]
-
-    ShowLoginUI --> WaitLogin[等待用户登录]
-    WaitLogin --> CheckLogin
-
-    ExtractCookie --> ValidateCookie{验证Cookie有效性}
-
-    ValidateCookie -->|无效| RetryLogin[提示重新登录]
-    RetryLogin --> ShowLoginUI
-
-    ValidateCookie -->|有效| SaveCookie[保存Cookie到本地]
-    SaveCookie --> CloseBrowser[关闭浏览器]
-    CloseBrowser --> End
-
-    style Start fill:#90EE90
-    style End fill:#FFB6C1
-    style UseCookie fill:#90EE90
-    style SaveCookie fill:#90EE90
+    def download_single_video(self, url: str) -> None:
+        context = self.video_manager.initialize_download(url)
+        self.video_manager.process_video(context)
 ```
 
-### 流程说明
+**优点**:
 
-Cookie 获取流程确保用户能够访问钉钉的直播回放内容：
+1. 简化接口,降低使用复杂度
+2. 解耦客户端与子系统
+3. 提高灵活性
 
-1. **本地检查**：优先检查本地是否存在有效的 Cookie
-2. **浏览器选择**：支持 Edge、Chrome、Firefox 三种主流浏览器
-3. **自动化操作**：通过 Selenium 驱动浏览器自动导航
-4. **登录处理**：检测登录状态，引导用户完成登录
-5. **Cookie 提取**：从浏览器中提取有效的 Cookie
-6. **本地存储**：将 Cookie 保存到本地文件，避免重复登录
+### 6.2 工厂模式
+
+**应用场景**: [BrowserFactory](src/dingtalk_downloader/browser/browser_factory.py)
+
+**设计意图**: 定义一个用于创建对象的接口,让子类决定实例化哪一个类。
+
+**实现方式**:
+
+```python
+class BrowserFactory:
+    @staticmethod
+    def create_browser(browser_type: str):
+        if browser_type == BROWSER_TYPE_EDGE:
+            return EdgeDriver()
+        elif browser_type == BROWSER_TYPE_CHROME:
+            return ChromeDriver()
+        elif browser_type == BROWSER_TYPE_FIREFOX:
+            return FirefoxDriver()
+```
+
+**优点**:
+
+1. 解耦对象的创建和使用
+2. 易于扩展新的浏览器类型
+3. 符合开闭原则
+
+### 6.3 模板方法模式
+
+**应用场景**: [BrowserDriver](src/dingtalk_downloader/browser/browser_driver.py)
+
+**设计意图**: 定义一个操作中的算法的骨架,而将一些步骤延迟到子类中。
+
+**实现方式**:
+
+```python
+class BrowserDriver(ABC):
+    @abstractmethod
+    def create_driver(self) -> WebDriver:
+        pass
+
+    @abstractmethod
+    def get_log(self, log_type: str) -> List[dict]:
+        pass
+
+    def get_cookies(self) -> List[dict]:
+        if self.driver:
+            return self.driver.get_cookies()
+        return []
+```
+
+**优点**:
+
+1. 复用通用代码
+2. 减少子类代码冗余
+3. 统一接口
+
+### 6.4 单例模式
+
+**应用场景**: [YamlConfig](src/dingtalk_downloader/config/yaml_config.py)
+
+**设计意图**: 保证一个类仅有一个实例,并提供一个访问它的全局访问点。
+
+**实现方式**:
+
+```python
+class YamlConfig:
+    _instance: Optional["YamlConfig"] = None
+    _lock: threading.RLock = threading.RLock()
+
+    def __new__(cls, config_file: Optional[str] = None) -> "YamlConfig":
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    instance = super().__new__(cls)
+                    instance._initialize(config_file)
+                    cls._instance = instance
+        return cls._instance
+```
+
+**优点**:
+
+1. 确保配置只加载一次
+2. 节省资源
+3. 线程安全
+
+### 6.5 值对象模式
+
+**应用场景**: [Models](src/dingtalk_downloader/utils/models.py)
+
+**设计意图**: 通过其属性值来标识的对象,不可变性。
+
+**实现方式**:
+
+```python
+@dataclass(frozen=True)
+class CookieData:
+    cookies: Dict[str, str]
+
+    def __post_init__(self):
+        if not isinstance(self.cookies, dict):
+            raise ValueError("cookies必须是字典类型")
+```
+
+**优点**:
+
+1. 不可变性,线程安全
+2. 类型安全
+3. 易于测试
 
 ---
 
-## 7. M3U8 解析流程图
+## 七、关键技术实现
 
-```mermaid
-flowchart TD
-    Start([开始]) --> InputURL[输入钉钉直播回放URL]
-    InputURL --> AddCookie[添加Cookie到请求头]
-    AddCookie --> FetchPage[获取页面内容]
+### 7.1 浏览器自动化
 
-    FetchPage --> ParseHTML{解析HTML}
-    ParseHTML -->|失败| Error1[HTML解析失败]
-    Error1 --> End([结束])
+#### 7.1.1 浏览器驱动抽象
 
-    ParseHTML -->|成功| FindM3U8{查找M3U8链接}
+使用抽象基类定义浏览器驱动接口,子类实现具体逻辑:
 
-    FindM3U8 -->|未找到| Error2[未找到M3U8链接]
-    Error2 --> End
+```python
+class BrowserDriver(ABC):
+    @abstractmethod
+    def create_driver(self) -> WebDriver:
+        pass
 
-    FindM3U8 -->|找到| ExtractM3U8[提取M3U8链接]
-    ExtractM3U8 --> ValidateM3U8{验证M3U8格式}
-
-    ValidateM3U8 -->|无效| Error3[M3U8格式无效]
-    Error3 --> End
-
-    ValidateM3U8 -->|有效| FetchM3U8[获取M3U8文件内容]
-    FetchM3U8 --> ParseM3U8[解析M3U8文件]
-
-    ParseM3U8 --> CheckType{M3U8类型}
-
-    CheckType -->|主M3U8| ParseMaster[解析主M3U8]
-    ParseMaster --> GetQuality{获取视频质量选项}
-    GetQuality --> SelectQuality[选择最佳质量]
-    SelectQuality --> GetSubM3U8[获取子M3U8链接]
-    GetSubM3U8 --> ParseSubM3U8[解析子M3U8]
-    ParseSubM3U8 --> ExtractSegments[提取视频片段]
-
-    CheckType -->|子M3U8| ExtractSegments
-
-    ExtractSegments --> ValidateSegments{验证片段列表}
-
-    ValidateSegments -->|无效| Error4[片段列表无效]
-    Error4 --> End
-
-    ValidateSegments -->|有效| ReturnResult[返回解析结果]
-    ReturnResult --> End
-
-    style Start fill:#90EE90
-    style End fill:#FFB6C1
-    style Error1 fill:#FFB6C1
-    style Error2 fill:#FFB6C1
-    style Error3 fill:#FFB6C1
-    style Error4 fill:#FFB6C1
-    style ReturnResult fill:#90EE90
+    @abstractmethod
+    def get_log(self, log_type: str) -> List[dict]:
+        pass
 ```
 
-### 流程说明
+#### 7.1.2 浏览器日志提取
 
-M3U8 解析流程负责从钉钉直播回放页面提取视频流信息：
+从浏览器性能日志中提取M3U8链接:
 
-1. **页面获取**：使用 Cookie 获取钉钉直播回放页面内容
-2. **HTML 解析**：解析 HTML 页面，查找 M3U8 视频流链接
-3. **M3U8 验证**：验证 M3U8 链接的格式和有效性
-4. **类型识别**：识别 M3U8 文件类型（主 M3U8 或子 M3U8）
-5. **质量选择**：对于主 M3U8，选择最佳视频质量
-6. **片段提取**：提取所有视频片段的 URL 列表
-7. **结果返回**：返回完整的 M3U8 解析结果
+```python
+def extract_m3u8_links_from_logs(self, logs: List[dict]) -> List[str]:
+    m3u8_links = []
+    for log in logs:
+        if "message" in log:
+            log_message = log["message"]
+            if ".m3u8" in log_message:
+                start_idx = log_message.find('url":"') + len('url":"')
+                end_idx = log_message.find('"', start_idx)
+                m3u8_url = log_message[start_idx:end_idx]
+                m3u8_links.append(m3u8_url)
+    return m3u8_links
+```
+
+### 7.2 Cookie管理
+
+#### 7.2.1 Cookie获取
+
+通过Selenium获取Cookie:
+
+```python
+def get_cookies(self) -> List[dict]:
+    if self.driver:
+        return self.driver.get_cookies()
+    return []
+```
+
+#### 7.2.2 请求头构建
+
+构建HTTP请求头:
+
+```python
+def get_headers(self) -> Dict[str, str]:
+    return {
+        "User-Agent": self.config.get_str("headers.user_agent"),
+        "Referer": self.config.get_str("headers.referer"),
+        "Accept": self.config.get_str("headers.accept"),
+    }
+```
+
+### 7.3 M3U8解析
+
+#### 7.3.1 M3U8链接提取
+
+从URL中提取liveUuid:
+
+```python
+parsed_url = urlparse(url)
+query_params = parse_qs(parsed_url.query)
+live_uuid = query_params.get("liveUuid", [None])[0]
+```
+
+#### 7.3.2 基础URL提取
+
+使用正则表达式提取基础URL:
+
+```python
+pattern = re.compile(r"(https?://[^/]+/live_hp/[0-9a-f-]+)")
+match = pattern.search(url)
+base_url = match.group(1) if match else url
+```
+
+### 7.4 配置管理
+
+#### 7.4.1 单例模式实现
+
+使用线程安全的单例模式:
+
+```python
+class YamlConfig:
+    _instance: Optional["YamlConfig"] = None
+    _lock: threading.RLock = threading.RLock()
+
+    def __new__(cls, config_file: Optional[str] = None) -> "YamlConfig":
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    instance = super().__new__(cls)
+                    instance._initialize(config_file)
+                    cls._instance = instance
+        return cls._instance
+```
+
+#### 7.4.2 配置验证
+
+使用Schema验证配置:
+
+```python
+CONFIG_SCHEMA = {
+    "app": {
+        "required": True,
+        "type": dict,
+        "fields": {
+            "name": {"required": True, "type": str},
+            "version": {"required": True, "type": str},
+        },
+    },
+}
+```
+
+### 7.5 日志管理
+
+#### 7.5.1 日志轮转
+
+使用RotatingFileHandler实现日志轮转:
+
+```python
+class RotatingFileHandlerWithCleanup(logging.handlers.RotatingFileHandler):
+    def __init__(self, filename: str, max_bytes: int = 10 * 1024 * 1024, backup_count: int = 5):
+        super().__init__(filename, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8")
+```
+
+#### 7.5.2 日志清理
+
+定期清理过期日志:
+
+```python
+def clean_old_logs(days: int = None) -> None:
+    retention_days = days or config.get_int("logging.retention_days", 30)
+    for filename in os.listdir(LoggerConfig._log_dir):
+        if self._is_log_file_expired(filename, retention_days):
+            os.remove(filepath)
+```
 
 ---
 
-## 8. 视频下载流程图
+## 八、架构演进方向
 
-```mermaid
-flowchart TD
-    Start([开始]) --> InputM3U8[输入M3U8解析结果]
-    InputM3U8 --> CheckBinary{检查N_m3u8DL-RE}
+### 8.1 短期优化
 
-    CheckBinary -->|不存在| DownloadBinary[下载N_m3u8DL-RE]
-    DownloadBinary --> CheckBinary
+1. **性能优化**
+   - 实现多线程下载
+   - 优化浏览器启动时间
+   - 减少不必要的网络请求
 
-    CheckBinary -->|存在| PrepareDownload[准备下载参数]
-    PrepareDownload --> SetOutput[设置输出路径]
+2. **功能增强**
+   - 支持断点续传
+   - 支持下载进度显示
+   - 支持下载历史记录
 
-    SetOutput --> SetThreads[设置下载线程数]
-    SetThreads --> SetHeaders[设置请求头]
-    SetHeaders --> SetCookies[设置Cookie]
+3. **代码质量**
+   - 提高测试覆盖率
+   - 完善文档
+   - 优化代码结构
 
-    SetCookies --> StartDownload[启动N_m3u8DL-RE]
-    StartDownload --> MonitorProgress[监控下载进度]
+### 8.2 中期规划
 
-    MonitorProgress --> CheckProgress{下载进度}
+1. **架构重构**
+   - 引入依赖注入
+   - 实现插件化架构
+   - 支持自定义下载策略
 
-    CheckProgress -->|进行中| UpdateProgress[更新进度显示]
-    UpdateProgress --> MonitorProgress
+2. **功能扩展**
+   - 支持更多浏览器
+   - 支持更多视频格式
+   - 支持批量下载优化
 
-    CheckProgress -->|完成| CheckResult{下载结果}
+3. **用户体验**
+   - 开发图形界面
+   - 支持配置向导
+   - 提供更好的错误提示
 
-    CheckResult -->|失败| Error1[下载失败]
-    Error1 --> Retry{重试?}
+### 8.3 长期愿景
 
-    Retry -->|是| StartDownload
-    Retry -->|否| End([结束])
+1. **平台化**
+   - 支持Windows、macOS、Linux
+   - 提供Web界面
+   - 支持分布式下载
 
-    CheckResult -->|成功| CheckFFmpeg{检查FFmpeg}
+2. **智能化**
+   - 自动识别视频质量
+   - 智能重试机制
+   - 下载速度优化
 
-    CheckFFmpeg -->|不存在| DownloadFFmpeg[下载FFmpeg]
-    DownloadFFmpeg --> CheckFFmpeg
-
-    CheckFFmpeg -->|存在| PrepareMerge[准备合并参数]
-    PrepareMerge --> SetInput[设置输入文件]
-    SetInput --> SetOutputFile[设置输出文件]
-
-    SetOutputFile --> StartMerge[启动FFmpeg合并]
-    StartMerge --> MonitorMerge[监控合并进度]
-
-    MonitorMerge --> CheckMerge{合并结果}
-
-    CheckMerge -->|失败| Error2[合并失败]
-    Error2 --> End
-
-    CheckMerge -->|成功| Cleanup[清理临时文件]
-    Cleanup --> Success[下载完成]
-    Success --> End
-
-    style Start fill:#90EE90
-    style End fill:#FFB6C1
-    style Error1 fill:#FFB6C1
-    style Error2 fill:#FFB6C1
-    style Success fill:#90EE90
-```
-
-### 流程说明
-
-视频下载流程使用专业工具完成视频片段的下载和合并：
-
-1. **工具检查**：检查 N_m3u8DL-RE 和 FFmpeg 是否可用
-2. **参数准备**：设置下载参数（输出路径、线程数、请求头、Cookie）
-3. **下载执行**：使用 N_m3u8DL-RE 下载视频片段
-4. **进度监控**：实时监控下载进度并显示给用户
-5. **错误处理**：下载失败时提供重试机制
-6. **视频合并**：使用 FFmpeg 将下载的片段合并为完整视频
-7. **清理工作**：删除临时文件，保持目录整洁
+3. **生态化**
+   - 开发插件系统
+   - 支持第三方扩展
+   - 构建开发者社区
 
 ---
 
 ## 总结
 
-本文档通过多个架构图和流程图，全面展示了 DingTalk-Live-Playback-Download-Tool 项目的系统结构和工作流程。这些图表帮助开发者和用户：
+本文档详细描述了钉钉直播回放下载工具的系统架构、模块划分、核心组件交互流程及技术栈选型依据。通过分层架构、设计模式应用和关键技术实现,项目实现了高内聚低耦合的架构设计,为后续的功能扩展和维护提供了良好的基础。
 
-- 理解项目的整体架构和模块关系
-- 掌握核心业务流程的实现逻辑
-- 了解批量处理的工作方式
-- 理解数据在系统中的流动过程
-- 掌握关键功能（Cookie 获取、M3U8 解析、视频下载）的详细流程
+项目遵循以下核心原则:
 
-所有图表均使用 Mermaid 语法编写，可以在支持 Mermaid 的 Markdown 编辑器中直接渲染，也可以导出为图片格式用于文档和演示。
+1. **分层架构**: 清晰的层次划分,职责明确
+2. **设计模式**: 合理应用设计模式,提高代码质量
+3. **单一职责**: 每个模块只负责一个功能领域
+4. **可扩展性**: 易于扩展新功能和浏览器类型
+5. **可维护性**: 代码结构清晰,易于理解和维护
