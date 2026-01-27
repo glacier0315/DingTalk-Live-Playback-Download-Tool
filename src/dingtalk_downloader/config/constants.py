@@ -4,15 +4,21 @@
 本模块定义项目中的所有常量。
 
 作者：项目团队
-依赖：无
+依赖：os
 创建日期：2025-01-14
 修改历史：
     - 2025-01-14: 初始版本
     - 2026-01-22: 新增直播名称选择器配置
+    - 2026-01-27: 支持从环境变量读取配置文件路径
 """
+import os
 
 # 配置文件路径
-CONFIG_FILE_PATH = "./config/app.yaml"
+# 优先级：环境变量 > 默认值
+CONFIG_FILE_PATH = os.getenv(
+    "DINGTALK_DOWNLOADER_CONFIG_PATH",
+    "./config/app.yaml"
+)
 
 # 浏览器类型
 BROWSER_TYPE_EDGE = "edge"

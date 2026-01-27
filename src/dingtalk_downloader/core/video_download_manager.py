@@ -116,6 +116,7 @@ class VideoDownloadManager:
     def process_video(self, context: VideoDownloadContext) -> bool:
         """
         处理单个视频下载。
+        下载完成后自动清理临时m3u8文件。
 
         Args:
             context: 视频下载上下文
@@ -123,6 +124,7 @@ class VideoDownloadManager:
         Returns:
             bool: 下载成功返回True，下载失败返回False
         """
+        m3u8_link = None
         try:
             m3u8_link = self.m3u8_download_service.fetch_and_download_m3u8(
                 context.url, context.get_headers_dict()
@@ -142,6 +144,12 @@ class VideoDownloadManager:
         except Exception as e:
             logger.error(f"处理视频时发生错误: {e}", exc_info=True)
             raise DownloadError(f"处理视频失败: {e}") from e
+
+        finally:
+            if m3u8_link and m3u8_link.local_file_path:
+                self.m3u8_download_service.cleanup_temp_file(
+                    m3u8_link.local_file_path
+                )
 
     def _download_video(
         self,

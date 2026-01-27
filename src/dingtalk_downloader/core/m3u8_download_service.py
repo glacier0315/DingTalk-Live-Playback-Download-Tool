@@ -50,6 +50,7 @@ class M3u8DownloadService:
     ) -> M3u8Link:
         """
         获取并下载m3u8文件。
+        下载完成后自动清理临时文件。
 
         Args:
             url: 钉钉直播回放分享链接
@@ -89,3 +90,17 @@ class M3u8DownloadService:
         return M3u8Link(
             url=m3u8_link, prefix=prefix, local_file_path=m3u8_file
         )
+
+    def cleanup_temp_file(self, file_path: str) -> None:
+        """
+        清理临时m3u8文件。
+
+        Args:
+            file_path: 临时文件路径
+        """
+        try:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+                logger.debug(f"已清理临时文件: {file_path}")
+        except Exception as e:
+            logger.warning(f"清理临时文件失败: {file_path}, 错误: {e}")

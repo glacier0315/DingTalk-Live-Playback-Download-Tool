@@ -11,9 +11,7 @@
     - 2025-01-15: 添加日志记录
 """
 
-from re import S
 import subprocess
-import platform
 import os
 import logging
 from typing import Dict, Optional, List
@@ -43,8 +41,8 @@ class NM3u8DLRE:
         Args:
             executable_path: 可执行文件路径，默认为 None（自动查找）
         """
-        config = YamlConfig()
-        config.load()
+        config = YamlConfig.get_instance()
+
         if executable_path is None:
             self.executable_path = config.get("n_m3u8dl_re.executable_path")
         else:
