@@ -386,6 +386,7 @@ def validate_file_path(file_path: str) -> str:
 
     _check_file_path_not_empty(file_path)
     _check_file_extension(file_path)
+    _check_file_path_traversal(file_path)
     _check_file_exists(file_path)
     _check_is_file(file_path)
     _check_file_readable(file_path)
@@ -423,6 +424,33 @@ def _check_file_extension(file_path: str) -> None:
         raise ValueError(
             f"文件格式不支持: {file_path}. 请使用CSV或Excel文件（.csv, .xlsx, .xls）。"
         )
+
+
+def _check_file_path_traversal(file_path: str) -> None:
+    """
+    检查路径遍历攻击。
+
+    Args:
+        file_path: 文件路径
+
+    Raises:
+        ValueError: 检测到路径遍历攻击时
+    """
+    try:
+        real_path = os.path.realpath(file_path)
+        abs_path = os.path.abspath(file_path)
+        
+        if real_path != abs_path:
+            raise ValueError(f"检测到符号链接: {file_path} -> {real_path}")
+        
+        current_dir = os.getcwd()
+        if not abs_path.startswith(current_dir):
+            raise ValueError(
+                f"检测到路径遍历攻击: {file_path}. "
+                f"文件路径必须在当前工作目录内。"
+            )
+    except (OSError, ValueError) as e:
+        raise ValueError(f"路径验证失败: {e}") from e
 
 
 def _check_file_exists(file_path: str) -> None:
