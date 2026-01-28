@@ -250,8 +250,9 @@ class BrowserDriver(ABC):
                     if m3u8_url in m3u8_links:
                         continue
 
-                    logger.debug(f"从日志中提取到消息: {log_message}")
-                    logger.debug(f"从日志中提取到 m3u8 链接: {m3u8_url}")
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug(f"从日志中提取到消息: {log_message}")
+                        logger.debug(f"从日志中提取到 m3u8 链接: {m3u8_url}")
                     m3u8_links.append(m3u8_url)
             except Exception as e:
                 logger.error(f"提取m3u8链接时发生错误: {e}", exc_info=True)

@@ -181,6 +181,7 @@ class YamlConfig:
                 if cls._instance is None:
                     instance = super().__new__(cls)
                     instance._initialize(config_file)
+                    instance.load()
                     cls._instance = instance
                     logger.debug("YamlConfig单例实例创建成功")
         return cls._instance

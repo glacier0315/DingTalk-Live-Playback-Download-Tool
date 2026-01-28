@@ -126,21 +126,20 @@ class VideoDownloadManager:
             )
 
             download_success = self._download_video(m3u8_link, context)
-
             if download_success:
                 logger.info(f"视频下载完成: {context.live_name}")
             else:
                 logger.error(f"视频下载失败: {context.live_name}")
 
             return download_success
-
         except Exception as e:
             logger.error(f"处理视频时发生错误: {e}", exc_info=True)
             raise DownloadError(f"处理视频失败: {e}") from e
-
         finally:
             if m3u8_link and m3u8_link.local_file_path:
-                self.m3u8_download_service.cleanup_temp_file(m3u8_link.local_file_path)
+                self.m3u8_download_service.cleanup_temp_file(
+                    m3u8_link.local_file_path
+                )
 
     def _download_video(
         self,

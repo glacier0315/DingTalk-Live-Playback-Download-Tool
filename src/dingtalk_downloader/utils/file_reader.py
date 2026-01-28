@@ -210,7 +210,7 @@ class FileReader:
         Raises:
             FileReaderError: 读取失败时
         """
-        encodings = ["utf-8", "gbk", "gb18030"]
+        encodings = ["utf-8", "gbk", "gb18030", "utf-8-sig"]
         last_error = None
 
         for encoding in encodings:
@@ -226,7 +226,10 @@ class FileReader:
                 logger.error(f"读取 CSV 文件时发生错误: {e}", exc_info=True)
                 raise FileReaderError(f"读取CSV文件失败: {e}") from e
 
-        logger.error(f"文件 {self.file_path} 使用的编码无法识别，请尝试其他编码格式")
+        logger.error(
+            f"文件 {self.file_path} 使用的编码无法识别，"
+            f"已尝试的编码: {', '.join(encodings)}"
+        )
         raise FileReaderError(f"文件编码无法识别: {last_error}") from last_error
 
     def _read_excel(self, links: Dict[int, str]) -> None:
