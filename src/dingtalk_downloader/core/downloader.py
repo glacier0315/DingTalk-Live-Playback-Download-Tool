@@ -19,9 +19,13 @@ from .cookie_handler import CookieError
 from .m3u8_parser import M3u8ParseError
 from .video_download_manager import VideoDownloadManager
 from ..utils.models import VideoDownloadContext
-from .exceptions import DownloadError
+from .exceptions import (
+    DownloadError,
+    BrowserError,
+    NetworkError,
+    ValidationError,
+)
 from ..utils.validator import validate_required_input, validate_dingtalk_url
-
 logger = logging.getLogger(__name__)
 
 
@@ -69,27 +73,36 @@ class Downloader:
         context = None
         try:
             context = self.video_manager.initialize_download(url)
-
             while True:
                 try:
                     self.video_manager.process_video(context)
                 except DownloadError as e:
                     logger.error(f"视频下载失败: {e}")
                     print(f"下载失败: {e}")
+                except BrowserError as e:
+                    logger.error(f"浏览器操作失败: {e}")
+                    print(f"浏览器操作失败: {e}")
+                except NetworkError as e:
+                    logger.error(f"网络请求失败: {e}")
+                    print(f"网络请求失败: {e}")
+                except ValidationError as e:
+                    logger.error(f"输入验证失败: {e}")
+                    print(f"输入验证失败: {e}")
 
                 new_url = self._handle_user_input()
                 if new_url is None:
                     break
-
                 context = self.video_manager.repeat_get_context(new_url)
-
         except KeyboardInterrupt:
             logger.warning("用户中断下载")
             print("\n程序已被用户终止。")
             self.close()
             raise
+        except (CookieError, M3u8ParseError) as e:
+            logger.error(f"初始化下载失败: {e}", exc_info=True)
+            raise DownloadError(f"初始化下载失败: {e}") from e
         except Exception as e:
-            logger.error(f"下载单个视频时发生错误: {e}", exc_info=True)
+            logger.error(f"下载单个视频时发生未知错误: {e}", exc_info=True)
             raise DownloadError(f"下载单个视频失败: {e}") from e
         finally:
             if context:

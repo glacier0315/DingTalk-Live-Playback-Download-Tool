@@ -208,8 +208,15 @@ class FileReader:
         except FileReaderError:
             raise
         except Exception as e:
-            logger.error(f"读取文件时发生错误: {e}", exc_info=True)
-            raise FileReaderError(f"读取文件失败: {e}") from e
+            logger.error(
+                f"读取文件时发生错误: {e}, "
+                f"文件路径: {self.file_path}",
+                exc_info=True
+            )
+            raise FileReaderError(
+                f"读取文件失败: {e}。"
+                f"文件路径: {self.file_path}"
+            ) from e
 
     def _read_csv(self, links: Dict[int, str]) -> None:
         """

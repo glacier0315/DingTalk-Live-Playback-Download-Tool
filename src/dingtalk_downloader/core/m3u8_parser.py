@@ -141,8 +141,17 @@ class M3u8Parser:
             return filename
 
         except Exception as e:
-            logger.error(f"下载 m3u8 文件时发生错误: {e}", exc_info=True)
-            raise M3u8ParseError(f"下载m3u8文件失败: {e}") from e
+            logger.error(
+                f"下载 m3u8 文件时发生错误: {e}, "
+                f"URL: {url}, "
+                f"文件名: {filename}",
+                exc_info=True
+            )
+            raise M3u8ParseError(
+                f"下载m3u8文件失败: {e}。"
+                f"URL: {url}, "
+                f"文件名: {filename}"
+            ) from e
 
     def extract_prefix(self, url: str) -> str:
         """

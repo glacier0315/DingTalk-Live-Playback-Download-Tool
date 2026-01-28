@@ -8,6 +8,7 @@
 创建日期：2026-01-26
 修改历史：
     - 2026-01-26: 初始版本，统一异常定义
+    - 2026-01-28: 添加更具体的异常类型
 """
 
 
@@ -43,5 +44,23 @@ class ConfigLoadError(Exception):
 
 class ConfigValidationError(Exception):
     """配置文件验证异常"""
+
+    pass
+
+
+class BrowserError(Exception):
+    """浏览器操作异常"""
+
+    pass
+
+
+class NetworkError(Exception):
+    """网络请求异常"""
+
+    pass
+
+
+class ValidationError(Exception):
+    """输入验证异常"""
 
     pass

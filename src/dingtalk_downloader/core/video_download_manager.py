@@ -17,10 +17,14 @@ from .cookie_handler import CookieHandler, CookieError
 from .m3u8_parser import M3u8Parser, M3u8ParseError
 from ..utils.models import CookieData, HeadersData, VideoDownloadContext, M3u8Link
 from .m3u8_download_service import M3u8DownloadService
-from .exceptions import DownloadError
+from .exceptions import (
+    DownloadError,
+    BrowserError,
+    NetworkError,
+    ValidationError,
+)
 from ..binary.n_m3u8dl_re import NM3u8DLRE
 from ..utils.path_selector import PathSelector
-
 logger = logging.getLogger(__name__)
 
 
@@ -132,9 +136,21 @@ class VideoDownloadManager:
                 logger.error(f"视频下载失败: {context.live_name}")
 
             return download_success
+        except DownloadError as e:
+            logger.error(f"视频下载失败: {context.live_name}, 错误: {e}")
+            return False
+        except BrowserError as e:
+            logger.error(f"浏览器操作失败: {context.live_name}, 错误: {e}")
+            return False
+        except NetworkError as e:
+            logger.error(f"网络请求失败: {context.live_name}, 错误: {e}")
+            return False
+        except M3u8ParseError as e:
+            logger.error(f"m3u8解析失败: {context.live_name}, 错误: {e}")
+            return False
         except Exception as e:
-            logger.error(f"处理视频时发生错误: {e}", exc_info=True)
-            raise DownloadError(f"处理视频失败: {e}") from e
+            logger.error(f"处理视频时发生未知错误: {context.live_name}, 错误: {e}", exc_info=True)
+            raise DownloadError(f"处理视频失败: {context.live_name}, 错误: {e}") from e
         finally:
             if m3u8_link and m3u8_link.local_file_path:
                 self.m3u8_download_service.cleanup_temp_file(
@@ -206,11 +222,26 @@ class VideoDownloadManager:
         """
         清理下载上下文相关资源。
 
+        确保所有资源都被正确清理，包括浏览器、解析器等。
+
         Args:
             context: 视频下载上下文
         """
         try:
-            if context and hasattr(context, "cookie_data"):
+            if context:
                 logger.debug(f"清理上下文资源: {context.live_name}")
+                
+                if hasattr(context, "cookie_data") and context.cookie_data:
+                    logger.debug(f"清理Cookie数据: {context.live_name}")
+                    
+                if hasattr(self, "m3u8_parser") and self.m3u8_parser:
+                    logger.debug(f"清理m3u8解析器: {context.live_name}")
+                    self.m3u8_parser = None
+                    
+                if hasattr(self, "m3u8_download_service") and self.m3u8_download_service:
+                    logger.debug(f"清理m3u8下载服务: {context.live_name}")
+                    self.m3u8_download_service = None
+                    
+                logger.info(f"上下文资源清理完成: {context.live_name}")
         except Exception as e:
-            logger.warning(f"清理上下文资源时发生错误: {e}", exc_info=True)
+            logger.warning(f"清理上下文资源时发生错误: {context.live_name}, 错误: {e}", exc_info=True)
