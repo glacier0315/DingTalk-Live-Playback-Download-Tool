@@ -158,7 +158,8 @@ class FileReader:
 
         if file_size > max_size:
             raise ValueError(
-                f"文件过大: {self.file_path} ({file_size} bytes, " f"最大允许 {max_size} bytes)"
+                f"文件过大: {self.file_path} ({file_size} bytes, "
+                f"最大允许 {max_size} bytes)"
             )
 
         if file_size == 0:

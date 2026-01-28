@@ -16,6 +16,7 @@
 import logging
 from typing import Dict, Tuple, Any
 from ..browser.browser_factory import BrowserFactory
+from ..browser.browser_driver import BrowserDriver
 from ..config.constants import LIVE_NAME_SELECTORS
 from ..config.header_manager import HeaderManager
 from ..utils.models import CookieData, HeadersData
@@ -97,7 +98,7 @@ class CookieHandler:
 
         return cookie_data, headers_data, live_name
 
-    def get_cookie(self, url: str) -> Tuple[Any, CookieData, HeadersData, str]:
+    def get_cookie(self, url: str) -> Tuple[BrowserDriver, CookieData, HeadersData, str]:
         """
         获取 Cookie 和请求头信息。
 

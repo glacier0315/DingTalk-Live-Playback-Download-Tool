@@ -14,9 +14,9 @@
 """
 
 import logging
+from typing import List
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from typing import List, Optional
 from .browser_driver import BrowserDriver
 
 logger = logging.getLogger(__name__)

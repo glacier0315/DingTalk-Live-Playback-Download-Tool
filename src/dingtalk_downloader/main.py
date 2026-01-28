@@ -72,8 +72,10 @@ def _get_user_inputs() -> tuple[str, str, str]:
     dingtalk_url = validate_required_input(
         "请输入钉钉直播回放分享链接: ",
         validation_func=validate_dingtalk_url,
-        error_message="链接格式不正确。请确保链接以 https://n.dingtalk.com "
-        "开头，并包含 liveUuid 参数。",
+        error_message=(
+            "链接格式不正确。请确保链接以 https://n.dingtalk.com "
+            "开头，并包含 liveUuid 参数。"
+        ),
         input_name="钉钉直播链接",
     )
     logger.debug(f"用户输入链接: {dingtalk_url}")

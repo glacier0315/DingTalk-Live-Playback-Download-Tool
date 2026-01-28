@@ -15,7 +15,7 @@ import logging
 from typing import Dict, Optional
 from .cookie_handler import CookieHandler, CookieError
 from .m3u8_parser import M3u8Parser, M3u8ParseError
-from ..utils.models import CookieData, HeadersData, VideoDownloadContext
+from ..utils.models import CookieData, HeadersData, VideoDownloadContext, M3u8Link
 from .m3u8_download_service import M3u8DownloadService
 from .exceptions import DownloadError
 from ..binary.n_m3u8dl_re import NM3u8DLRE
@@ -144,7 +144,7 @@ class VideoDownloadManager:
 
     def _download_video(
         self,
-        m3u8_link,
+        m3u8_link: M3u8Link,
         context: VideoDownloadContext,
     ) -> bool:
         """

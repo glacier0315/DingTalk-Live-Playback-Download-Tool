@@ -15,9 +15,9 @@
 
 import logging
 import re
+from typing import List
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from typing import List
 from .browser_driver import BrowserDriver
 
 logger = logging.getLogger(__name__)

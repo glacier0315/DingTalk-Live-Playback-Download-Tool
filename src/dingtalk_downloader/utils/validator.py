@@ -415,7 +415,8 @@ def _check_file_extension(file_path: str) -> None:
     valid_extensions = [".csv", ".xlsx", ".xls"]
     if not file_path.lower().endswith(tuple(valid_extensions)):
         raise ValueError(
-            f"文件格式不支持: {file_path}. 请使用CSV或Excel文件（.csv, .xlsx, .xls）。"
+            f"文件格式不支持: {file_path}. "
+            "请使用CSV或Excel文件（.csv, .xlsx, .xls）。"
         )
 
 
@@ -500,7 +501,8 @@ def _check_file_size(file_path: str) -> None:
 
     if file_size > max_size:
         raise ValueError(
-            f"文件过大: {file_path} ({file_size} bytes, " f"最大允许 {max_size} bytes)"
+            f"文件过大: {file_path} ({file_size} bytes, "
+            f"最大允许 {max_size} bytes)"
         )
 
     if file_size == 0:
