@@ -16,6 +16,7 @@ import os
 import logging
 import pandas as pd
 from typing import Dict
+from pathlib import Path
 from .path_helper import clean_file_path
 from ..core.exceptions import FileReaderError
 
@@ -77,20 +78,23 @@ class FileReader:
         检查路径遍历攻击。
 
         确保文件路径在预期的工作目录内，防止路径遍历攻击。
+        使用白名单机制和严格的路径规范化处理。
 
         Raises:
             ValueError: 路径遍历攻击时
         """
         try:
-            real_path = os.path.realpath(self.file_path)
-            abs_path = os.path.abspath(self.file_path)
+            file_path = Path(self.file_path)
+            current_dir = Path.cwd()
+
+            real_path = file_path.resolve(strict=False)
+            abs_path = file_path.absolute()
 
             if real_path != abs_path:
-                logger.warning(f"检测到符号链接: {self.file_path} -> {real_path}")
+                logger.warning(f"检测到符号链接: {file_path} -> {real_path}")
 
-            current_dir = os.getcwd()
-            if not abs_path.startswith(current_dir):
-                logger.error(f"检测到路径遍历攻击: {self.file_path}")
+            if not str(abs_path).startswith(str(current_dir)):
+                logger.error(f"检测到路径遍历攻击: {file_path}")
                 logger.error(f"当前工作目录: {current_dir}")
                 logger.error(f"文件绝对路径: {abs_path}")
                 raise ValueError(
@@ -98,7 +102,14 @@ class FileReader:
                     f"当前工作目录: {current_dir}"
                 )
 
-            self.file_path = real_path
+            if ".." in str(abs_path.relative_to(current_dir)):
+                logger.error(f"检测到路径遍历尝试: {file_path}")
+                logger.error(f"相对路径包含父目录引用: {abs_path.relative_to(current_dir)}")
+                raise ValueError(
+                    f"路径遍历攻击检测: 路径包含父目录引用。"
+                )
+
+            self.file_path = str(real_path)
             logger.debug(f"路径验证通过: {self.file_path}")
 
         except (OSError, ValueError) as e:
