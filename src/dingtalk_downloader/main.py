@@ -22,6 +22,7 @@ from .config.yaml_config import (
     ConfigValidationError,
 )
 from .core.downloader import Downloader
+from .core.user_interaction_controller import UserInteractionController
 from .core.exceptions import CookieError, M3u8ParseError, FileReaderError
 from .utils.validator import (
     validate_input,
@@ -60,16 +61,21 @@ def _handle_interrupt() -> None:
     sys.exit(0)
 
 
-def _get_user_inputs() -> tuple[str, str, str]:
+def _get_user_inputs(
+    user_controller: UserInteractionController,
+) -> tuple[str, str, str]:
     """
     获取用户输入。
 
     获取链接、保存模式和浏览器类型。
 
+    Args:
+        user_controller: 用户交互控制器
+
     Returns:
         tuple: (dingtalk_url, save_mode, browser_option)
     """
-    dingtalk_url = validate_required_input(
+    dingtalk_url = user_controller.get_user_input(
         "请输入钉钉直播回放分享链接: ",
         validation_func=validate_dingtalk_url,
         error_message=(
@@ -99,24 +105,29 @@ def _get_user_inputs() -> tuple[str, str, str]:
     return dingtalk_url, save_mode, browser_option
 
 
-def _create_downloader(browser_option: str, save_mode: str) -> Downloader:
+def _create_downloader(
+    browser_option: str,
+    save_mode: str,
+    user_controller: UserInteractionController,
+) -> Downloader:
     """
     创建下载器实例。
 
     Args:
         browser_option: 浏览器选项
         save_mode: 保存模式
+        user_controller: 用户交互控制器
 
     Returns:
         Downloader实例
     """
     browser_type = BROWSER_OPTION_MAP[browser_option]
-    downloader = Downloader(browser_type, save_mode)
+    downloader = Downloader(browser_type, save_mode, user_controller)
     logger.debug(f"下载器创建成功 - 浏览器: {browser_type}, " f"保存模式: {save_mode}")
     return downloader
 
 
-def single_mode() -> None:
+def single_mode(user_controller: UserInteractionController) -> None:
     """
     单个视频下载模式。
 
@@ -140,8 +151,8 @@ def single_mode() -> None:
     logger.info("进入单个视频下载模式")
 
     try:
-        dingtalk_url, save_mode, browser_option = _get_user_inputs()
-        downloader = _create_downloader(browser_option, save_mode)
+        dingtalk_url, save_mode, browser_option = _get_user_inputs(user_controller)
+        downloader = _create_downloader(browser_option, save_mode, user_controller)
         downloader.download_single_video(dingtalk_url)
 
     except KeyboardInterrupt:
@@ -152,14 +163,19 @@ def single_mode() -> None:
         _handle_download_error(e)
 
 
-def _get_batch_inputs() -> tuple[str, dict, str, str]:
+def _get_batch_inputs(
+    user_controller: UserInteractionController,
+) -> tuple[str, dict, str, str]:
     """
     获取批量下载模式的用户输入。
+
+    Args:
+        user_controller: 用户交互控制器
 
     Returns:
         tuple: (file_path, links_dict, save_mode, browser_option)
     """
-    file_path = validate_required_input(
+    file_path = user_controller.get_user_input(
         "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，" "可直接将文件拖放进窗口）: ",
         validation_func=validate_file_path,
         error_message="文件路径不正确。",
@@ -189,7 +205,7 @@ def _get_batch_inputs() -> tuple[str, dict, str, str]:
     return file_path, links_dict, save_mode, browser_option
 
 
-def batch_mode() -> None:
+def batch_mode(user_controller: UserInteractionController) -> None:
     """
     批量下载模式。
 
@@ -214,8 +230,8 @@ def batch_mode() -> None:
     logger.info("进入批量下载模式")
 
     try:
-        file_path, links_dict, save_mode, browser_option = _get_batch_inputs()
-        downloader = _create_downloader(browser_option, save_mode)
+        file_path, links_dict, save_mode, browser_option = _get_batch_inputs(user_controller)
+        downloader = _create_downloader(browser_option, save_mode, user_controller)
         downloader.download_batch_videos(links_dict)
 
     except KeyboardInterrupt:
@@ -279,6 +295,8 @@ def main() -> None:
     except ConfigValidationError as e:
         _handle_config_error(e, "验证")
 
+    user_controller = UserInteractionController()
+
     try:
         download_mode = validate_input(
             "请选择下载模式(输入1:单个视频下载模式,输入2:批量下载模式," "直接回车默认选择1）: ",
@@ -288,9 +306,9 @@ def main() -> None:
         logger.debug(f"用户选择下载模式: {download_mode}")
 
         if download_mode == DOWNLOAD_MODE_SINGLE:
-            single_mode()
+            single_mode(user_controller)
         elif download_mode == DOWNLOAD_MODE_BATCH:
-            batch_mode()
+            batch_mode(user_controller)
 
     except KeyboardInterrupt:
         _handle_interrupt()

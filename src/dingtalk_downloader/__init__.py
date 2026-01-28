@@ -12,6 +12,7 @@
 
 from .main import main
 from .core.downloader import Downloader
+from .core.user_interaction_controller import UserInteractionController
 from .core.cookie_handler import CookieHandler
 from .core.m3u8_parser import M3u8Parser
 from .utils.file_reader import FileReader
@@ -27,6 +28,7 @@ from .config.yaml_config import YamlConfig
 __all__ = [
     "main",
     "Downloader",
+    "UserInteractionController",
     "CookieHandler",
     "M3u8Parser",
     "FileReader",

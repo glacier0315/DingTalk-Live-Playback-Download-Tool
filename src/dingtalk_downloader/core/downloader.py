@@ -18,6 +18,7 @@ from typing import Dict, Optional, Tuple, Any
 from .cookie_handler import CookieError
 from .m3u8_parser import M3u8ParseError
 from .video_download_manager import VideoDownloadManager
+from .user_interaction_controller import UserInteractionController
 from ..utils.models import VideoDownloadContext
 from .exceptions import (
     DownloadError,
@@ -34,25 +35,33 @@ class Downloader:
     下载器类，作为外观类提供统一接口。
 
     该类封装了单个视频下载和批量下载的逻辑，
-    通过VideoDownloadManager、PathSelector等辅助类实现功能。
+    通过VideoDownloadManager、UserInteractionController等辅助类实现功能。
 
     Attributes:
         video_manager: 视频下载管理器
         browser_type: 浏览器类型
         save_mode: 保存模式
+        user_controller: 用户交互控制器
     """
 
-    def __init__(self, browser_type: str, save_mode: str):
+    def __init__(
+        self,
+        browser_type: str,
+        save_mode: str,
+        user_controller: UserInteractionController,
+    ):
         """
         初始化下载器。
 
         Args:
             browser_type: 浏览器类型（edge/chrome/firefox）
             save_mode: 保存模式（1：默认路径，2：手动选择）
+            user_controller: 用户交互控制器
         """
         self.browser_type = browser_type
         self.save_mode = save_mode
         self.video_manager = VideoDownloadManager(browser_type, save_mode)
+        self.user_controller = user_controller
 
         logger.info(f"下载器初始化完成 - 浏览器类型: {browser_type}, 保存模式: {save_mode}")
 
@@ -89,8 +98,17 @@ class Downloader:
                     logger.error(f"输入验证失败: {e}")
                     print(f"输入验证失败: {e}")
 
-                new_url = self._handle_user_input()
-                if new_url is None:
+                new_url = self.user_controller.get_user_input(
+                    "请继续输入钉钉直播分享链接，或输入q退出程序: ",
+                    validation_func=lambda x: (x.lower() == "q" or validate_dingtalk_url(x)),
+                    error_message="输入不正确，请重新输入。",
+                    input_name="钉钉直播分享链接",
+                )
+
+                if new_url.lower() == "q":
+                    logger.info("用户选择退出程序")
+                    self.close()
+                    print("程序已退出。")
                     break
                 context = self.video_manager.repeat_get_context(new_url)
         except KeyboardInterrupt:
@@ -107,31 +125,6 @@ class Downloader:
         finally:
             if context:
                 self.video_manager.cleanup_context(context)
-
-    def _handle_user_input(self) -> Optional[str]:
-        """
-        处理用户输入。
-
-        获取用户输入的链接或退出命令。
-
-        Returns:
-            新的链接，如果用户选择退出则返回None
-        """
-        url = validate_required_input(
-            "请继续输入钉钉直播分享链接，或输入q退出程序: ",
-            validation_func=lambda x: (x.lower() == "q" or validate_dingtalk_url(x)),
-            error_message="输入不正确，请重新输入。",
-            input_name="钉钉直播分享链接",
-        )
-
-        if url.lower() == "q":
-            logger.info("用户选择退出程序")
-            self.close()
-            print("程序已退出。")
-            return None
-
-        logger.debug(f"用户输入新链接: {url}")
-        return url
 
     def _download_first_video(self, first_url: str) -> None:
         """
@@ -215,21 +208,20 @@ class Downloader:
         logger.info("进入继续下载循环")
 
         while True:
-            continue_option = input(
-                "是否继续输入钉钉直播回放链接表格路径进行下载？(按Enter继续，按q退出程序): "
-            )
-            if continue_option.lower() == "q":
+            if not self.user_controller.ask_continue_download():
                 logger.info("用户选择退出程序")
-                print("程序已退出。")
                 self.close()
                 break
             else:
                 logger.info("用户选择继续下载")
                 from ..utils.file_reader import FileReader
 
-                file_path = input(
-                    "请输入新的钉钉直播回放链接表格路径（支持CSV或Excel格式，可直接将文件拖放进窗口）: "
-                )
+                file_path = self.user_controller.ask_file_path()
+                if file_path is None:
+                    logger.info("用户选择退出程序")
+                    self.close()
+                    break
+
                 logger.info("用户已输入文件路径")
 
                 new_links_dict = FileReader(file_path).read_links()
