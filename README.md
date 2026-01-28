@@ -172,7 +172,7 @@ python -m src.dingtalk_downloader.main
 pip install -r requirements-dev.txt
 
 # 格式化代码
-python -m black .
+python -m black src tests
 
 # 检查格式
 python -m black --check .
