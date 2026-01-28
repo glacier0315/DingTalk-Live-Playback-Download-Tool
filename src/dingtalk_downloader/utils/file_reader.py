@@ -68,7 +68,9 @@ class FileReader:
         self._check_is_file()
         self._check_file_readable()
         self._check_file_size()
-        logger.debug(f"文件验证通过: {self.file_path}, 大小: {os.path.getsize(self.file_path)} bytes")
+        logger.debug(
+            f"文件验证通过: {self.file_path}, 大小: {os.path.getsize(self.file_path)} bytes"
+        )
 
     def _check_path_traversal(self) -> None:
         """
@@ -156,8 +158,7 @@ class FileReader:
 
         if file_size > max_size:
             raise ValueError(
-                f"文件过大: {self.file_path} ({file_size} bytes, "
-                f"最大允许 {max_size} bytes)"
+                f"文件过大: {self.file_path} ({file_size} bytes, " f"最大允许 {max_size} bytes)"
             )
 
         if file_size == 0:
@@ -246,9 +247,7 @@ class FileReader:
             logger.error(f"读取 Excel 文件时发生错误: {e}", exc_info=True)
             raise FileReaderError(f"读取Excel文件失败: {e}") from e
 
-    def _extract_links_from_dataframe(
-        self, df: pd.DataFrame, links: Dict[int, str]
-    ) -> None:
+    def _extract_links_from_dataframe(self, df: pd.DataFrame, links: Dict[int, str]) -> None:
         """
         从 DataFrame 中提取链接。
 
@@ -258,10 +257,7 @@ class FileReader:
         """
         for col in df.columns:
             for i, value in df[col].dropna().items():
-                if (
-                    isinstance(value, str)
-                    and value.startswith("https://n.dingtalk.com")
-                ):
+                if isinstance(value, str) and value.startswith("https://n.dingtalk.com"):
                     links[i] = value
 
     @staticmethod

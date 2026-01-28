@@ -85,11 +85,13 @@ class FirefoxDriver(BrowserDriver):
             日志列表
         """
         if self.driver:
-            logs = self.driver.execute_script("""
+            logs = self.driver.execute_script(
+                """
                 var performance = window.performance || window.mozPerformance || window.msPerformance || window.webkitPerformance || {};
                 var network = performance.getEntries() || {};
                 return network;
-            """)
+            """
+            )
             return logs
         return []
 
@@ -107,16 +109,16 @@ class FirefoxDriver(BrowserDriver):
         """
         m3u8_links = []
         pattern = r'https://[^,\'"]+\.m3u8\?[^\'"]+'
-        
+
         for log in logs:
             try:
                 log_message = str(log)
                 found_links = re.findall(pattern, log_message)
-                
+
                 if found_links:
                     cleaned_link = re.sub(r'[\]\s\\\'"]+$', "", found_links[0])
                     m3u8_links.append(cleaned_link)
             except Exception as e:
                 logger.error(f"提取m3u8链接时发生错误: {e}", exc_info=True)
-        
+
         return m3u8_links

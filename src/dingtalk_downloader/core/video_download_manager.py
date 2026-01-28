@@ -55,8 +55,7 @@ class VideoDownloadManager:
         self.n_m3u8dl_re = NM3u8DLRE()
 
         logger.debug(
-            f"视频下载管理器初始化完成 - 浏览器类型: {browser_type}, "
-            f"保存模式: {save_mode}"
+            f"视频下载管理器初始化完成 - 浏览器类型: {browser_type}, " f"保存模式: {save_mode}"
         )
 
     def initialize_download(self, url: str) -> VideoDownloadContext:
@@ -71,9 +70,7 @@ class VideoDownloadManager:
         Returns:
             VideoDownloadContext: 视频下载上下文
         """
-        browser, cookie_data, headers_data, live_name = (
-            self.cookie_handler.get_cookie(url)
-        )
+        browser, cookie_data, headers_data, live_name = self.cookie_handler.get_cookie(url)
         logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
 
         self.m3u8_parser = M3u8Parser(browser)
@@ -100,9 +97,7 @@ class VideoDownloadManager:
         Returns:
             VideoDownloadContext: 视频下载上下文
         """
-        cookie_data, headers_data, live_name = (
-            self.cookie_handler.repeat_get_cookie(url)
-        )
+        cookie_data, headers_data, live_name = self.cookie_handler.repeat_get_cookie(url)
         logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
         return VideoDownloadContext(
@@ -130,9 +125,7 @@ class VideoDownloadManager:
                 context.url, context.get_headers_dict()
             )
 
-            download_success = self._download_video(
-                m3u8_link, context
-            )
+            download_success = self._download_video(m3u8_link, context)
 
             if download_success:
                 logger.info(f"视频下载完成: {context.live_name}")
@@ -147,9 +140,7 @@ class VideoDownloadManager:
 
         finally:
             if m3u8_link and m3u8_link.local_file_path:
-                self.m3u8_download_service.cleanup_temp_file(
-                    m3u8_link.local_file_path
-                )
+                self.m3u8_download_service.cleanup_temp_file(m3u8_link.local_file_path)
 
     def _download_video(
         self,
@@ -220,7 +211,7 @@ class VideoDownloadManager:
             context: 视频下载上下文
         """
         try:
-            if context and hasattr(context, 'cookie_data'):
+            if context and hasattr(context, "cookie_data"):
                 logger.debug(f"清理上下文资源: {context.live_name}")
         except Exception as e:
             logger.warning(f"清理上下文资源时发生错误: {e}", exc_info=True)

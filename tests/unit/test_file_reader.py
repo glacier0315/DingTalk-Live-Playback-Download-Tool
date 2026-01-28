@@ -49,9 +49,7 @@ def sample_excel_file(test_dir):
     import pandas as pd
 
     path = test_dir / "test.xlsx"
-    df = pd.DataFrame(
-        {"link": ["https://n.dingtalk.com/test1", "https://n.dingtalk.com/test2"]}
-    )
+    df = pd.DataFrame({"link": ["https://n.dingtalk.com/test1", "https://n.dingtalk.com/test2"]})
     df.to_excel(path, index=False)
     return str(path)
 

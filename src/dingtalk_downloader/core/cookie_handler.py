@@ -97,9 +97,7 @@ class CookieHandler:
 
         return cookie_data, headers_data, live_name
 
-    def get_cookie(
-        self, url: str
-    ) -> Tuple[Any, CookieData, HeadersData, str]:
+    def get_cookie(self, url: str) -> Tuple[Any, CookieData, HeadersData, str]:
         """
         获取 Cookie 和请求头信息。
 
@@ -142,9 +140,7 @@ class CookieHandler:
                 self.browser.close()
             raise CookieError(f"获取Cookie失败: {e}") from e
 
-    def repeat_get_cookie(
-        self, url: str
-    ) -> Tuple[CookieData, HeadersData, str]:
+    def repeat_get_cookie(self, url: str) -> Tuple[CookieData, HeadersData, str]:
         """
         重复获取 Cookie 和请求头信息。
 
@@ -202,17 +198,9 @@ class CookieHandler:
         for selector_type, selector_value in LIVE_NAME_SELECTORS:
             try:
                 if selector_type == "xpath":
-                    live_name = (
-                        self.browser.get_element_by_xpath(
-                            selector_value
-                        ).text
-                    )
+                    live_name = self.browser.get_element_by_xpath(selector_value).text
                 elif selector_type == "css":
-                    live_name = (
-                        self.browser.get_element_by_class_name(
-                            selector_value
-                        ).text
-                    )
+                    live_name = self.browser.get_element_by_class_name(selector_value).text
                 else:
                     continue
 

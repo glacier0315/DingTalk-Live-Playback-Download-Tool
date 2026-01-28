@@ -296,9 +296,7 @@ class YamlConfig:
         if value is None:
             return default
         if isinstance(value, bool):
-            raise ConfigValueError(
-                f"配置值类型错误，bool不能转换为int: {key}", key
-            )
+            raise ConfigValueError(f"配置值类型错误，bool不能转换为int: {key}", key)
         try:
             return int(value)
         except (ValueError, TypeError) as e:

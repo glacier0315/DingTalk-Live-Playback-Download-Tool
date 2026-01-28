@@ -99,7 +99,9 @@ def test_download_single_video_success(mock_video_manager_class):
     with patch("builtins.input", return_value="q"):
         downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
-    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_video_manager.initialize_download.assert_called_once_with(
+        "https://n.dingtalk.com/test?liveUuid=abc"
+    )
     mock_video_manager.process_video.assert_called_once_with(mock_context)
 
 
@@ -119,7 +121,9 @@ def test_download_single_video_failure(mock_video_manager_class):
     with patch("builtins.input", return_value="q"):
         downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
-    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_video_manager.initialize_download.assert_called_once_with(
+        "https://n.dingtalk.com/test?liveUuid=abc"
+    )
     mock_video_manager.process_video.assert_called_once_with(mock_context)
 
 
@@ -139,7 +143,9 @@ def test_download_single_video_exit(mock_video_manager_class):
     with patch("builtins.input", return_value="q"):
         downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
-    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_video_manager.initialize_download.assert_called_once_with(
+        "https://n.dingtalk.com/test?liveUuid=abc"
+    )
     mock_video_manager.process_video.assert_called_once_with(mock_context)
 
 
@@ -160,12 +166,17 @@ def test_download_batch_videos_success(mock_video_manager_class):
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    urls = {0: "https://n.dingtalk.com/test1?liveUuid=abc", 1: "https://n.dingtalk.com/test2?liveUuid=def"}
+    urls = {
+        0: "https://n.dingtalk.com/test1?liveUuid=abc",
+        1: "https://n.dingtalk.com/test2?liveUuid=def",
+    }
 
     with patch("builtins.input", return_value="q"):
         downloader.download_batch_videos(urls)
 
-    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test1?liveUuid=abc")
+    mock_video_manager.initialize_download.assert_called_once_with(
+        "https://n.dingtalk.com/test1?liveUuid=abc"
+    )
     assert mock_video_manager.process_video.call_count == 2
 
 
@@ -182,12 +193,17 @@ def test_download_batch_videos_failure(mock_video_manager_class):
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    urls = {0: "https://n.dingtalk.com/test1?liveUuid=abc", 1: "https://n.dingtalk.com/test2?liveUuid=def"}
+    urls = {
+        0: "https://n.dingtalk.com/test1?liveUuid=abc",
+        1: "https://n.dingtalk.com/test2?liveUuid=def",
+    }
 
     with patch("builtins.input", return_value="q"):
         downloader.download_batch_videos(urls)
 
-    mock_video_manager.initialize_download.assert_called_once_with("https://n.dingtalk.com/test1?liveUuid=abc")
+    mock_video_manager.initialize_download.assert_called_once_with(
+        "https://n.dingtalk.com/test1?liveUuid=abc"
+    )
     assert mock_video_manager.process_video.call_count == 2
 
 
@@ -208,7 +224,10 @@ def test_download_batch_videos_continue(mock_video_manager_class):
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    urls = {0: "https://n.dingtalk.com/test1?liveUuid=abc", 1: "https://n.dingtalk.com/test2?liveUuid=def"}
+    urls = {
+        0: "https://n.dingtalk.com/test1?liveUuid=abc",
+        1: "https://n.dingtalk.com/test2?liveUuid=def",
+    }
 
     with patch("builtins.input", side_effect=["q"]):
         downloader.download_batch_videos(urls)

@@ -69,9 +69,7 @@ class M3u8DownloadService:
         logger.debug(f"准备下载 m3u8 文件到: {m3u8_file}")
 
         try:
-            m3u8_file = self.m3u8_parser.download_m3u8_file(
-                m3u8_link, m3u8_file, m3u8_headers
-            )
+            m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_link, m3u8_file, m3u8_headers)
             logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
             if not m3u8_file or not os.path.exists(m3u8_file):
@@ -87,9 +85,7 @@ class M3u8DownloadService:
         prefix = self.m3u8_parser.extract_prefix(m3u8_link)
         logger.info(f"提取到基础 URL: {prefix}")
 
-        return M3u8Link(
-            url=m3u8_link, prefix=prefix, local_file_path=m3u8_file
-        )
+        return M3u8Link(url=m3u8_link, prefix=prefix, local_file_path=m3u8_file)
 
     def cleanup_temp_file(self, file_path: str) -> None:
         """

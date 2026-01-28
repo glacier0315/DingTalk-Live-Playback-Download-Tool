@@ -16,6 +16,7 @@ class TestNM3u8DLREInit:
     def test_init_default_windows(self, mock_ensure, mock_config):
         """测试 Windows 系统默认初始化"""
         import os
+
         mock_config_instance = Mock()
         mock_config_instance.get.side_effect = lambda key, default=None: {
             "n_m3u8dl_re.executable_path": os.path.join("assets", "bin", "N_m3u8DL-RE.exe"),
@@ -35,6 +36,7 @@ class TestNM3u8DLREInit:
     def test_init_default_linux(self, mock_ensure, mock_config):
         """测试 Linux 系统默认初始化"""
         import os
+
         mock_config_instance = Mock()
         mock_config_instance.get.side_effect = lambda key, default=None: {
             "n_m3u8dl_re.executable_path": os.path.join("assets", "bin", "N_m3u8DL-RE"),
@@ -54,6 +56,7 @@ class TestNM3u8DLREInit:
     def test_init_default_macos(self, mock_ensure, mock_config):
         """测试 macOS 系统默认初始化"""
         import os
+
         mock_config_instance = Mock()
         mock_config_instance.get.side_effect = lambda key, default=None: {
             "n_m3u8dl_re.executable_path": os.path.join("assets", "bin", "N_m3u8DL-RE"),
@@ -140,9 +143,6 @@ class TestNM3u8DLREGetLogFilePath:
         time.sleep(1.0)
         log_path2 = dl._get_log_file_path()
         assert log_path1 != log_path2
-
-
-
 
 
 class TestNM3u8DLREBuildCommand:
@@ -508,6 +508,7 @@ class TestNM3u8DLREIntegration:
     def test_full_workflow(self, mock_ensure, mock_config, mock_run):
         """测试完整工作流程"""
         import os
+
         mock_config_instance = Mock()
         mock_config_instance.get.side_effect = lambda key, default=None: {
             "n_m3u8dl_re.executable_path": os.path.join("assets", "bin", "N_m3u8DL-RE.exe"),

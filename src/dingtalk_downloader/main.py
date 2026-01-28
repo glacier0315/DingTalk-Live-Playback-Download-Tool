@@ -110,10 +110,7 @@ def _create_downloader(browser_option: str, save_mode: str) -> Downloader:
     """
     browser_type = BROWSER_OPTION_MAP[browser_option]
     downloader = Downloader(browser_type, save_mode)
-    logger.debug(
-        f"下载器创建成功 - 浏览器: {browser_type}, "
-        f"保存模式: {save_mode}"
-    )
+    logger.debug(f"下载器创建成功 - 浏览器: {browser_type}, " f"保存模式: {save_mode}")
     return downloader
 
 
@@ -161,8 +158,7 @@ def _get_batch_inputs() -> tuple[str, dict, str, str]:
         tuple: (file_path, links_dict, save_mode, browser_option)
     """
     file_path = validate_required_input(
-        "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，"
-        "可直接将文件拖放进窗口）: ",
+        "请输入钉钉直播回放链接表格路径（支持CSV或Excel格式，" "可直接将文件拖放进窗口）: ",
         validation_func=validate_file_path,
         error_message="文件路径不正确。",
         input_name="文件路径",
@@ -216,9 +212,7 @@ def batch_mode() -> None:
     logger.info("进入批量下载模式")
 
     try:
-        file_path, links_dict, save_mode, browser_option = (
-            _get_batch_inputs()
-        )
+        file_path, links_dict, save_mode, browser_option = _get_batch_inputs()
         downloader = _create_downloader(browser_option, save_mode)
         downloader.download_batch_videos(links_dict)
 
@@ -285,8 +279,7 @@ def main() -> None:
 
     try:
         download_mode = validate_input(
-            "请选择下载模式(输入1:单个视频下载模式,输入2:批量下载模式,"
-            "直接回车默认选择1）: ",
+            "请选择下载模式(输入1:单个视频下载模式,输入2:批量下载模式," "直接回车默认选择1）: ",
             ["1", "2"],
             default_option="1",
         )

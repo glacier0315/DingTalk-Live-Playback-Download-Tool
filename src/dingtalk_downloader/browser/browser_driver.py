@@ -238,7 +238,6 @@ class BrowserDriver(ABC):
                 else:
                     log_message = str(log)
 
-                
                 if ".m3u8" in log_message:
                     start_idx = log_message.find('url":"') + len('url":"')
                     end_idx = log_message.find('"', start_idx)

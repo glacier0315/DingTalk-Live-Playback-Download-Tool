@@ -109,7 +109,10 @@ def test_batch_download_flow_success(mock_video_manager_class):
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    urls = {0: "https://n.dingtalk.com/test1?liveUuid=abc", 1: "https://n.dingtalk.com/test2?liveUuid=abc"}
+    urls = {
+        0: "https://n.dingtalk.com/test1?liveUuid=abc",
+        1: "https://n.dingtalk.com/test2?liveUuid=abc",
+    }
 
     with patch("builtins.input", return_value="q"):
         downloader.download_batch_videos(urls)
@@ -134,7 +137,10 @@ def test_batch_download_flow_failure(mock_video_manager_class):
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
 
-    urls = {0: "https://n.dingtalk.com/test1?liveUuid=abc", 1: "https://n.dingtalk.com/test2?liveUuid=abc"}
+    urls = {
+        0: "https://n.dingtalk.com/test1?liveUuid=abc",
+        1: "https://n.dingtalk.com/test2?liveUuid=abc",
+    }
 
     with patch("builtins.input", return_value="q"):
         downloader.download_batch_videos(urls)

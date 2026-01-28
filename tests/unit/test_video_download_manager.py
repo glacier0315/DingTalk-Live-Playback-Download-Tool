@@ -32,9 +32,7 @@ from dingtalk_downloader.utils.models import CookieData, HeadersData, VideoDownl
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_video_download_manager_init_edge_default(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试Edge浏览器默认模式初始化"""
     mock_cookie_handler = Mock()
@@ -62,9 +60,7 @@ def test_video_download_manager_init_edge_default(
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_video_download_manager_init_chrome_manual(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试Chrome浏览器手动模式初始化"""
     mock_cookie_handler = Mock()
@@ -92,9 +88,7 @@ def test_video_download_manager_init_chrome_manual(
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_video_download_manager_init_firefox_manual(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试Firefox浏览器手动模式初始化"""
     mock_cookie_handler = Mock()
@@ -122,9 +116,7 @@ def test_video_download_manager_init_firefox_manual(
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_initialize_download_success(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试初始化下载成功"""
     mock_cookie_handler = Mock()
@@ -145,7 +137,7 @@ def test_initialize_download_success(
         mock_browser,
         mock_cookie_data,
         mock_headers_data,
-        "测试直播"
+        "测试直播",
     )
 
     manager = VideoDownloadManager(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
@@ -165,9 +157,7 @@ def test_initialize_download_success(
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_initialize_download_cookie_error(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试初始化下载Cookie错误"""
     from dingtalk_downloader.core.exceptions import CookieError
@@ -196,9 +186,7 @@ def test_initialize_download_cookie_error(
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_repeat_get_context_success(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试重复获取上下文成功"""
     mock_cookie_handler = Mock()
@@ -217,7 +205,7 @@ def test_repeat_get_context_success(
     mock_cookie_handler.repeat_get_cookie.return_value = (
         mock_cookie_data,
         mock_headers_data,
-        "测试直播"
+        "测试直播",
     )
 
     manager = VideoDownloadManager(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
@@ -235,9 +223,7 @@ def test_repeat_get_context_success(
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_repeat_get_context_first_call(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试重复获取上下文首次调用"""
     mock_cookie_handler = Mock()
@@ -256,7 +242,7 @@ def test_repeat_get_context_first_call(
     mock_cookie_handler.repeat_get_cookie.return_value = (
         mock_cookie_data,
         mock_headers_data,
-        "测试直播"
+        "测试直播",
     )
 
     manager = VideoDownloadManager(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
@@ -275,10 +261,7 @@ def test_repeat_get_context_first_call(
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 @patch("os.path.exists")
 def test_process_video_success(
-    mock_exists,
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_exists, mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试处理视频成功"""
     mock_exists.return_value = True
@@ -301,7 +284,7 @@ def test_process_video_success(
         mock_browser,
         mock_cookie_data,
         mock_headers_data,
-        "测试直播"
+        "测试直播",
     )
 
     mock_m3u8_link = Mock()
@@ -333,10 +316,7 @@ def test_process_video_success(
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 @patch("os.path.exists")
 def test_process_video_failure(
-    mock_exists,
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_exists, mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试处理视频失败"""
     mock_exists.return_value = True
@@ -359,7 +339,7 @@ def test_process_video_failure(
         mock_browser,
         mock_cookie_data,
         mock_headers_data,
-        "测试直播"
+        "测试直播",
     )
 
     mock_m3u8_link = Mock()
@@ -390,9 +370,7 @@ def test_process_video_failure(
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_process_video_m3u8_download_error(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
+    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
 ):
     """测试处理视频m3u8下载错误"""
     from dingtalk_downloader.core.exceptions import DownloadError
@@ -415,7 +393,7 @@ def test_process_video_m3u8_download_error(
         mock_browser,
         mock_cookie_data,
         mock_headers_data,
-        "测试直播"
+        "测试直播",
     )
 
     mock_m3u8_download_service = Mock()
@@ -434,11 +412,7 @@ def test_process_video_m3u8_download_error(
 @patch("dingtalk_downloader.core.video_download_manager.CookieHandler")
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
-def test_close(
-    mock_n_m3u8dl_re_class,
-    mock_path_selector_class,
-    mock_cookie_handler_class
-):
+def test_close(mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class):
     """测试关闭管理器"""
     mock_cookie_handler = Mock()
     mock_cookie_handler_class.return_value = mock_cookie_handler

@@ -95,7 +95,9 @@ class M3u8Parser:
                 logger.debug(f"提取到的 m3u8 链接: {m3u8_links}")
                 # 预期仅 1 个 m3u8 链接，返回最后一个
                 if len(m3u8_links) >= 1:
-                    logger.info(f"提取到 {len(m3u8_links)} 个 m3u8 链接，预期仅 1 个, 返回最后一个链接: {m3u8_links[-1]}")
+                    logger.info(
+                        f"提取到 {len(m3u8_links)} 个 m3u8 链接，预期仅 1 个, 返回最后一个链接: {m3u8_links[-1]}"
+                    )
                     return m3u8_links[-1]
             except Exception as e:
                 logger.error(f"第 {attempt + 1} 次尝试获取 m3u8 链接时发生错误: {e}", exc_info=True)
@@ -103,9 +105,7 @@ class M3u8Parser:
         logger.warning(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
         raise M3u8ParseError(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
 
-    def download_m3u8_file(
-        self, url: str, filename: str, headers: dict
-    ) -> str:
+    def download_m3u8_file(self, url: str, filename: str, headers: dict) -> str:
         """
         下载 m3u8 文件。
 
@@ -125,8 +125,7 @@ class M3u8Parser:
         """
         try:
             script = (
-                "return fetch(arguments[0], { method: 'GET' })"
-                ".then(response => response.text())"
+                "return fetch(arguments[0], { method: 'GET' })" ".then(response => response.text())"
             )
             m3u8_content = self.browser.driver.execute_script(
                 script,

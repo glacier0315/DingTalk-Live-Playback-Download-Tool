@@ -97,7 +97,7 @@ def test_m3u8_parser_fetch_m3u8_link_retry_success(mock_browser):
     mock_browser.extract_m3u8_links_from_logs.side_effect = [
         [],
         [],
-        ["https://test.com/live_hp/123/test.m3u8?liveUuid=abc"]
+        ["https://test.com/live_hp/123/test.m3u8?liveUuid=abc"],
     ]
 
     parser = M3u8Parser(mock_browser, max_retries=3)
@@ -109,9 +109,7 @@ def test_m3u8_parser_fetch_m3u8_link_retry_success(mock_browser):
 
 def test_m3u8_parser_fetch_m3u8_link_retry_failure(mock_browser):
     """测试重试机制失败"""
-    mock_browser.get_log.return_value = [
-        {"message": '{"url":"https://test.com/other/file.txt"}'}
-    ]
+    mock_browser.get_log.return_value = [{"message": '{"url":"https://test.com/other/file.txt"}'}]
     mock_browser.extract_m3u8_links_from_logs.return_value = []
 
     parser = M3u8Parser(mock_browser, max_retries=2)

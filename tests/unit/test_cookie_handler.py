@@ -37,7 +37,7 @@ def mock_header_manager():
     header_manager = Mock()
     header_manager.get_headers.return_value = {
         "User-Agent": "Mozilla/5.0",
-        "Referer": "https://n.dingtalk.com/"
+        "Referer": "https://n.dingtalk.com/",
     }
     return header_manager
 
@@ -60,10 +60,7 @@ def test_cookie_handler_init(mock_header_manager_class, mock_browser_factory):
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
 def test_cookie_handler_get_cookie_success(
-    mock_header_manager_class,
-    mock_browser_factory,
-    mock_browser,
-    mock_header_manager
+    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
 ):
     """测试获取Cookie成功"""
     mock_header_manager_class.return_value = mock_header_manager
@@ -81,7 +78,9 @@ def test_cookie_handler_get_cookie_success(
     handler = CookieHandler(BROWSER_TYPE_EDGE)
 
     with patch("builtins.input", return_value=""):
-        browser, cookie_data, headers_data, live_name = handler.get_cookie("https://n.dingtalk.com/test")
+        browser, cookie_data, headers_data, live_name = handler.get_cookie(
+            "https://n.dingtalk.com/test"
+        )
 
     assert len(cookie_data) == 1
     assert cookie_data.get("test") == "value"
@@ -93,10 +92,7 @@ def test_cookie_handler_get_cookie_success(
 
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
-def test_cookie_handler_get_cookie_browser_error(
-    mock_header_manager_class,
-    mock_browser_factory
-):
+def test_cookie_handler_get_cookie_browser_error(mock_header_manager_class, mock_browser_factory):
     """测试获取Cookie浏览器错误"""
     from dingtalk_downloader.core.exceptions import CookieError
 
@@ -114,10 +110,7 @@ def test_cookie_handler_get_cookie_browser_error(
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
 def test_cookie_handler_repeat_get_cookie_success(
-    mock_header_manager_class,
-    mock_browser_factory,
-    mock_browser,
-    mock_header_manager
+    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
 ):
     """测试重复获取Cookie成功"""
     mock_header_manager_class.return_value = mock_header_manager
@@ -138,7 +131,9 @@ def test_cookie_handler_repeat_get_cookie_success(
         handler.get_cookie("https://n.dingtalk.com/test")
 
     with patch("builtins.input", return_value=""):
-        cookie_data, headers_data, live_name = handler.repeat_get_cookie("https://n.dingtalk.com/test2")
+        cookie_data, headers_data, live_name = handler.repeat_get_cookie(
+            "https://n.dingtalk.com/test2"
+        )
 
     assert len(cookie_data) == 1
     assert cookie_data.get("test") == "value"
@@ -151,10 +146,7 @@ def test_cookie_handler_repeat_get_cookie_success(
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
 def test_cookie_handler_repeat_get_cookie_first_call(
-    mock_header_manager_class,
-    mock_browser_factory,
-    mock_browser,
-    mock_header_manager
+    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
 ):
     """测试重复获取Cookie首次调用"""
     mock_header_manager_class.return_value = mock_header_manager
@@ -172,7 +164,9 @@ def test_cookie_handler_repeat_get_cookie_first_call(
     handler = CookieHandler(BROWSER_TYPE_EDGE)
 
     with patch("builtins.input", return_value=""):
-        cookie_data, headers_data, live_name = handler.repeat_get_cookie("https://n.dingtalk.com/test")
+        cookie_data, headers_data, live_name = handler.repeat_get_cookie(
+            "https://n.dingtalk.com/test"
+        )
 
     assert len(cookie_data) == 1
     assert cookie_data.get("test") == "value"
@@ -185,10 +179,7 @@ def test_cookie_handler_repeat_get_cookie_first_call(
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
 def test_cookie_handler_collect_browser_data_success(
-    mock_header_manager_class,
-    mock_browser_factory,
-    mock_browser,
-    mock_header_manager
+    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
 ):
     """测试收集浏览器数据成功"""
     mock_header_manager_class.return_value = mock_header_manager
@@ -219,10 +210,7 @@ def test_cookie_handler_collect_browser_data_success(
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
 def test_cookie_handler_get_live_name_xpath_success(
-    mock_header_manager_class,
-    mock_browser_factory,
-    mock_browser,
-    mock_header_manager
+    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
 ):
     """测试通过XPath获取直播名称成功"""
     mock_header_manager_class.return_value = mock_header_manager
@@ -248,10 +236,7 @@ def test_cookie_handler_get_live_name_xpath_success(
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
 def test_cookie_handler_get_live_name_css_success(
-    mock_header_manager_class,
-    mock_browser_factory,
-    mock_browser,
-    mock_header_manager
+    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
 ):
     """测试通过CSS选择器获取直播名称成功"""
     mock_header_manager_class.return_value = mock_header_manager
@@ -281,10 +266,7 @@ def test_cookie_handler_get_live_name_css_success(
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
 def test_cookie_handler_get_live_name_fallback(
-    mock_header_manager_class,
-    mock_browser_factory,
-    mock_browser,
-    mock_header_manager
+    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
 ):
     """测试直播名称获取失败回退"""
     mock_header_manager_class.return_value = mock_header_manager
@@ -312,10 +294,7 @@ def test_cookie_handler_get_live_name_fallback(
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
 @patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
 def test_cookie_handler_close(
-    mock_header_manager_class,
-    mock_browser_factory,
-    mock_browser,
-    mock_header_manager
+    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
 ):
     """测试关闭浏览器"""
     mock_header_manager_class.return_value = mock_header_manager

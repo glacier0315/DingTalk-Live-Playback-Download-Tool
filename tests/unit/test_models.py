@@ -62,10 +62,7 @@ def test_headers_data_to_dict():
 
 def test_m3u8_link_creation():
     """测试创建m3u8链接"""
-    m3u8_link = M3u8Link(
-        "https://example.com/live/video.m3u8",
-        "https://example.com/live/"
-    )
+    m3u8_link = M3u8Link("https://example.com/live/video.m3u8", "https://example.com/live/")
     assert m3u8_link.url == "https://example.com/live/video.m3u8"
     assert m3u8_link.prefix == "https://example.com/live/"
     assert m3u8_link.local_file_path is None
@@ -76,7 +73,7 @@ def test_m3u8_link_creation_with_local_path():
     m3u8_link = M3u8Link(
         "https://example.com/live/video.m3u8",
         "https://example.com/live/",
-        "/path/to/local/video.m3u8"
+        "/path/to/local/video.m3u8",
     )
     assert m3u8_link.url == "https://example.com/live/video.m3u8"
     assert m3u8_link.prefix == "https://example.com/live/"
@@ -98,11 +95,7 @@ def test_m3u8_link_validation():
 def test_m3u8_link_local_file_path_validation():
     """测试m3u8链接本地文件路径验证"""
     with pytest.raises(ValueError):
-        M3u8Link(
-            "https://example.com/live/video.m3u8",
-            "https://example.com/live/",
-            123
-        )
+        M3u8Link("https://example.com/live/video.m3u8", "https://example.com/live/", 123)
 
     with pytest.raises(ValueError):
         M3u8Link("invalid-url", "https://example.com/live/")
@@ -118,7 +111,7 @@ def test_video_download_context_creation():
         headers_data=headers_data,
         live_name="测试直播",
         save_dir="Downloads",
-        save_mode="1"
+        save_mode="1",
     )
     assert context.url == "https://n.dingtalk.com/test"
     assert context.live_name == "测试直播"
@@ -134,7 +127,7 @@ def test_video_download_context_get_cookies_dict():
         url="https://n.dingtalk.com/test",
         cookie_data=cookie_data,
         headers_data=headers_data,
-        live_name="测试直播"
+        live_name="测试直播",
     )
     cookies_dict = context.get_cookies_dict()
     assert cookies_dict == {"session": "abc"}
@@ -148,7 +141,7 @@ def test_video_download_context_get_headers_dict():
         url="https://n.dingtalk.com/test",
         cookie_data=cookie_data,
         headers_data=headers_data,
-        live_name="测试直播"
+        live_name="测试直播",
     )
     headers_dict = context.get_headers_dict()
     assert headers_dict == {"User-Agent": "Mozilla"}
@@ -163,7 +156,7 @@ def test_video_download_context_is_save_dir_set():
         cookie_data=cookie_data,
         headers_data=headers_data,
         live_name="测试直播",
-        save_dir="Downloads"
+        save_dir="Downloads",
     )
     assert context.is_save_dir_set() is True
 
@@ -171,6 +164,6 @@ def test_video_download_context_is_save_dir_set():
         url="https://n.dingtalk.com/test",
         cookie_data=cookie_data,
         headers_data=headers_data,
-        live_name="测试直播"
+        live_name="测试直播",
     )
     assert context_no_dir.is_save_dir_set() is False

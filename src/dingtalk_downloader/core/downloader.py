@@ -106,9 +106,7 @@ class Downloader:
         """
         url = validate_required_input(
             "请继续输入钉钉直播分享链接，或输入q退出程序: ",
-            validation_func=lambda x: (
-                x.lower() == "q" or validate_dingtalk_url(x)
-            ),
+            validation_func=lambda x: (x.lower() == "q" or validate_dingtalk_url(x)),
             error_message="输入不正确，请重新输入。",
             input_name="钉钉直播分享链接",
         )
@@ -150,9 +148,7 @@ class Downloader:
             total_links: 总链接数
         """
         for idx, dingtalk_url in list(urls.items())[1:]:
-            logger.info(
-                f"正在下载第 {idx + 1} 个视频，共 {total_links} 个视频"
-            )
+            logger.info(f"正在下载第 {idx + 1} 个视频，共 {total_links} 个视频")
 
             try:
                 context = self.video_manager.repeat_get_context(dingtalk_url)

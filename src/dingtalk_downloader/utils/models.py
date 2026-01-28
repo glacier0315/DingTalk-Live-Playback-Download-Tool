@@ -194,9 +194,7 @@ class M3u8Link:
         if not self.prefix.startswith(("http://", "https://")):
             raise ValueError("prefix必须是有效的HTTP/HTTPS URL")
 
-        if self.local_file_path is not None and not isinstance(
-            self.local_file_path, str
-        ):
+        if self.local_file_path is not None and not isinstance(self.local_file_path, str):
             raise ValueError("local_file_path必须是字符串类型或None")
 
     def __str__(self) -> str:

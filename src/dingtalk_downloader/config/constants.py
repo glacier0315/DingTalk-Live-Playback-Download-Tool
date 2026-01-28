@@ -11,14 +11,12 @@
     - 2026-01-22: 新增直播名称选择器配置
     - 2026-01-27: 支持从环境变量读取配置文件路径
 """
+
 import os
 
 # 配置文件路径
 # 优先级：环境变量 > 默认值
-CONFIG_FILE_PATH = os.getenv(
-    "DINGTALK_DOWNLOADER_CONFIG_PATH",
-    "./config/app.yaml"
-)
+CONFIG_FILE_PATH = os.getenv("DINGTALK_DOWNLOADER_CONFIG_PATH", "./config/app.yaml")
 
 # 浏览器类型
 BROWSER_TYPE_EDGE = "edge"

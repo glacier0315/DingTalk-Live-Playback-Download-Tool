@@ -81,9 +81,7 @@ def _handle_eof_error(
     raise EOFError()
 
 
-def _validate_choice(
-    choice: str, valid_options: List[str]
-) -> bool:
+def _validate_choice(choice: str, valid_options: List[str]) -> bool:
     """
     验证选项是否有效。
 
@@ -173,9 +171,7 @@ def _process_input(
     if choice == "":
         return _handle_empty_input(default_option, error_message)
 
-    return _process_user_choice(
-        choice, valid_options, validation_func, error_message
-    )
+    return _process_user_choice(choice, valid_options, validation_func, error_message)
 
 
 def validate_input(
@@ -212,8 +208,7 @@ def validate_input(
             choice = input(prompt)
 
             result = _process_input(
-                choice, valid_options, validation_func, error_message,
-                default_option
+                choice, valid_options, validation_func, error_message, default_option
             )
             if result is not None:
                 return result
@@ -291,9 +286,7 @@ def validate_required_input(
                 continue
 
             # 自定义验证
-            if _validate_required_input(
-                user_input, validation_func, error_message, input_name
-            ):
+            if _validate_required_input(user_input, validation_func, error_message, input_name):
                 return user_input
 
         except EOFError:
@@ -439,16 +432,13 @@ def _check_file_path_traversal(file_path: str) -> None:
     try:
         real_path = os.path.realpath(file_path)
         abs_path = os.path.abspath(file_path)
-        
+
         if real_path != abs_path:
             raise ValueError(f"检测到符号链接: {file_path} -> {real_path}")
-        
+
         current_dir = os.getcwd()
         if not abs_path.startswith(current_dir):
-            raise ValueError(
-                f"检测到路径遍历攻击: {file_path}. "
-                f"文件路径必须在当前工作目录内。"
-            )
+            raise ValueError(f"检测到路径遍历攻击: {file_path}. " f"文件路径必须在当前工作目录内。")
     except (OSError, ValueError) as e:
         raise ValueError(f"路径验证失败: {e}") from e
 
@@ -510,8 +500,7 @@ def _check_file_size(file_path: str) -> None:
 
     if file_size > max_size:
         raise ValueError(
-            f"文件过大: {file_path} ({file_size} bytes, "
-            f"最大允许 {max_size} bytes)"
+            f"文件过大: {file_path} ({file_size} bytes, " f"最大允许 {max_size} bytes)"
         )
 
     if file_size == 0:
