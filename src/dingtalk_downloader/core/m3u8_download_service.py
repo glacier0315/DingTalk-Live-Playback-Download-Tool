@@ -70,7 +70,6 @@ class M3u8DownloadService:
 
         try:
             m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_link, m3u8_file, m3u8_headers)
-            logger.info(f"m3u8 文件下载成功: {m3u8_file}")
 
             if not m3u8_file or not os.path.exists(m3u8_file):
                 raise DownloadError(f"m3u8 文件下载失败或文件不存在: {m3u8_file}")
