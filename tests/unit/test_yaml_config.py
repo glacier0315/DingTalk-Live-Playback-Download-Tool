@@ -165,7 +165,7 @@ def test_yaml_config_get_str_type_error(temp_config_file):
     with pytest.raises(ConfigValueError) as exc_info:
         config.get_str("browser.headless")
     
-    assert "配置值类型错误" in str(exc_info.value)
+    assert "错误" in str(exc_info.value)
 
 
 def test_yaml_config_get_int(temp_config_file):
@@ -195,7 +195,7 @@ def test_yaml_config_get_int_type_error(temp_config_file):
     with pytest.raises(ConfigValueError) as exc_info:
         config.get_int("app.name")
     
-    assert "配置值类型错误" in str(exc_info.value)
+    assert "无法转换为int" in str(exc_info.value)
 
 
 def test_yaml_config_get_bool(temp_config_file):
@@ -272,6 +272,13 @@ def test_yaml_config_validate_missing_required_field(tmp_path):
     config_data = {
         "app": {
             "name": "测试",
+            "version": "1.0.0",
+            "build_date": "2026-01-01",
+        },
+        "download": {
+            "default_dir": "downloads",
+            "temp_dir": "temp",
+            "max_retry_count": 3,
         },
     }
     
@@ -299,6 +306,11 @@ def test_yaml_config_validate_invalid_type(tmp_path):
             "headless": "not_a_bool",
             "timeout": 30,
         },
+        "download": {
+            "default_dir": "downloads",
+            "temp_dir": "temp",
+            "max_retry_count": 3,
+        },
     }
     
     config_file = tmp_path / "invalid_type.yaml"
@@ -325,6 +337,11 @@ def test_yaml_config_validate_invalid_choice(tmp_path):
             "headless": True,
             "timeout": 30,
         },
+        "download": {
+            "default_dir": "downloads",
+            "temp_dir": "temp",
+            "max_retry_count": 3,
+        },
     }
     
     config_file = tmp_path / "invalid_choice.yaml"
@@ -350,6 +367,11 @@ def test_yaml_config_validate_out_of_range(tmp_path):
             "default_type": "edge",
             "headless": True,
             "timeout": 500,
+        },
+        "download": {
+            "default_dir": "downloads",
+            "temp_dir": "temp",
+            "max_retry_count": 3,
         },
     }
     

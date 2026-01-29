@@ -30,6 +30,7 @@ from dingtalk_downloader.main import main, single_mode, batch_mode
 
 def test_single_mode_with_default_options():
     """测试单个视频下载模式 - 使用默认选项"""
+    mock_user_controller = Mock()
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
@@ -43,7 +44,7 @@ def test_single_mode_with_default_options():
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
 
-        single_mode()
+        single_mode(mock_user_controller)
 
         mock_downloader.download_single_video.assert_called_once_with(
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
@@ -53,6 +54,7 @@ def test_single_mode_with_default_options():
 
 def test_single_mode_with_manual_options():
     """测试单个视频下载模式 - 手动选择选项"""
+    mock_user_controller = Mock()
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
@@ -66,7 +68,7 @@ def test_single_mode_with_manual_options():
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
 
-        single_mode()
+        single_mode(mock_user_controller)
 
         mock_downloader.download_single_video.assert_called_once_with(
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
@@ -76,17 +78,19 @@ def test_single_mode_with_manual_options():
 
 def test_single_mode_keyboard_interrupt():
     """测试单个视频下载模式 - 用户中断"""
+    mock_user_controller = Mock()
     with patch("builtins.input") as mock_input:
         mock_input.side_effect = KeyboardInterrupt()
 
         with pytest.raises(SystemExit) as exc_info:
-            single_mode()
+            single_mode(mock_user_controller)
 
         assert exc_info.value.code == 0
 
 
 def test_single_mode_exception():
     """测试单个视频下载模式 - 异常处理"""
+    mock_user_controller = Mock()
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
@@ -99,7 +103,7 @@ def test_single_mode_exception():
         mock_downloader_class.side_effect = Exception("下载失败")
 
         with pytest.raises(SystemExit) as exc_info:
-            single_mode()
+            single_mode(mock_user_controller)
 
         assert exc_info.value.code == 1
 
@@ -137,7 +141,7 @@ def test_batch_mode_with_default_options():
             mock_downloader = Mock()
             mock_downloader_class.return_value = mock_downloader
 
-            batch_mode()
+            batch_mode(mock_user_controller)
 
             mock_downloader.download_batch_videos.assert_called_once()
             assert mock_downloader_class.call_count == 1
@@ -178,7 +182,7 @@ def test_batch_mode_with_manual_options():
             mock_downloader = Mock()
             mock_downloader_class.return_value = mock_downloader
 
-            batch_mode()
+            batch_mode(mock_user_controller)
 
             mock_downloader.download_batch_videos.assert_called_once()
             assert mock_downloader_class.call_count == 1
@@ -189,11 +193,12 @@ def test_batch_mode_with_manual_options():
 
 def test_batch_mode_keyboard_interrupt():
     """测试批量下载模式 - 用户中断"""
+    mock_user_controller = Mock()
     with patch("builtins.input") as mock_input:
         mock_input.side_effect = KeyboardInterrupt()
 
         with pytest.raises(SystemExit) as exc_info:
-            batch_mode()
+            batch_mode(mock_user_controller)
 
         assert exc_info.value.code == 0
 
@@ -217,7 +222,7 @@ def test_batch_mode_exception():
             mock_file_reader_class.side_effect = Exception("文件读取失败")
 
             with pytest.raises(SystemExit) as exc_info:
-                batch_mode()
+                batch_mode(mock_user_controller)
 
             assert exc_info.value.code == 1
     finally:
@@ -314,6 +319,7 @@ def test_main_default_mode():
 
 def test_single_mode_edge_browser():
     """测试单个视频下载模式 - Edge浏览器"""
+    mock_user_controller = Mock()
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
@@ -327,7 +333,7 @@ def test_single_mode_edge_browser():
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
 
-        single_mode()
+        single_mode(mock_user_controller)
 
         call_args = mock_downloader_class.call_args
         assert call_args[0][0] == BROWSER_TYPE_EDGE
@@ -348,7 +354,7 @@ def test_single_mode_chrome_browser():
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
 
-        single_mode()
+        single_mode(mock_user_controller)
 
         call_args = mock_downloader_class.call_args
         assert call_args[0][0] == BROWSER_TYPE_CHROME
@@ -369,7 +375,7 @@ def test_single_mode_firefox_browser():
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
 
-        single_mode()
+        single_mode(mock_user_controller)
 
         call_args = mock_downloader_class.call_args
         assert call_args[0][0] == BROWSER_TYPE_FIREFOX
@@ -390,7 +396,7 @@ def test_single_mode_default_save_mode():
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
 
-        single_mode()
+        single_mode(mock_user_controller)
 
         call_args = mock_downloader_class.call_args
         assert call_args[0][1] == SAVE_MODE_DEFAULT
@@ -411,7 +417,7 @@ def test_single_mode_manual_save_mode():
         mock_downloader = Mock()
         mock_downloader_class.return_value = mock_downloader
 
-        single_mode()
+        single_mode(mock_user_controller)
 
         call_args = mock_downloader_class.call_args
         assert call_args[0][1] == SAVE_MODE_MANUAL

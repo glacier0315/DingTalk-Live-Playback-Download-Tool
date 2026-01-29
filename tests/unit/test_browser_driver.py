@@ -24,10 +24,15 @@ from dingtalk_downloader.browser.browser_driver import BrowserDriver, COMMON_BRO
 class ConcreteBrowserDriver(BrowserDriver):
     """具体的浏览器驱动实现，用于测试抽象基类"""
     
+    def __init__(self):
+        super().__init__()
+        self.driver = None
+    
     def create_driver(self):
         """创建浏览器实例"""
         mock_driver = MagicMock()
         mock_driver.find_element.return_value.text = "Test Element"
+        self.driver = mock_driver
         return mock_driver
     
     def get_log(self, log_type: str):

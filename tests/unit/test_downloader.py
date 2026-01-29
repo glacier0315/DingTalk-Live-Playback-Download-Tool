@@ -43,12 +43,13 @@ def test_downloader_init_edge_default(mock_video_manager_class, mock_dependency_
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
     mock_dependency_factory.get_n_m3u8dl_re.return_value = mock_n_m3u8dl_re
 
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
     assert downloader.browser_type == BROWSER_TYPE_EDGE
     assert downloader.save_mode == SAVE_MODE_DEFAULT
@@ -74,12 +75,13 @@ def test_downloader_init_chrome_manual(mock_video_manager_class, mock_dependency
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
     mock_dependency_factory.get_n_m3u8dl_re.return_value = mock_n_m3u8dl_re
 
-    downloader = Downloader(BROWSER_TYPE_CHROME, SAVE_MODE_MANUAL)
+    downloader = Downloader(BROWSER_TYPE_CHROME, SAVE_MODE_MANUAL, mock_user_controller)
 
     assert downloader.browser_type == BROWSER_TYPE_CHROME
     assert downloader.save_mode == SAVE_MODE_MANUAL
@@ -105,12 +107,13 @@ def test_downloader_init_firefox_manual(mock_video_manager_class, mock_dependenc
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
     mock_dependency_factory.get_n_m3u8dl_re.return_value = mock_n_m3u8dl_re
 
-    downloader = Downloader(BROWSER_TYPE_FIREFOX, SAVE_MODE_MANUAL)
+    downloader = Downloader(BROWSER_TYPE_FIREFOX, SAVE_MODE_MANUAL, mock_user_controller)
 
     assert downloader.browser_type == BROWSER_TYPE_FIREFOX
     assert downloader.save_mode == SAVE_MODE_MANUAL
@@ -136,12 +139,13 @@ def test_downloader_close(mock_video_manager_class, mock_dependency_factory_clas
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
     mock_dependency_factory.get_n_m3u8dl_re.return_value = mock_n_m3u8dl_re
 
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
     downloader.close()
 
     mock_video_manager.close.assert_called_once()
@@ -160,6 +164,7 @@ def test_download_single_video_success(mock_video_manager_class, mock_dependency
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
@@ -170,7 +175,7 @@ def test_download_single_video_success(mock_video_manager_class, mock_dependency
     mock_video_manager.initialize_download.return_value = mock_context
     mock_video_manager.process_video.return_value = True
 
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
     with patch("builtins.input", return_value="q"):
         downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
@@ -194,6 +199,7 @@ def test_download_single_video_failure(mock_video_manager_class, mock_dependency
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
@@ -204,7 +210,7 @@ def test_download_single_video_failure(mock_video_manager_class, mock_dependency
     mock_video_manager.initialize_download.return_value = mock_context
     mock_video_manager.process_video.return_value = False
 
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
     with patch("builtins.input", return_value="q"):
         downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
@@ -213,7 +219,6 @@ def test_download_single_video_failure(mock_video_manager_class, mock_dependency
         "https://n.dingtalk.com/test?liveUuid=abc"
     )
     mock_video_manager.process_video.assert_called_once_with(mock_context)
-
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
@@ -228,6 +233,7 @@ def test_download_single_video_exit(mock_video_manager_class, mock_dependency_fa
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
@@ -238,7 +244,7 @@ def test_download_single_video_exit(mock_video_manager_class, mock_dependency_fa
     mock_video_manager.initialize_download.return_value = mock_context
     mock_video_manager.process_video.return_value = True
 
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
     with patch("builtins.input", return_value="q"):
         downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
@@ -276,7 +282,7 @@ def test_download_batch_videos_success(mock_video_manager_class, mock_dependency
     mock_video_manager.repeat_get_context.return_value = mock_context2
     mock_video_manager.process_video.return_value = True
 
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
     urls = {
         0: "https://n.dingtalk.com/test1?liveUuid=abc",
@@ -315,7 +321,7 @@ def test_download_batch_videos_failure(mock_video_manager_class, mock_dependency
     mock_video_manager.initialize_download.return_value = mock_context
     mock_video_manager.process_video.return_value = False
 
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
     urls = {
         0: "https://n.dingtalk.com/test1?liveUuid=abc",

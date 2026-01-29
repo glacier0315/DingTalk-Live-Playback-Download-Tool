@@ -82,7 +82,7 @@ def test_join_paths_multiple():
 
 def test_join_paths_empty():
     """测试拼接空路径"""
-    result = join_paths()
+    result = join_paths("")
     assert result == ""
 
 

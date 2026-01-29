@@ -42,7 +42,7 @@ class TestUserInteractionController:
         assert result == "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"
         assert mock_input.call_count == 2
 
-    @patch("builtins.input", return_value="")
+    @patch("builtins.input", side_effect=["", "", "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"])
     def test_get_user_input_empty(self, mock_input):
         """测试获取空用户输入"""
         from dingtalk_downloader.utils.validator import validate_required_input
@@ -52,13 +52,14 @@ class TestUserInteractionController:
             "dingtalk_downloader.core.user_interaction_controller.validate_required_input",
             side_effect=validate_required_input,
         ):
-            with pytest.raises(ValueError):
-                controller.get_user_input(
-                    "请输入钉钉直播回放分享链接: ",
-                    validation_func=lambda x: x.startswith("https://"),
-                    error_message="链接格式不正确",
-                    input_name="钉钉直播链接",
-                )
+            result = controller.get_user_input(
+                "请输入钉钉直播回放分享链接: ",
+                validation_func=lambda x: x.startswith("https://"),
+                error_message="链接格式不正确",
+                input_name="钉钉直播链接",
+            )
+            assert result == "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"
+            assert mock_input.call_count == 3
 
     @patch("builtins.input", return_value="")
     def test_ask_continue_download_continue(self, mock_input):
