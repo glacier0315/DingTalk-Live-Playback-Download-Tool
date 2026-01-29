@@ -43,20 +43,36 @@ class VideoDownloadManager:
         n_m3u8dl_re: N_m3u8DL-RE调用器
     """
 
-    def __init__(self, browser_type: str, save_mode: str):
+    def __init__(
+        self,
+        browser_type: str,
+        save_mode: str,
+        cookie_handler: Optional[CookieHandler] = None,
+        m3u8_parser: Optional[M3u8Parser] = None,
+        m3u8_download_service: Optional[M3u8DownloadService] = None,
+        path_selector: Optional[PathSelector] = None,
+        n_m3u8dl_re: Optional[NM3u8DLRE] = None,
+    ):
         """
         初始化视频下载管理器。
 
         Args:
             browser_type: 浏览器类型（edge/chrome/firefox）
             save_mode: 保存模式（1：默认路径，2：手动选择）
+            cookie_handler: Cookie处理器（可选，用于依赖注入）
+            m3u8_parser: m3u8解析器（可选，用于依赖注入）
+            m3u8_download_service: m3u8下载服务（可选，用于依赖注入）
+            path_selector: 路径选择器（可选，用于依赖注入）
+            n_m3u8dl_re: NM3u8DLRE实例（可选，用于依赖注入）
         """
         self.browser_type = browser_type
-        self.cookie_handler = CookieHandler(browser_type)
-        self.m3u8_parser: Optional[M3u8Parser] = None
-        self.m3u8_download_service: Optional[M3u8DownloadService] = None
-        self.path_selector = PathSelector(save_mode)
-        self.n_m3u8dl_re = NM3u8DLRE()
+        self.save_mode = save_mode
+
+        self.cookie_handler = cookie_handler
+        self.m3u8_parser = m3u8_parser
+        self.m3u8_download_service = m3u8_download_service
+        self.path_selector = path_selector
+        self.n_m3u8dl_re = n_m3u8dl_re
 
         logger.debug(
             f"视频下载管理器初始化完成 - 浏览器类型: {browser_type}, " f"保存模式: {save_mode}"
@@ -74,11 +90,24 @@ class VideoDownloadManager:
         Returns:
             VideoDownloadContext: 视频下载上下文
         """
+        if not self.cookie_handler:
+            self.cookie_handler = CookieHandler(self.browser_type)
+
+        if not self.path_selector:
+            self.path_selector = PathSelector(self.save_mode)
+
         browser, cookie_data, headers_data, live_name = self.cookie_handler.get_cookie(url)
         logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
 
-        self.m3u8_parser = M3u8Parser(browser)
-        self.m3u8_download_service = M3u8DownloadService(self.m3u8_parser)
+        if not self.m3u8_parser:
+            self.m3u8_parser = M3u8Parser(browser)
+
+        if not self.m3u8_download_service:
+            self.m3u8_download_service = M3u8DownloadService(self.m3u8_parser)
+
+        if not self.n_m3u8dl_re:
+            self.n_m3u8dl_re = NM3u8DLRE()
+
         logger.info("m3u8 解析器创建成功")
 
         return VideoDownloadContext(
@@ -101,6 +130,12 @@ class VideoDownloadManager:
         Returns:
             VideoDownloadContext: 视频下载上下文
         """
+        if not self.cookie_handler:
+            self.cookie_handler = CookieHandler(self.browser_type)
+
+        if not self.path_selector:
+            self.path_selector = PathSelector(self.save_mode)
+
         cookie_data, headers_data, live_name = self.cookie_handler.repeat_get_cookie(url)
         logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
@@ -186,9 +221,15 @@ class VideoDownloadManager:
 
         logger.info(f"使用本地 m3u8 文件: {m3u8_link.local_file_path}")
 
+        if not self.path_selector:
+            self.path_selector = PathSelector(self.save_mode)
+
         save_dir = self.path_selector.get_save_dir()
         if not save_dir:
             return False
+
+        if not self.n_m3u8dl_re:
+            self.n_m3u8dl_re = NM3u8DLRE()
 
         logger.info("调用 N_m3u8DL-RE 下载视频")
         logger.debug(

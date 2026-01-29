@@ -39,21 +39,21 @@ def test_video_download_manager_init_edge_default(
     mock_cookie_handler_class.return_value = mock_cookie_handler
 
     mock_path_selector = Mock()
-    mock_path_selector.save_mode = SAVE_MODE_DEFAULT
+    mock_path_selector.save_mode = str(SAVE_MODE_DEFAULT)
     mock_path_selector_class.return_value = mock_path_selector
 
     mock_n_m3u8dl_re = Mock()
     mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
 
-    manager = VideoDownloadManager(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    manager = VideoDownloadManager(BROWSER_TYPE_EDGE, str(SAVE_MODE_DEFAULT))
 
     assert manager.browser_type == BROWSER_TYPE_EDGE
-    assert manager.cookie_handler == mock_cookie_handler
-    assert manager.path_selector == mock_path_selector
-    assert manager.n_m3u8dl_re == mock_n_m3u8dl_re
-    mock_cookie_handler_class.assert_called_once_with(BROWSER_TYPE_EDGE)
-    mock_path_selector_class.assert_called_once_with(SAVE_MODE_DEFAULT)
-    mock_n_m3u8dl_re_class.assert_called_once()
+    assert manager.cookie_handler is None
+    assert manager.path_selector is None
+    assert manager.n_m3u8dl_re is None
+    mock_cookie_handler_class.assert_not_called()
+    mock_path_selector_class.assert_not_called()
+    mock_n_m3u8dl_re_class.assert_not_called()
 
 
 @patch("dingtalk_downloader.core.video_download_manager.CookieHandler")
@@ -67,21 +67,21 @@ def test_video_download_manager_init_chrome_manual(
     mock_cookie_handler_class.return_value = mock_cookie_handler
 
     mock_path_selector = Mock()
-    mock_path_selector.save_mode = SAVE_MODE_MANUAL
+    mock_path_selector.save_mode = str(SAVE_MODE_MANUAL)
     mock_path_selector_class.return_value = mock_path_selector
 
     mock_n_m3u8dl_re = Mock()
     mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
 
-    manager = VideoDownloadManager(BROWSER_TYPE_CHROME, SAVE_MODE_MANUAL)
+    manager = VideoDownloadManager(BROWSER_TYPE_CHROME, str(SAVE_MODE_MANUAL))
 
     assert manager.browser_type == BROWSER_TYPE_CHROME
-    assert manager.cookie_handler == mock_cookie_handler
-    assert manager.path_selector == mock_path_selector
-    assert manager.n_m3u8dl_re == mock_n_m3u8dl_re
-    mock_cookie_handler_class.assert_called_once_with(BROWSER_TYPE_CHROME)
-    mock_path_selector_class.assert_called_once_with(SAVE_MODE_MANUAL)
-    mock_n_m3u8dl_re_class.assert_called_once()
+    assert manager.cookie_handler is None
+    assert manager.path_selector is None
+    assert manager.n_m3u8dl_re is None
+    mock_cookie_handler_class.assert_not_called()
+    mock_path_selector_class.assert_not_called()
+    mock_n_m3u8dl_re_class.assert_not_called()
 
 
 @patch("dingtalk_downloader.core.video_download_manager.CookieHandler")
@@ -95,21 +95,21 @@ def test_video_download_manager_init_firefox_manual(
     mock_cookie_handler_class.return_value = mock_cookie_handler
 
     mock_path_selector = Mock()
-    mock_path_selector.save_mode = SAVE_MODE_MANUAL
+    mock_path_selector.save_mode = str(SAVE_MODE_MANUAL)
     mock_path_selector_class.return_value = mock_path_selector
 
     mock_n_m3u8dl_re = Mock()
     mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
 
-    manager = VideoDownloadManager(BROWSER_TYPE_FIREFOX, SAVE_MODE_MANUAL)
+    manager = VideoDownloadManager(BROWSER_TYPE_FIREFOX, str(SAVE_MODE_MANUAL))
 
     assert manager.browser_type == BROWSER_TYPE_FIREFOX
-    assert manager.cookie_handler == mock_cookie_handler
-    assert manager.path_selector == mock_path_selector
-    assert manager.n_m3u8dl_re == mock_n_m3u8dl_re
-    mock_cookie_handler_class.assert_called_once_with(BROWSER_TYPE_FIREFOX)
-    mock_path_selector_class.assert_called_once_with(SAVE_MODE_MANUAL)
-    mock_n_m3u8dl_re_class.assert_called_once()
+    assert manager.cookie_handler is None
+    assert manager.path_selector is None
+    assert manager.n_m3u8dl_re is None
+    mock_cookie_handler_class.assert_not_called()
+    mock_path_selector_class.assert_not_called()
+    mock_n_m3u8dl_re_class.assert_not_called()
 
 
 @patch("dingtalk_downloader.core.video_download_manager.CookieHandler")
@@ -429,3 +429,168 @@ def test_close(mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_han
     manager.close()
 
     mock_cookie_handler.close.assert_called_once()
+
+
+def test_video_download_manager_init_with_dependency_injection():
+    """测试使用依赖注入初始化"""
+    mock_cookie_handler = Mock()
+    mock_path_selector = Mock()
+    mock_n_m3u8dl_re = Mock()
+
+    manager = VideoDownloadManager(
+        BROWSER_TYPE_EDGE,
+        SAVE_MODE_DEFAULT,
+        cookie_handler=mock_cookie_handler,
+        path_selector=mock_path_selector,
+        n_m3u8dl_re=mock_n_m3u8dl_re,
+    )
+
+    assert manager.browser_type == BROWSER_TYPE_EDGE
+    assert manager.cookie_handler == mock_cookie_handler
+    assert manager.path_selector == mock_path_selector
+    assert manager.n_m3u8dl_re == mock_n_m3u8dl_re
+
+
+def test_initialize_download_with_injected_dependencies():
+    """测试使用注入的依赖初始化下载"""
+    mock_cookie_handler = Mock()
+    mock_path_selector = Mock()
+    mock_m3u8_parser = Mock()
+    mock_m3u8_download_service = Mock()
+    mock_n_m3u8dl_re = Mock()
+
+    mock_browser = Mock()
+    mock_cookie_data = CookieData({"session": "test"})
+    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
+
+    mock_cookie_handler.get_cookie.return_value = (
+        mock_browser,
+        mock_cookie_data,
+        mock_headers_data,
+        "测试直播",
+    )
+
+    manager = VideoDownloadManager(
+        BROWSER_TYPE_EDGE,
+        SAVE_MODE_DEFAULT,
+        cookie_handler=mock_cookie_handler,
+        m3u8_parser=mock_m3u8_parser,
+        m3u8_download_service=mock_m3u8_download_service,
+        path_selector=mock_path_selector,
+        n_m3u8dl_re=mock_n_m3u8dl_re,
+    )
+
+    context = manager.initialize_download("https://n.dingtalk.com/test")
+
+    assert context.url == "https://n.dingtalk.com/test"
+    assert context.cookie_data == mock_cookie_data
+    assert context.headers_data == mock_headers_data
+    assert context.live_name == "测试直播"
+    assert manager.m3u8_parser == mock_m3u8_parser
+    assert manager.m3u8_download_service == mock_m3u8_download_service
+    assert manager.n_m3u8dl_re == mock_n_m3u8dl_re
+    mock_cookie_handler.get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
+
+
+def test_repeat_get_context_with_injected_dependencies():
+    """测试使用注入的依赖重复获取上下文"""
+    mock_cookie_handler = Mock()
+    mock_path_selector = Mock()
+
+    mock_cookie_data = CookieData({"session": "test"})
+    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
+
+    mock_cookie_handler.repeat_get_cookie.return_value = (
+        mock_cookie_data,
+        mock_headers_data,
+        "测试直播",
+    )
+
+    manager = VideoDownloadManager(
+        BROWSER_TYPE_EDGE,
+        SAVE_MODE_DEFAULT,
+        cookie_handler=mock_cookie_handler,
+        path_selector=mock_path_selector,
+    )
+
+    context = manager.repeat_get_context("https://n.dingtalk.com/test")
+
+    assert context.url == "https://n.dingtalk.com/test"
+    assert context.cookie_data == mock_cookie_data
+    assert context.headers_data == mock_headers_data
+    assert context.live_name == "测试直播"
+    mock_cookie_handler.repeat_get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
+
+
+@patch("os.path.exists")
+def test_download_video_with_injected_dependencies(mock_exists):
+    """测试使用注入的依赖下载视频"""
+    mock_exists.return_value = True
+
+    mock_cookie_handler = Mock()
+    mock_path_selector = Mock()
+    mock_m3u8_download_service = Mock()
+    mock_n_m3u8dl_re = Mock()
+
+    mock_m3u8_link = Mock()
+    mock_m3u8_link.url = "https://test.com/video.m3u8"
+    mock_m3u8_link.prefix = "https://test.com/"
+    mock_m3u8_link.local_file_path = "/path/to/video.m3u8"
+
+    mock_m3u8_download_service.fetch_and_download_m3u8.return_value = mock_m3u8_link
+    mock_path_selector.get_save_dir.return_value = "/downloads"
+    mock_n_m3u8dl_re.download.return_value = True
+
+    manager = VideoDownloadManager(
+        BROWSER_TYPE_EDGE,
+        SAVE_MODE_DEFAULT,
+        cookie_handler=mock_cookie_handler,
+        m3u8_download_service=mock_m3u8_download_service,
+        path_selector=mock_path_selector,
+        n_m3u8dl_re=mock_n_m3u8dl_re,
+    )
+
+    context = VideoDownloadContext(
+        url="https://n.dingtalk.com/test",
+        cookie_data=CookieData({"session": "test"}),
+        headers_data=HeadersData({"User-Agent": "Mozilla/5.0"}),
+        live_name="测试直播",
+        save_mode=SAVE_MODE_DEFAULT,
+    )
+
+    result = manager.process_video(context)
+
+    assert result is True
+    mock_m3u8_download_service.fetch_and_download_m3u8.assert_called_once()
+    mock_path_selector.get_save_dir.assert_called_once()
+    mock_n_m3u8dl_re.download.assert_called_once()
+
+
+def test_cleanup_context_with_injected_dependencies():
+    """测试使用注入的依赖清理上下文"""
+    mock_cookie_handler = Mock()
+    mock_path_selector = Mock()
+    mock_m3u8_parser = Mock()
+    mock_m3u8_download_service = Mock()
+
+    manager = VideoDownloadManager(
+        BROWSER_TYPE_EDGE,
+        SAVE_MODE_DEFAULT,
+        cookie_handler=mock_cookie_handler,
+        m3u8_parser=mock_m3u8_parser,
+        m3u8_download_service=mock_m3u8_download_service,
+        path_selector=mock_path_selector,
+    )
+
+    context = VideoDownloadContext(
+        url="https://n.dingtalk.com/test",
+        cookie_data=CookieData({"session": "test"}),
+        headers_data=HeadersData({"User-Agent": "Mozilla/5.0"}),
+        live_name="测试直播",
+        save_mode=SAVE_MODE_DEFAULT,
+    )
+
+    manager.cleanup_context(context)
+
+    assert manager.m3u8_parser is None
+    assert manager.m3u8_download_service is None

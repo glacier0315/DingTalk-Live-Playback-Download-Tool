@@ -19,6 +19,7 @@ from .cookie_handler import CookieError
 from .m3u8_parser import M3u8ParseError
 from .video_download_manager import VideoDownloadManager
 from .user_interaction_controller import UserInteractionController
+from .dependency_factory import DependencyFactory
 from ..utils.models import VideoDownloadContext
 from .exceptions import (
     DownloadError,
@@ -35,13 +36,15 @@ class Downloader:
     下载器类，作为外观类提供统一接口。
 
     该类封装了单个视频下载和批量下载的逻辑，
-    通过VideoDownloadManager、UserInteractionController等辅助类实现功能。
+    通过VideoDownloadManager、UserInteractionController、DependencyFactory等辅助类实现功能。
+    使用依赖注入和工厂模式降低模块间耦合度。
 
     Attributes:
         video_manager: 视频下载管理器
         browser_type: 浏览器类型
         save_mode: 保存模式
         user_controller: 用户交互控制器
+        dependency_factory: 依赖工厂
     """
 
     def __init__(
@@ -49,6 +52,7 @@ class Downloader:
         browser_type: str,
         save_mode: str,
         user_controller: UserInteractionController,
+        dependency_factory: Optional[DependencyFactory] = None,
     ):
         """
         初始化下载器。
@@ -57,11 +61,25 @@ class Downloader:
             browser_type: 浏览器类型（edge/chrome/firefox）
             save_mode: 保存模式（1：默认路径，2：手动选择）
             user_controller: 用户交互控制器
+            dependency_factory: 依赖工厂（可选，用于依赖注入）
         """
         self.browser_type = browser_type
         self.save_mode = save_mode
-        self.video_manager = VideoDownloadManager(browser_type, save_mode)
         self.user_controller = user_controller
+
+        self.dependency_factory = dependency_factory or DependencyFactory()
+
+        cookie_handler = self.dependency_factory.get_cookie_handler(browser_type)
+        path_selector = self.dependency_factory.get_path_selector(save_mode)
+        n_m3u8dl_re = self.dependency_factory.get_n_m3u8dl_re()
+
+        self.video_manager = VideoDownloadManager(
+            browser_type,
+            save_mode,
+            cookie_handler=cookie_handler,
+            path_selector=path_selector,
+            n_m3u8dl_re=n_m3u8dl_re,
+        )
 
         logger.info(f"下载器初始化完成 - 浏览器类型: {browser_type}, 保存模式: {save_mode}")
 
