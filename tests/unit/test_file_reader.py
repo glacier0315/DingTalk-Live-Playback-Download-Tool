@@ -62,7 +62,6 @@ def test_file_reader_csv(sample_csv_file):
     assert "https://n.dingtalk.com/test1" in links.values()
     assert "https://n.dingtalk.com/test2" in links.values()
 
-
 def test_file_reader_excel(sample_excel_file):
     """测试读取 Excel 文件"""
     reader = FileReader(sample_excel_file)

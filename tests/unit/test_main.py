@@ -129,10 +129,8 @@ def test_batch_mode_with_default_options():
 
             mock_file_reader = Mock()
             mock_file_reader.read_links.return_value = {
-                "Sheet1": [
-                    "https://n.dingtalk.com/test1?liveUuid=12345678-1234-1234-1234-1234567890ab",
-                    "https://n.dingtalk.com/test2?liveUuid=12345678-1234-1234-1234-1234567890ab",
-                ]
+                0: "https://n.dingtalk.com/test1?liveUuid=12345678-1234-1234-1234-1234567890ab",
+                1: "https://n.dingtalk.com/test2?liveUuid=12345678-1234-1234-1234-1234567890ab",
             }
             mock_file_reader_class.return_value = mock_file_reader
 
@@ -173,9 +171,7 @@ def test_batch_mode_with_manual_options():
 
             mock_file_reader = Mock()
             mock_file_reader.read_links.return_value = {
-                "Sheet1": [
-                    "https://n.dingtalk.com/test1?liveUuid=12345678-1234-1234-1234-1234567890ab"
-                ]
+                0: "https://n.dingtalk.com/test1?liveUuid=12345678-1234-1234-1234-1234567890ab"
             }
             mock_file_reader_class.return_value = mock_file_reader
 

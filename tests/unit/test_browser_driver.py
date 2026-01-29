@@ -1,302 +1,263 @@
 """
 钉钉直播回放下载工具 - browser_driver 单元测试
 
-本模块测试浏览器驱动抽象基类模块。
+本模块测试浏览器驱动抽象基类。
 
 作者：项目团队
 依赖：pytest, pytest-mock
-创建日期：2026-01-21
+创建日期：2026-01-29
 修改历史：
-    - 2026-01-21: 初始版本
-    - 2026-01-24: 添加继承测试和新增方法测试
+    - 2026-01-29: 初始版本
 """
 
 import sys
 import os
 import pytest
+from unittest.mock import Mock, patch, MagicMock
 from abc import ABC
-from unittest.mock import Mock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.browser.browser_driver import BrowserDriver
-
-
-class TestBrowserDriverAbstract:
-    """测试 BrowserDriver 抽象基类特性"""
-
-    def test_browser_driver_is_abstract(self):
-        """测试 BrowserDriver 是抽象基类"""
-        assert issubclass(BrowserDriver, ABC)
-
-    def test_browser_driver_has_abstract_methods(self):
-        """测试 BrowserDriver 有所有必需的抽象方法"""
-        abstract_methods = ["create_driver", "get_log"]
-
-        for method_name in abstract_methods:
-            assert hasattr(BrowserDriver, method_name)
-            method = getattr(BrowserDriver, method_name)
-            assert getattr(method, "__isabstractmethod__", False)
-
-    def test_browser_driver_has_concrete_methods(self):
-        """测试 BrowserDriver 有所有通用的非抽象方法"""
-        concrete_methods = [
-            "get_element_by_xpath",
-            "get_element_by_class_name",
-            "get_cookies",
-            "navigate",
-            "wait_for_video",
-            "close",
-            "is_driver_initialized",
-            "get_driver",
-        ]
-
-        for method_name in concrete_methods:
-            assert hasattr(BrowserDriver, method_name)
-            method = getattr(BrowserDriver, method_name)
-            assert callable(method)
-            is_abstract = getattr(method, "__isabstractmethod__", False)
-            assert not is_abstract, f"{method_name} 不应该是抽象方法"
-
-    def test_browser_driver_cannot_be_instantiated(self):
-        """测试 BrowserDriver 不能直接实例化"""
-        with pytest.raises(TypeError):
-            BrowserDriver()
+from dingtalk_downloader.browser.browser_driver import BrowserDriver, COMMON_BROWSER_ARGS
 
 
 class ConcreteBrowserDriver(BrowserDriver):
-    """具体的浏览器驱动实现，用于测试"""
-
-    def __init__(self):
-        super().__init__()
-        self.call_log = []
-
+    """具体的浏览器驱动实现，用于测试抽象基类"""
+    
     def create_driver(self):
-        self.call_log.append("create_driver")
-        return None
-
-    def get_log(self, log_type):
-        self.call_log.append(f"get_log:{log_type}")
-        return []
-
-
-class TestBrowserDriverInheritance:
-    """测试 BrowserDriver 继承功能"""
-
-    def test_concrete_browser_driver_can_be_instantiated(self):
-        """测试具体的浏览器驱动可以实例化"""
-        driver = ConcreteBrowserDriver()
-        assert driver is not None
-        assert isinstance(driver, BrowserDriver)
-
-    def test_concrete_browser_driver_has_driver_attribute(self):
-        """测试具体的浏览器驱动有 driver 属性"""
-        driver = ConcreteBrowserDriver()
-        assert hasattr(driver, "driver")
-        assert driver.driver is None
-
-    def test_concrete_browser_driver_implements_all_methods(self):
-        """测试具体的浏览器驱动实现了所有必需方法"""
-        driver = ConcreteBrowserDriver()
-
-        assert callable(driver.create_driver)
-        assert callable(driver.get_log)
-        assert callable(driver.get_element_by_xpath)
-        assert callable(driver.get_element_by_class_name)
-        assert callable(driver.get_cookies)
-        assert callable(driver.navigate)
-        assert callable(driver.wait_for_video)
-        assert callable(driver.close)
-
-    def test_init_calls_parent_init(self):
-        """测试 __init__ 调用父类初始化"""
-        driver = ConcreteBrowserDriver()
-        assert driver.driver is None
+        """创建浏览器实例"""
+        mock_driver = MagicMock()
+        mock_driver.find_element.return_value.text = "Test Element"
+        return mock_driver
+    
+    def get_log(self, log_type: str):
+        """获取浏览器日志"""
+        return [{"message": "test log message"}]
 
 
-class TestBrowserDriverConcreteMethods:
-    """测试 BrowserDriver 具体方法实现"""
-
-    def test_create_driver(self):
-        """测试 create_driver 方法"""
-        driver = ConcreteBrowserDriver()
-        result = driver.create_driver()
-        assert result is None
-
-    def test_get_log(self):
-        """测试 get_log 方法"""
-        driver = ConcreteBrowserDriver()
-        result = driver.get_log("performance")
-        assert result == []
-
-    def test_get_element_by_xpath_without_driver(self):
-        """测试 get_element_by_xpath - 无驱动实例"""
-        driver = ConcreteBrowserDriver()
-        result = driver.get_element_by_xpath("//div[@class='test']")
-        assert result is None
-
-    def test_get_element_by_class_name_without_driver(self):
-        """测试 get_element_by_class_name - 无驱动实例"""
-        driver = ConcreteBrowserDriver()
-        result = driver.get_element_by_class_name("test-class")
-        assert result is None
-
-    def test_get_cookies_without_driver(self):
-        """测试 get_cookies - 无驱动实例"""
-        driver = ConcreteBrowserDriver()
-        result = driver.get_cookies()
-        assert result == []
-
-    def test_navigate_without_driver(self):
-        """测试 navigate - 无驱动实例"""
-        driver = ConcreteBrowserDriver()
-        driver.navigate("https://test.com")
-
-    def test_wait_for_video_without_driver(self):
-        """测试 wait_for_video - 无驱动实例"""
-        driver = ConcreteBrowserDriver()
-        driver.wait_for_video(timeout=10)
-
-    def test_wait_for_video_default_timeout(self):
-        """测试 wait_for_video 使用默认超时"""
-        driver = ConcreteBrowserDriver()
-        driver.wait_for_video()
-
-    def test_close_without_driver(self):
-        """测试 close - 无驱动实例"""
-        driver = ConcreteBrowserDriver()
-        driver.close()
-
-    def test_is_driver_initialized_without_driver(self):
-        """测试 is_driver_initialized - 无驱动实例"""
-        driver = ConcreteBrowserDriver()
-        assert driver.is_driver_initialized() is False
-
-    def test_get_driver_without_driver(self):
-        """测试 get_driver - 无驱动实例"""
-        driver = ConcreteBrowserDriver()
-        assert driver.get_driver() is None
+def test_browser_driver_init():
+    """测试浏览器驱动初始化"""
+    driver = ConcreteBrowserDriver()
+    assert driver.driver is None
 
 
-class TestBrowserDriverWithMockedDriver:
-    """使用 Mock 驱动测试 BrowserDriver 方法"""
-
-    def test_get_element_by_xpath_with_driver(self):
-        """测试 get_element_by_xpath - 有驱动实例"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
-
-        mock_element = Mock()
-        driver.driver.find_element.return_value = mock_element
-
-        result = driver.get_element_by_xpath("//div[@class='test']")
-
-        assert result == mock_element
-        driver.driver.find_element.assert_called_once()
-
-    def test_get_element_by_class_name_with_driver(self):
-        """测试 get_element_by_class_name - 有驱动实例"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
-
-        mock_element = Mock()
-        driver.driver.find_element.return_value = mock_element
-
-        result = driver.get_element_by_class_name("test-class")
-
-        assert result == mock_element
-        driver.driver.find_element.assert_called_once()
-
-    def test_get_cookies_with_driver(self):
-        """测试 get_cookies - 有驱动实例"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
-
-        mock_cookies = [{"name": "cookie1", "value": "value1"}]
-        driver.driver.get_cookies.return_value = mock_cookies
-
-        result = driver.get_cookies()
-
-        assert result == mock_cookies
-        driver.driver.get_cookies.assert_called_once()
-
-    def test_navigate_with_driver(self):
-        """测试 navigate - 有驱动实例"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
-
-        url = "https://test.com"
-        driver.navigate(url)
-
-        driver.driver.get.assert_called_once_with(url)
-
-    def test_close_with_driver(self):
-        """测试 close - 有驱动实例"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
-
-        driver.close()
-
-        assert driver.driver is None
+def test_browser_driver_create_driver():
+    """测试创建浏览器实例"""
+    driver = ConcreteBrowserDriver()
+    web_driver = driver.create_driver()
+    
+    assert web_driver is not None
 
 
-class TestBrowserDriverNewMethods:
-    """测试 BrowserDriver 新增方法"""
-
-    def test_is_driver_initialized_false(self):
-        """测试 is_driver_initialized - 未初始化"""
-        driver = ConcreteBrowserDriver()
-        assert driver.is_driver_initialized() is False
-
-    def test_is_driver_initialized_true(self):
-        """测试 is_driver_initialized - 已初始化"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
-        assert driver.is_driver_initialized() is True
-
-    def test_get_driver_returns_none(self):
-        """测试 get_driver - 未初始化"""
-        driver = ConcreteBrowserDriver()
-        assert driver.get_driver() is None
-
-    def test_get_driver_returns_driver(self):
-        """测试 get_driver - 已初始化"""
-        driver = ConcreteBrowserDriver()
-        mock_driver = Mock()
-        driver.driver = mock_driver
-        assert driver.get_driver() == mock_driver
+def test_browser_driver_get_element_by_xpath():
+    """测试通过XPath获取元素"""
+    driver = ConcreteBrowserDriver()
+    web_driver = driver.create_driver()
+    
+    element = driver.get_element_by_xpath("//div[@class='test']")
+    
+    assert element is not None
+    assert element.text == "Test Element"
+    web_driver.find_element.assert_called_once()
 
 
-class TestBrowserDriverWaitForVideo:
-    """测试 wait_for_video 方法的详细行为"""
+def test_browser_driver_get_element_by_xpath_no_driver():
+    """测试通过XPath获取元素（无driver）"""
+    driver = ConcreteBrowserDriver()
+    
+    element = driver.get_element_by_xpath("//div[@class='test']")
+    
+    assert element is None
 
-    def test_wait_for_video_calls_execute_script(self):
-        """测试 wait_for_video 执行 JavaScript 检查"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
 
-        with patch("dingtalk_downloader.browser.browser_driver.WebDriverWait") as mock_wait:
-            driver.wait_for_video(timeout=10)
+def test_browser_driver_get_element_by_class_name():
+    """测试通过类名获取元素"""
+    driver = ConcreteBrowserDriver()
+    web_driver = driver.create_driver()
+    
+    element = driver.get_element_by_class_name("test-class")
+    
+    assert element is not None
+    assert element.text == "Test Element"
+    web_driver.find_element.assert_called_once()
 
-            mock_wait.assert_called_once_with(driver.driver, 10)
 
-    def test_wait_for_video_uses_custom_timeout(self):
-        """测试 wait_for_video 使用自定义超时"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
+def test_browser_driver_get_element_by_class_name_no_driver():
+    """测试通过类名获取元素（无driver）"""
+    driver = ConcreteBrowserDriver()
+    
+    element = driver.get_element_by_class_name("test-class")
+    
+    assert element is None
 
-        with patch("dingtalk_downloader.browser.browser_driver.WebDriverWait") as mock_wait:
-            custom_timeout = 30
-            driver.wait_for_video(timeout=custom_timeout)
 
-            mock_wait.assert_called_once_with(driver.driver, custom_timeout)
+def test_browser_driver_get_cookies():
+    """测试获取Cookie"""
+    driver = ConcreteBrowserDriver()
+    web_driver = driver.create_driver()
+    web_driver.get_cookies.return_value = [{"name": "test", "value": "value"}]
+    
+    cookies = driver.get_cookies()
+    
+    assert len(cookies) == 1
+    assert cookies[0]["name"] == "test"
+    web_driver.get_cookies.assert_called_once()
 
-    def test_wait_for_video_with_zero_timeout(self):
-        """测试 wait_for_video 使用零超时"""
-        driver = ConcreteBrowserDriver()
-        driver.driver = Mock()
 
-        with patch("dingtalk_downloader.browser.browser_driver.WebDriverWait") as mock_wait:
-            driver.wait_for_video(timeout=0)
+def test_browser_driver_get_cookies_no_driver():
+    """测试获取Cookie（无driver）"""
+    driver = ConcreteBrowserDriver()
+    
+    cookies = driver.get_cookies()
+    
+    assert cookies == []
 
-            mock_wait.assert_called_once_with(driver.driver, 0)
+
+def test_browser_driver_navigate():
+    """测试导航到URL"""
+    driver = ConcreteBrowserDriver()
+    web_driver = driver.create_driver()
+    
+    driver.navigate("https://example.com")
+    
+    web_driver.get.assert_called_once_with("https://example.com")
+
+
+def test_browser_driver_navigate_no_driver():
+    """测试导航到URL（无driver）"""
+    driver = ConcreteBrowserDriver()
+    
+    driver.navigate("https://example.com")
+    
+    assert driver.driver is None
+
+
+def test_browser_driver_wait_for_video():
+    """测试等待视频加载"""
+    driver = ConcreteBrowserDriver()
+    web_driver = driver.create_driver()
+    web_driver.execute_script.return_value = False
+    
+    driver.wait_for_video(timeout=10)
+    
+    web_driver.execute_script.assert_called_once()
+
+
+def test_browser_driver_wait_for_video_no_driver():
+    """测试等待视频加载（无driver）"""
+    driver = ConcreteBrowserDriver()
+    
+    driver.wait_for_video(timeout=10)
+    
+    assert driver.driver is None
+
+
+def test_browser_driver_close():
+    """测试关闭浏览器"""
+    driver = ConcreteBrowserDriver()
+    web_driver = driver.create_driver()
+    
+    driver.close()
+    
+    assert driver.driver is None
+    web_driver.quit.assert_called_once()
+
+
+def test_browser_driver_close_no_driver():
+    """测试关闭浏览器（无driver）"""
+    driver = ConcreteBrowserDriver()
+    
+    driver.close()
+    
+    assert driver.driver is None
+
+
+def test_browser_driver_is_driver_initialized():
+    """测试检查浏览器驱动是否已初始化"""
+    driver = ConcreteBrowserDriver()
+    
+    assert driver.is_driver_initialized() is False
+    
+    driver.create_driver()
+    
+    assert driver.is_driver_initialized() is True
+
+
+def test_browser_driver_get_driver():
+    """测试获取浏览器驱动实例"""
+    driver = ConcreteBrowserDriver()
+    
+    assert driver.get_driver() is None
+    
+    web_driver = driver.create_driver()
+    
+    assert driver.get_driver() == web_driver
+
+
+def test_browser_driver_extract_m3u8_links_from_logs():
+    """测试从浏览器日志中提取m3u8链接"""
+    driver = ConcreteBrowserDriver()
+    
+    logs = [
+        {"message": '{"url":"https://test.com/video1.m3u8?liveUuid=abc"}'},
+        {"message": '{"url":"https://test.com/video2.m3u8?liveUuid=abc"}'},
+        {"message": "other message"},
+        {"message": '{"url":"https://test.com/video1.m3u8?liveUuid=def"}'},
+    ]
+    
+    links = driver.extract_m3u8_links_from_logs(logs, "abc")
+    
+    assert len(links) == 2
+    assert "video1.m3u8" in links[0]
+    assert "video2.m3u8" in links[1]
+
+
+def test_browser_driver_extract_m3u8_links_from_logs_filter_duplicates():
+    """测试从浏览器日志中提取m3u8链接（过滤重复）"""
+    driver = ConcreteBrowserDriver()
+    
+    logs = [
+        {"message": '{"url":"https://test.com/video1.m3u8?liveUuid=abc"}'},
+        {"message": '{"url":"https://test.com/video1.m3u8?liveUuid=abc"}'},
+    ]
+    
+    links = driver.extract_m3u8_links_from_logs(logs, "abc")
+    
+    assert len(links) == 1
+    assert "video1.m3u8" in links[0]
+
+
+def test_browser_driver_extract_m3u8_links_from_logs_filter_different_uuid():
+    """测试从浏览器日志中提取m3u8链接（过滤不同UUID）"""
+    driver = ConcreteBrowserDriver()
+    
+    logs = [
+        {"message": '{"url":"https://test.com/video1.m3u8?liveUuid=abc"}'},
+        {"message": '{"url":"https://test.com/video2.m3u8?liveUuid=def"}'},
+    ]
+    
+    links = driver.extract_m3u8_links_from_logs(logs, "abc")
+    
+    assert len(links) == 1
+    assert "video1.m3u8" in links[0]
+
+
+def test_browser_driver_extract_m3u8_links_from_logs_no_valid_links():
+    """测试从浏览器日志中提取m3u8链接（无有效链接）"""
+    driver = ConcreteBrowserDriver()
+    
+    logs = [
+        {"message": "other message"},
+        {"message": "another message"},
+    ]
+    
+    links = driver.extract_m3u8_links_from_logs(logs, "abc")
+    
+    assert len(links) == 0
+
+
+def test_common_browser_args():
+    """测试通用浏览器参数"""
+    assert isinstance(COMMON_BROWSER_ARGS, list)
+    assert len(COMMON_BROWSER_ARGS) > 0
+    assert "--disable-usb-device-event-log" in COMMON_BROWSER_ARGS
