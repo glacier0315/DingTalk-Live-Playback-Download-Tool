@@ -18,7 +18,12 @@ from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.utils.validator import validate_input, validate_dingtalk_url
+from dingtalk_downloader.utils.validator import (
+    validate_input,
+    validate_dingtalk_url,
+    validate_required_input,
+    validate_file_path,
+)
 
 
 @patch("builtins.input")
@@ -173,3 +178,134 @@ def test_validate_dingtalk_url_valid_live_uuid_uppercase():
     with pytest.raises(ValueError) as exc_info:
         validate_dingtalk_url(url)
     assert "liveUuid 格式无效" in str(exc_info.value)
+
+
+@patch("builtins.input")
+def test_validate_required_input_valid(mock_input):
+    """测试验证必填输入（有效输入）"""
+    mock_input.return_value = "valid_input"
+    result = validate_required_input("请输入: ")
+    assert result == "valid_input"
+
+
+@patch("builtins.input")
+@patch("builtins.print")
+def test_validate_required_input_empty(mock_print, mock_input):
+    """测试验证必填输入（空输入）"""
+    mock_input.side_effect = ["", "valid_input"]
+    result = validate_required_input("请输入: ")
+    assert result == "valid_input"
+    assert mock_print.call_count == 1
+
+
+@patch("builtins.input")
+@patch("builtins.print")
+def test_validate_required_input_validation_error(mock_print, mock_input):
+    """测试验证必填输入（验证失败）"""
+    def validation_func(x):
+        return x == "valid"
+    
+    mock_input.side_effect = ["invalid", "valid"]
+    result = validate_required_input("请输入: ", validation_func=validation_func)
+    assert result == "valid"
+    assert mock_print.call_count == 1
+
+
+@patch("builtins.input")
+def test_validate_required_input_eof_error(mock_input):
+    """测试验证必填输入（EOF错误）"""
+    mock_input.side_effect = EOFError()
+    with pytest.raises(EOFError):
+        validate_required_input("请输入: ")
+
+
+@patch("builtins.input")
+@patch("builtins.print")
+def test_validate_required_input_keyboard_interrupt(mock_print, mock_input):
+    """测试验证必填输入（键盘中断）"""
+    mock_input.side_effect = KeyboardInterrupt()
+    with pytest.raises(KeyboardInterrupt):
+        validate_required_input("请输入: ")
+    mock_print.assert_called()
+
+
+def test_validate_file_path_valid(tmp_path, monkeypatch):
+    """测试验证文件路径（有效路径）"""
+    monkeypatch.chdir(tmp_path)
+    
+    file_path = tmp_path / "test.csv"
+    file_path.write_text("test")
+    result = validate_file_path("test.csv")
+    assert result == "test.csv"
+
+
+def test_validate_file_path_empty():
+    """测试验证文件路径（空路径）"""
+    with pytest.raises(ValueError) as exc_info:
+        validate_file_path("")
+    assert "文件路径不能为空" in str(exc_info.value)
+
+
+def test_validate_file_path_invalid_extension(tmp_path, monkeypatch):
+    """测试验证文件路径（无效扩展名）"""
+    monkeypatch.chdir(tmp_path)
+    
+    file_path = tmp_path / "test.txt"
+    file_path.write_text("test")
+    with pytest.raises(ValueError) as exc_info:
+        validate_file_path("test.txt")
+    assert "文件格式不支持" in str(exc_info.value)
+
+
+def test_validate_file_path_traversal_attack(tmp_path, monkeypatch):
+    """测试验证文件路径（路径遍历攻击）"""
+    monkeypatch.chdir(tmp_path)
+    
+    with pytest.raises(ValueError) as exc_info:
+        validate_file_path("../test.csv")
+    assert "路径遍历攻击检测" in str(exc_info.value) or "路径验证失败" in str(exc_info.value)
+
+
+def test_validate_file_path_not_exists(tmp_path, monkeypatch):
+    """测试验证文件路径（文件不存在）"""
+    monkeypatch.chdir(tmp_path)
+    
+    with pytest.raises(FileNotFoundError) as exc_info:
+        validate_file_path("nonexistent.csv")
+    assert "文件不存在" in str(exc_info.value) or "路径遍历攻击检测" in str(exc_info.value)
+
+
+def test_validate_file_path_not_file(tmp_path, monkeypatch):
+    """测试验证文件路径（不是文件）"""
+    monkeypatch.chdir(tmp_path)
+    
+    dir_path = tmp_path / "test_dir"
+    dir_path.mkdir()
+    with pytest.raises(ValueError) as exc_info:
+        validate_file_path("test_dir")
+    assert "路径不是文件" in str(exc_info.value) or "文件格式不支持" in str(exc_info.value)
+
+
+def test_validate_file_path_too_large(tmp_path, monkeypatch):
+    """测试验证文件路径（文件过大）"""
+    monkeypatch.chdir(tmp_path)
+    
+    file_path = tmp_path / "test.csv"
+    file_path.write_text("test")
+    
+    with patch("os.path.getsize") as mock_getsize:
+        mock_getsize.return_value = 200 * 1024 * 1024  # 200MB
+        with pytest.raises(ValueError) as exc_info:
+            validate_file_path("test.csv")
+        assert "文件过大" in str(exc_info.value)
+
+
+def test_validate_file_path_empty_file(tmp_path, monkeypatch):
+    """测试验证文件路径（文件为空）"""
+    monkeypatch.chdir(tmp_path)
+    
+    file_path = tmp_path / "test.csv"
+    file_path.write_text("")
+    with pytest.raises(ValueError) as exc_info:
+        validate_file_path("test.csv")
+    assert "文件为空" in str(exc_info.value)

@@ -253,3 +253,60 @@ class TestFirefoxDriverFullWorkflow:
                 assert driver is not None
                 firefox_driver.close()
                 assert firefox_driver.driver is None
+
+
+class TestFirefoxDriverExtractM3u8Links:
+    """测试 extract_m3u8_links_from_logs 方法"""
+
+    def test_extract_m3u8_links_from_logs_no_links(self):
+        """测试提取m3u8链接（无链接）"""
+        driver = FirefoxDriver()
+        logs = [{"name": "test", "duration": 100}]
+        result = driver.extract_m3u8_links_from_logs(logs)
+        assert result == []
+
+    def test_extract_m3u8_links_from_logs_multiple_links(self):
+        """测试提取m3u8链接（多个链接）"""
+        driver = FirefoxDriver()
+        logs = [
+            "https://example.com/video1.m3u8?token=abc",
+            "https://example.com/video2.m3u8?token=def"
+        ]
+        result = driver.extract_m3u8_links_from_logs(logs)
+        assert len(result) == 2
+        assert "https://example.com/video1.m3u8?token=abc" in result
+        assert "https://example.com/video2.m3u8?token=def" in result
+
+    def test_extract_m3u8_links_from_logs_exception(self):
+        """测试提取m3u8链接（异常）"""
+        driver = FirefoxDriver()
+        logs = [{"name": "test"}]
+        result = driver.extract_m3u8_links_from_logs(logs)
+        assert result == []
+
+    def test_extract_m3u8_links_from_logs_invalid_object(self):
+        """测试提取m3u8链接（无效对象）"""
+        driver = FirefoxDriver()
+        logs = [None, 123, True]
+        result = driver.extract_m3u8_links_from_logs(logs)
+        assert result == []
+
+    def test_extract_m3u8_links_from_logs_dingtalk_links(self):
+        """测试提取钉钉m3u8链接"""
+        driver = FirefoxDriver()
+        logs = [
+            "https://n.dingtalk.com/live/123.m3u8?auth=abc"
+        ]
+        result = driver.extract_m3u8_links_from_logs(logs)
+        assert len(result) == 1
+        assert "https://n.dingtalk.com/live/123.m3u8?auth=abc" in result
+
+    def test_extract_m3u8_links_from_logs_cleaned_links(self):
+        """测试提取并清理m3u8链接"""
+        driver = FirefoxDriver()
+        logs = [
+            "https://example.com/video.m3u8?token=abc\"]"
+        ]
+        result = driver.extract_m3u8_links_from_logs(logs)
+        assert len(result) == 1
+        assert result[0] == "https://example.com/video.m3u8?token=abc"
