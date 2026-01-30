@@ -27,6 +27,12 @@ from .exceptions import (
 )
 from ..binary.n_m3u8dl_re import NM3u8DLRE
 from ..utils.path_selector import PathSelector
+from ..config.constants import (
+    VIDEO_DOWNLOAD_MAX_RETRIES,
+    VIDEO_DOWNLOAD_RETRY_WAIT_MIN,
+    VIDEO_DOWNLOAD_RETRY_WAIT_MAX,
+    BROWSER_WAIT_TIMEOUT,
+)
 logger = logging.getLogger(__name__)
 
 
@@ -161,79 +167,108 @@ class VideoDownloadManager:
         Returns:
             bool: 下载成功返回True，下载失败返回False
         """
-        max_retries = 20
+        max_retries = VIDEO_DOWNLOAD_MAX_RETRIES
         m3u8_link = None
-        
+
         for attempt in range(1, max_retries + 1):
             try:
-                if attempt > 1:
-                    logger.info(f"第 {attempt} 次尝试下载视频: {context.live_name}")
-                    
-                    random_wait = random.uniform(3, 10)
-                    logger.info(f"等待 {random_wait:.2f} 秒后重试...")
-                    time.sleep(random_wait)
-                    
-                    context = self.repeat_get_context(context.url)
-                    
-                m3u8_link = self.m3u8_download_service.fetch_and_download_m3u8(
-                    context.url, context.get_headers_dict()
-                )
-
+                m3u8_link = self._attempt_download(context, attempt, max_retries)
                 download_success = self._download_video(m3u8_link, context)
-                
+
                 if download_success:
                     logger.info(f"视频下载成功: {context.live_name} (第 {attempt} 次尝试)")
                     return True
-                else:
-                    logger.warning(f"视频下载失败: {context.live_name} (第 {attempt} 次尝试)")
-                    if attempt < max_retries:
-                        continue
-                    else:
-                        logger.error(f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}")
-                        return False
-                    
-            except DownloadError as e:
-                logger.error(f"视频下载失败: {context.live_name} (第 {attempt} 次尝试), 错误: {e}")
-                if attempt < max_retries:
-                    continue
-                else:
-                    logger.error(f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}")
-                    return False
-            except BrowserError as e:
-                logger.error(f"浏览器操作失败: {context.live_name} (第 {attempt} 次尝试), 错误: {e}")
-                if attempt < max_retries:
-                    continue
-                else:
-                    logger.error(f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}")
-                    return False
-            except NetworkError as e:
-                logger.error(f"网络请求失败: {context.live_name} (第 {attempt} 次尝试), 错误: {e}")
-                if attempt < max_retries:
-                    continue
-                else:
-                    logger.error(f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}")
-                    return False
-            except M3u8ParseError as e:
-                logger.error(f"m3u8解析失败: {context.live_name} (第 {attempt} 次尝试), 错误: {e}")
-                if attempt < max_retries:
-                    continue
-                else:
-                    logger.error(f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}")
+
+                logger.warning(f"视频下载失败: {context.live_name} (第 {attempt} 次尝试)")
+
+            except (DownloadError, BrowserError, NetworkError, M3u8ParseError) as e:
+                self._handle_download_exception(context, e, attempt, max_retries)
+                if attempt == max_retries:
                     return False
             except Exception as e:
-                logger.error(f"处理视频时发生未知错误: {context.live_name} (第 {attempt} 次尝试), 错误: {e}", exc_info=True)
-                if attempt < max_retries:
-                    continue
-                else:
-                    logger.error(f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}")
+                logger.error(
+                    f"处理视频时发生未知错误: {context.live_name} (第 {attempt} 次尝试), 错误: {e}",
+                    exc_info=True
+                )
+                if attempt == max_retries:
+                    logger.error(
+                        f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}"
+                    )
                     raise DownloadError(f"处理视频失败: {context.live_name}, 错误: {e}") from e
             finally:
                 if m3u8_link and m3u8_link.local_file_path:
                     self.m3u8_download_service.cleanup_temp_file(
                         m3u8_link.local_file_path
                     )
-        
+
         return False
+
+    def _attempt_download(
+        self,
+        context: VideoDownloadContext,
+        attempt: int,
+        max_retries: int,
+    ) -> M3u8Link:
+        """
+        尝试下载视频。
+
+        Args:
+            context: 视频下载上下文
+            attempt: 当前尝试次数
+            max_retries: 最大重试次数
+
+        Returns:
+            M3u8Link: m3u8链接对象
+        """
+        if attempt > 1:
+            self._prepare_retry(context, attempt)
+
+        m3u8_link = self.m3u8_download_service.fetch_and_download_m3u8(
+            context.url, context.get_headers_dict()
+        )
+        return m3u8_link
+
+    def _prepare_retry(self, context: VideoDownloadContext, attempt: int) -> None:
+        """
+        准备重试。
+
+        Args:
+            context: 视频下载上下文
+            attempt: 当前尝试次数
+        """
+        logger.info(f"第 {attempt} 次尝试下载视频: {context.live_name}")
+
+        random_wait = random.uniform(VIDEO_DOWNLOAD_RETRY_WAIT_MIN, VIDEO_DOWNLOAD_RETRY_WAIT_MAX)
+        logger.info(f"等待 {random_wait:.2f} 秒后重试...")
+        time.sleep(random_wait)
+
+        context = self.repeat_get_context(context.url)
+
+    def _handle_download_exception(
+        self,
+        context: VideoDownloadContext,
+        error: Exception,
+        attempt: int,
+        max_retries: int,
+    ) -> None:
+        """
+        处理下载异常。
+
+        Args:
+            context: 视频下载上下文
+            error: 异常对象
+            attempt: 当前尝试次数
+            max_retries: 最大重试次数
+        """
+        error_type = type(error).__name__
+        logger.error(
+            f"{error_type}: {context.live_name} (第 {attempt} 次尝试), 错误: {error}"
+        )
+
+        if attempt == max_retries:
+            logger.error(
+                f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}"
+            )
 
     def _download_video(
         self,

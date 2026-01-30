@@ -34,6 +34,13 @@ SAVE_MODE_MANUAL = "2"
 # 最大重试次数
 MAX_RETRY_COUNT = 5
 
+# 视频下载最大重试次数
+VIDEO_DOWNLOAD_MAX_RETRIES = 20
+
+# 视频下载重试等待时间范围（秒）
+VIDEO_DOWNLOAD_RETRY_WAIT_MIN = 3
+VIDEO_DOWNLOAD_RETRY_WAIT_MAX = 10
+
 # 浏览器选项映射
 BROWSER_OPTION_MAP = {"1": BROWSER_TYPE_EDGE, "2": BROWSER_TYPE_CHROME, "3": BROWSER_TYPE_FIREFOX}
 
@@ -44,3 +51,9 @@ LIVE_NAME_SELECTORS = [
     ("xpath", '//h3[contains(@class, "live-title")]'),
     ("css", ".live-title"),
 ]
+
+# 文件大小限制（字节）
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+
+# 浏览器等待超时时间（秒）
+BROWSER_WAIT_TIMEOUT = 20

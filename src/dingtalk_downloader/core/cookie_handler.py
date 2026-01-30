@@ -17,7 +17,7 @@ import logging
 from typing import Dict, Tuple, Any
 from ..browser.browser_factory import BrowserFactory
 from ..browser.browser_driver import BrowserDriver
-from ..config.constants import LIVE_NAME_SELECTORS
+from ..config.constants import LIVE_NAME_SELECTORS, BROWSER_WAIT_TIMEOUT
 from ..config.header_manager import HeaderManager
 from ..utils.models import CookieData, HeadersData
 from .exceptions import CookieError
@@ -171,7 +171,7 @@ class CookieHandler:
             logger.debug(f"导航到指定 URL: {url}")
 
             try:
-                self.browser.wait_for_video(20)
+                self.browser.wait_for_video(BROWSER_WAIT_TIMEOUT)
                 logger.debug("视频加载完成")
             except Exception as e:
                 logger.warning(f"等待视频加载时发生错误: {e}")

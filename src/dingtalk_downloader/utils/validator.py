@@ -16,6 +16,7 @@ import re
 import os
 from typing import List, Optional, Callable
 from urllib.parse import urlparse, parse_qs
+from .file_validator import FileValidator
 
 
 def _handle_empty_input(
@@ -362,7 +363,7 @@ def validate_file_path(file_path: str) -> str:
     """
     验证文件路径。
 
-    检查文件路径格式、文件是否存在、文件是否可读、文件大小是否合理。
+    使用统一的FileValidator进行文件路径验证。
 
     Args:
         file_path: 文件路径
@@ -375,135 +376,4 @@ def validate_file_path(file_path: str) -> str:
         PermissionError: 文件不可读时
         ValueError: 文件格式不支持或文件过大时
     """
-    file_path = file_path.strip()
-
-    _check_file_path_not_empty(file_path)
-    _check_file_extension(file_path)
-    _check_file_path_traversal(file_path)
-    _check_file_exists(file_path)
-    _check_is_file(file_path)
-    _check_file_readable(file_path)
-    _check_file_size(file_path)
-
-    return file_path
-
-
-def _check_file_path_not_empty(file_path: str) -> None:
-    """
-    检查文件路径是否为空。
-
-    Args:
-        file_path: 文件路径
-
-    Raises:
-        ValueError: 文件路径为空时
-    """
-    if not file_path:
-        raise ValueError("文件路径不能为空")
-
-
-def _check_file_extension(file_path: str) -> None:
-    """
-    检查文件扩展名。
-
-    Args:
-        file_path: 文件路径
-
-    Raises:
-        ValueError: 文件扩展名不支持时
-    """
-    valid_extensions = [".csv", ".xlsx", ".xls"]
-    if not file_path.lower().endswith(tuple(valid_extensions)):
-        raise ValueError(
-            f"文件格式不支持: {file_path}. "
-            "请使用CSV或Excel文件（.csv, .xlsx, .xls）。"
-        )
-
-
-def _check_file_path_traversal(file_path: str) -> None:
-    """
-    检查路径遍历攻击。
-
-    Args:
-        file_path: 文件路径
-
-    Raises:
-        ValueError: 检测到路径遍历攻击时
-    """
-    try:
-        real_path = os.path.realpath(file_path)
-        abs_path = os.path.abspath(file_path)
-
-        if real_path != abs_path:
-            raise ValueError(f"检测到符号链接: {file_path} -> {real_path}")
-
-        current_dir = os.getcwd()
-        if not abs_path.startswith(current_dir):
-            raise ValueError(f"检测到路径遍历攻击: {file_path}. " f"文件路径必须在当前工作目录内。")
-    except (OSError, ValueError) as e:
-        raise ValueError(f"路径验证失败: {e}") from e
-
-
-def _check_file_exists(file_path: str) -> None:
-    """
-    检查文件是否存在。
-
-    Args:
-        file_path: 文件路径
-
-    Raises:
-        FileNotFoundError: 文件不存在时
-    """
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"文件不存在: {file_path}")
-
-
-def _check_is_file(file_path: str) -> None:
-    """
-    检查是否为文件。
-
-    Args:
-        file_path: 文件路径
-
-    Raises:
-        ValueError: 路径不是文件时
-    """
-    if not os.path.isfile(file_path):
-        raise ValueError(f"路径不是文件: {file_path}")
-
-
-def _check_file_readable(file_path: str) -> None:
-    """
-    检查文件是否可读。
-
-    Args:
-        file_path: 文件路径
-
-    Raises:
-        PermissionError: 文件不可读时
-    """
-    if not os.access(file_path, os.R_OK):
-        raise PermissionError(f"文件不可读: {file_path}")
-
-
-def _check_file_size(file_path: str) -> None:
-    """
-    检查文件大小是否合理。
-
-    Args:
-        file_path: 文件路径
-
-    Raises:
-        ValueError: 文件过大或为空时
-    """
-    file_size = os.path.getsize(file_path)
-    max_size = 100 * 1024 * 1024  # 100MB
-
-    if file_size > max_size:
-        raise ValueError(
-            f"文件过大: {file_path} ({file_size} bytes, "
-            f"最大允许 {max_size} bytes)"
-        )
-
-    if file_size == 0:
-        raise ValueError(f"文件为空: {file_path}")
+    return FileValidator.validate_file_path(file_path)

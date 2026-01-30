@@ -17,6 +17,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 import logging
+from ..config.constants import BROWSER_WAIT_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ class BrowserDriver(ABC):
         if self.driver:
             self.driver.get(url)
 
-    def wait_for_video(self, timeout: int = 20) -> None:
+    def wait_for_video(self, timeout: int = BROWSER_WAIT_TIMEOUT) -> None:
         """
         等待视频加载。
 

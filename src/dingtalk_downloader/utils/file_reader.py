@@ -18,6 +18,7 @@ import pandas as pd
 from typing import Dict
 from pathlib import Path
 from .path_helper import clean_file_path
+from .file_validator import FileValidator
 from ..core.exceptions import FileReaderError
 
 logger = logging.getLogger(__name__)
@@ -55,126 +56,14 @@ class FileReader:
         """
         验证文件路径。
 
-        检查文件扩展名、文件是否存在、文件是否可读、文件大小是否合理。
-        检查路径遍历攻击，确保文件路径在预期的工作目录内。
+        使用统一的FileValidator进行文件路径验证。
 
         Raises:
             FileNotFoundError: 文件不存在时
             PermissionError: 文件不可读时
             ValueError: 文件格式不支持或文件过大时
         """
-        self._check_path_traversal()
-        self._check_file_extension()
-        self._check_file_exists()
-        self._check_is_file()
-        self._check_file_readable()
-        self._check_file_size()
-        logger.debug(
-            f"文件验证通过: {self.file_path}, 大小: {os.path.getsize(self.file_path)} bytes"
-        )
-
-    def _check_path_traversal(self) -> None:
-        """
-        检查路径遍历攻击。
-
-        确保文件路径在预期的工作目录内，防止路径遍历攻击。
-        使用白名单机制和严格的路径规范化处理。
-
-        Raises:
-            ValueError: 路径遍历攻击时
-        """
-        try:
-            file_path = Path(self.file_path)
-            current_dir = Path.cwd()
-
-            real_path = file_path.resolve(strict=False)
-            abs_path = file_path.absolute()
-
-            if real_path != abs_path:
-                logger.warning(f"检测到符号链接: {file_path} -> {real_path}")
-
-            if not str(abs_path).startswith(str(current_dir)):
-                logger.error(f"检测到路径遍历攻击: {file_path}")
-                logger.error(f"当前工作目录: {current_dir}")
-                logger.error(f"文件绝对路径: {abs_path}")
-                raise ValueError(
-                    f"路径遍历攻击检测: 文件路径必须在当前工作目录内。"
-                    f"当前工作目录: {current_dir}"
-                )
-
-            if ".." in str(abs_path.relative_to(current_dir)):
-                logger.error(f"检测到路径遍历尝试: {file_path}")
-                logger.error(f"相对路径包含父目录引用: {abs_path.relative_to(current_dir)}")
-                raise ValueError(
-                    f"路径遍历攻击检测: 路径包含父目录引用。"
-                )
-
-            self.file_path = str(real_path)
-            logger.debug(f"路径验证通过: {self.file_path}")
-
-        except (OSError, ValueError) as e:
-            logger.error(f"路径验证失败: {e}")
-            raise ValueError(f"路径验证失败: {e}") from e
-
-    def _check_file_extension(self) -> None:
-        """
-        检查文件扩展名。
-
-        Raises:
-            ValueError: 文件扩展名不支持时
-        """
-        valid_extensions = [".csv", ".xlsx", ".xls"]
-        if not self.file_path.lower().endswith(tuple(valid_extensions)):
-            raise ValueError(f"文件格式不支持: {self.file_path}. 请使用CSV或Excel文件。")
-
-    def _check_file_exists(self) -> None:
-        """
-        检查文件是否存在。
-
-        Raises:
-            FileNotFoundError: 文件不存在时
-        """
-        if not os.path.exists(self.file_path):
-            raise FileNotFoundError(f"文件不存在: {self.file_path}")
-
-    def _check_is_file(self) -> None:
-        """
-        检查是否为文件。
-
-        Raises:
-            ValueError: 路径不是文件时
-        """
-        if not os.path.isfile(self.file_path):
-            raise ValueError(f"路径不是文件: {self.file_path}")
-
-    def _check_file_readable(self) -> None:
-        """
-        检查文件是否可读。
-
-        Raises:
-            PermissionError: 文件不可读时
-        """
-        if not os.access(self.file_path, os.R_OK):
-            raise PermissionError(f"文件不可读: {self.file_path}")
-
-    def _check_file_size(self) -> None:
-        """
-        检查文件大小是否合理。
-
-        Raises:
-            ValueError: 文件过大或为空时
-        """
-        file_size = os.path.getsize(self.file_path)
-        max_size = 100 * 1024 * 1024
-
-        if file_size > max_size:
-            raise ValueError(
-                f"文件过大: {self.file_path} ({file_size} bytes, "
-                f"最大允许 {max_size} bytes)"
-            )
-
-        if file_size == 0:
-            raise ValueError(f"文件为空: {self.file_path}")
+        self.file_path = FileValidator.validate_file_path(self.file_path)
 
     def read_links(self) -> Dict[int, str]:
         """
