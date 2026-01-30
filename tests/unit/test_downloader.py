@@ -177,13 +177,15 @@ def test_download_single_video_success(mock_video_manager_class, mock_dependency
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
-    with patch("builtins.input", return_value="q"):
-        downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_user_controller.get_user_input.return_value = "q"
+
+    downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
     mock_video_manager.initialize_download.assert_called_once_with(
         "https://n.dingtalk.com/test?liveUuid=abc"
     )
     mock_video_manager.process_video.assert_called_once_with(mock_context)
+    mock_user_controller.get_user_input.assert_called_once()
 
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
@@ -212,13 +214,15 @@ def test_download_single_video_failure(mock_video_manager_class, mock_dependency
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
-    with patch("builtins.input", return_value="q"):
-        downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_user_controller.get_user_input.return_value = "q"
+
+    downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
     mock_video_manager.initialize_download.assert_called_once_with(
         "https://n.dingtalk.com/test?liveUuid=abc"
     )
     mock_video_manager.process_video.assert_called_once_with(mock_context)
+    mock_user_controller.get_user_input.assert_called_once()
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
@@ -246,13 +250,15 @@ def test_download_single_video_exit(mock_video_manager_class, mock_dependency_fa
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
-    with patch("builtins.input", return_value="q"):
-        downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
+    mock_user_controller.get_user_input.return_value = "q"
+
+    downloader.download_single_video("https://n.dingtalk.com/test?liveUuid=abc")
 
     mock_video_manager.initialize_download.assert_called_once_with(
         "https://n.dingtalk.com/test?liveUuid=abc"
     )
     mock_video_manager.process_video.assert_called_once_with(mock_context)
+    mock_user_controller.get_user_input.assert_called_once()
 
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
@@ -268,6 +274,7 @@ def test_download_batch_videos_success(mock_video_manager_class, mock_dependency
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
@@ -289,13 +296,15 @@ def test_download_batch_videos_success(mock_video_manager_class, mock_dependency
         1: "https://n.dingtalk.com/test2?liveUuid=def",
     }
 
-    with patch("builtins.input", return_value="q"):
-        downloader.download_batch_videos(urls)
+    mock_user_controller.ask_continue_download.return_value = False
+
+    downloader.download_batch_videos(urls)
 
     mock_video_manager.initialize_download.assert_called_once_with(
         "https://n.dingtalk.com/test1?liveUuid=abc"
     )
     assert mock_video_manager.process_video.call_count == 2
+    mock_user_controller.ask_continue_download.assert_called_once()
 
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
@@ -311,6 +320,7 @@ def test_download_batch_videos_failure(mock_video_manager_class, mock_dependency
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
@@ -328,13 +338,15 @@ def test_download_batch_videos_failure(mock_video_manager_class, mock_dependency
         1: "https://n.dingtalk.com/test2?liveUuid=def",
     }
 
-    with patch("builtins.input", return_value="q"):
-        downloader.download_batch_videos(urls)
+    mock_user_controller.ask_continue_download.return_value = False
+
+    downloader.download_batch_videos(urls)
 
     mock_video_manager.initialize_download.assert_called_once_with(
         "https://n.dingtalk.com/test1?liveUuid=abc"
     )
     assert mock_video_manager.process_video.call_count == 2
+    mock_user_controller.ask_continue_download.assert_called_once()
 
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
@@ -350,6 +362,7 @@ def test_download_batch_videos_continue(mock_video_manager_class, mock_dependenc
     mock_cookie_handler = Mock()
     mock_path_selector = Mock()
     mock_n_m3u8dl_re = Mock()
+    mock_user_controller = Mock()
 
     mock_dependency_factory.get_cookie_handler.return_value = mock_cookie_handler
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
@@ -364,18 +377,20 @@ def test_download_batch_videos_continue(mock_video_manager_class, mock_dependenc
     mock_video_manager.repeat_get_context.return_value = mock_context2
     mock_video_manager.process_video.return_value = True
 
-    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+    downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
 
     urls = {
         0: "https://n.dingtalk.com/test1?liveUuid=abc",
         1: "https://n.dingtalk.com/test2?liveUuid=def",
     }
 
-    with patch("builtins.input", side_effect=["q"]):
-        downloader.download_batch_videos(urls)
+    mock_user_controller.ask_continue_download.return_value = False
+
+    downloader.download_batch_videos(urls)
 
     mock_video_manager.initialize_download.assert_called_once()
     assert mock_video_manager.process_video.call_count == 2
+    mock_user_controller.ask_continue_download.assert_called_once()
 
 
 def test_downloader_init_with_injected_dependency_factory():
