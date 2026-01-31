@@ -122,20 +122,3 @@ class M3u8FileManager:
             临时目录路径
         """
         return self.temp_dir
-
-    def _resolve_path(self, path: str) -> str:
-        """
-        解析路径。
-
-        支持绝对路径和相对路径。
-
-        Args:
-            path: 路径字符串
-
-        Returns:
-            解析后的路径
-        """
-        if os.path.isabs(path):
-            return path
-        else:
-            return os.path.join(os.getcwd(), path)

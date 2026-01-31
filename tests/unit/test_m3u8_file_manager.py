@@ -139,27 +139,3 @@ def test_m3u8_file_manager_get_temp_dir():
         temp_dir = manager.get_temp_dir()
         
         assert temp_dir is not None
-
-
-def test_m3u8_file_manager_resolve_path_absolute():
-    """测试解析路径（绝对路径）"""
-    with patch("dingtalk_downloader.utils.m3u8_file_manager.YamlConfig") as mock_yaml_config_class:
-        mock_config = Mock()
-        mock_yaml_config_class.get_instance.return_value = mock_config
-        
-        manager = M3u8FileManager()
-        path = manager._resolve_path("/absolute/path")
-        
-        assert "absolute" in path and "path" in path
-
-
-def test_m3u8_file_manager_resolve_path_relative():
-    """测试解析路径（相对路径）"""
-    with patch("dingtalk_downloader.utils.m3u8_file_manager.YamlConfig") as mock_yaml_config_class:
-        mock_config = Mock()
-        mock_yaml_config_class.get_instance.return_value = mock_config
-        
-        manager = M3u8FileManager()
-        path = manager._resolve_path("relative/path")
-        
-        assert "relative/path" in path.lower()
