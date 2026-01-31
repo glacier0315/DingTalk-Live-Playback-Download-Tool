@@ -103,7 +103,9 @@ class VideoDownloadManager:
             self.path_selector = PathSelector(self.save_mode)
 
         cookie_data, headers_data, live_name = self.cookie_handler.get_cookie(url)
-        logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
+        logger.info(f"获取到 Cookie: {cookie_data}")
+        logger.info(f"获取到 请求头: {headers_data}")
+        logger.info(f"获取到 直播名称: {live_name}")
 
         if not self.m3u8_parser:
             self.m3u8_parser = M3u8Parser(self.cookie_handler.browser)
@@ -115,35 +117,6 @@ class VideoDownloadManager:
             self.n_m3u8dl_re = NM3u8DLRE()
 
         logger.info("m3u8 解析器创建成功")
-
-        return VideoDownloadContext(
-            url=url,
-            cookie_data=cookie_data,
-            headers_data=headers_data,
-            live_name=live_name,
-            save_mode=self.path_selector.save_mode,
-        )
-
-    def repeat_get_context(self, url: str) -> VideoDownloadContext:
-        """
-        重复获取下载上下文。
-
-        使用已有的浏览器实例重复获取Cookie和请求头信息。
-
-        Args:
-            url: 钉钉直播回放分享链接
-
-        Returns:
-            VideoDownloadContext: 视频下载上下文
-        """
-        if not self.cookie_handler:
-            self.cookie_handler = CookieHandler(self.browser_type)
-
-        if not self.path_selector:
-            self.path_selector = PathSelector(self.save_mode)
-
-        cookie_data, headers_data, live_name = self.cookie_handler.get_cookie(url)
-        logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
         return VideoDownloadContext(
             url=url,
@@ -236,11 +209,11 @@ class VideoDownloadManager:
         """
         logger.info(f"第 {attempt} 次尝试下载视频: {context.live_name}")
 
-        random_wait = random.uniform(VIDEO_DOWNLOAD_RETRY_WAIT_MIN, VIDEO_DOWNLOAD_RETRY_WAIT_MAX)
-        logger.info(f"等待 {random_wait:.2f} 秒后重试...")
+        random_wait = random.randint(VIDEO_DOWNLOAD_RETRY_WAIT_MIN, VIDEO_DOWNLOAD_RETRY_WAIT_MAX)
+        logger.info(f"等待 {random_wait} 秒后重试...")
         time.sleep(random_wait)
 
-        context = self.repeat_get_context(context.url)
+        context = self.initialize_download(context.url)
 
     def _handle_download_exception(
         self,

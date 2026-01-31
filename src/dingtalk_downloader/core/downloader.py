@@ -14,20 +14,19 @@
 """
 
 import logging
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Optional
 from .cookie_handler import CookieError
 from .m3u8_parser import M3u8ParseError
 from .video_download_manager import VideoDownloadManager
 from .user_interaction_controller import UserInteractionController
 from .dependency_factory import DependencyFactory
-from ..utils.models import VideoDownloadContext
 from .exceptions import (
     DownloadError,
     BrowserError,
     NetworkError,
     ValidationError,
 )
-from ..utils.validator import validate_required_input, validate_dingtalk_url
+from ..utils.validator import validate_dingtalk_url
 logger = logging.getLogger(__name__)
 
 
@@ -128,7 +127,7 @@ class Downloader:
                     self.close()
                     print("程序已退出。")
                     break
-                context = self.video_manager.repeat_get_context(new_url)
+                context = self.video_manager.initialize_download(new_url)
         except KeyboardInterrupt:
             logger.warning("用户中断下载")
             print("\n程序已被用户终止。")
@@ -175,8 +174,7 @@ class Downloader:
             logger.info(f"正在下载第 {idx + 1} 个视频，共 {total_links} 个视频")
 
             try:
-                context = self.video_manager.repeat_get_context(dingtalk_url)
-                logger.info(f"获取到 Cookie 和请求头，直播名称: {context.live_name}")
+                context = self.video_manager.initialize_download(dingtalk_url)
 
                 self.video_manager.process_video(context)
                 logger.info(f"视频下载完成: {context.live_name}")

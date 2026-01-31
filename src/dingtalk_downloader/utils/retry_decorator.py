@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 def retry_decorator(
     max_retries: int = 3,
     exceptions: Tuple[Type[Exception], ...] = (Exception,),
-    wait_min: float = VIDEO_DOWNLOAD_RETRY_WAIT_MIN,
-    wait_max: float = VIDEO_DOWNLOAD_RETRY_WAIT_MAX,
+    wait_min: int = VIDEO_DOWNLOAD_RETRY_WAIT_MIN,
+    wait_max: int = VIDEO_DOWNLOAD_RETRY_WAIT_MAX,
     on_retry: Optional[Callable] = None,
 ):
     """
@@ -70,8 +70,8 @@ def retry_decorator(
                         if on_retry:
                             on_retry(e, attempt, max_retries)
 
-                        wait_time = random.uniform(wait_min, wait_max)
-                        logger.info(f"等待 {wait_time:.2f} 秒后重试...")
+                        wait_time = random.randint(wait_min, wait_max)
+                        logger.info(f"等待 {wait_time} 秒后重试...")
                         time.sleep(wait_time)
                     else:
                         logger.error(
@@ -89,8 +89,8 @@ def retry_decorator(
 def retry_with_backoff(
     max_retries: int = 3,
     exceptions: Tuple[Type[Exception], ...] = (Exception,),
-    base_delay: float = 1.0,
-    max_delay: float = 60.0,
+    base_delay: int = 1,
+    max_delay: int = 60,
     exponential_base: float = 2.0,
 ):
     """
@@ -101,15 +101,15 @@ def retry_with_backoff(
     Args:
         max_retries: 最大重试次数，默认为3
         exceptions: 需要重试的异常类型元组，默认为所有异常
-        base_delay: 基础延迟时间（秒），默认为1.0
-        max_delay: 最大延迟时间（秒），默认为60.0
+        base_delay: 基础延迟时间（秒），默认为1
+        max_delay: 最大延迟时间（秒），默认为60
         exponential_base: 指数退避基数，默认为2.0
 
     Returns:
         装饰器函数
 
     Example:
-        @retry_with_backoff(max_retries=5, base_delay=2.0)
+        @retry_with_backoff(max_retries=5, base_delay=2)
         def api_call():
             pass
     """
@@ -130,11 +130,11 @@ def retry_with_backoff(
                     )
 
                     if attempt < max_retries:
-                        delay = min(
+                        delay = int(min(
                             base_delay * (exponential_base ** (attempt - 1)),
                             max_delay,
-                        )
-                        logger.info(f"等待 {delay:.2f} 秒后重试...")
+                        ))
+                        logger.info(f"等待 {delay} 秒后重试...")
                         time.sleep(delay)
                     else:
                         logger.error(
