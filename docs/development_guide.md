@@ -175,6 +175,8 @@ DingTalk-Live-Playback-Download-Tool/
 │       │   ├── cookie_handler.py    # Cookie处理器
 │       │   ├── m3u8_parser.py      # M3U8解析器
 │       │   ├── m3u8_download_service.py  # M3U8下载服务
+│       │   ├── user_interaction_controller.py # 用户交互控制器
+│       │   ├── dependency_factory.py # 依赖工厂
 │       │   └── exceptions.py        # 自定义异常
 │       └── utils/                   # 工具函数模块
 │           ├── __init__.py
@@ -183,6 +185,7 @@ DingTalk-Live-Playback-Download-Tool/
 │           ├── file_reader.py       # 文件读取
 │           ├── path_selector.py     # 路径选择
 │           ├── path_helper.py       # 路径工具
+│           ├── file_validator.py    # 文件验证
 │           └── m3u8_file_manager.py  # M3U8文件管理
 ├── tests/                           # 测试目录
 │   ├── unit/                        # 单元测试
@@ -190,7 +193,38 @@ DingTalk-Live-Playback-Download-Tool/
 │   │   ├── test_validator.py
 │   │   ├── test_file_reader.py
 │   │   ├── test_path_helper.py
-│   │   └── test_yaml_config.py
+│   │   ├── test_yaml_config.py
+│   │   ├── test_cookie_handler.py
+│   │   ├── test_m3u8_parser.py
+│   │   ├── test_downloader.py
+│   │   ├── test_video_download_manager.py
+│   │   ├── test_browser_driver.py
+│   │   ├── test_browser_factory.py
+│   │   ├── test_edge_driver.py
+│   │   ├── test_chrome_driver.py
+│   │   ├── test_firefox_driver.py
+│   │   ├── test_n_m3u8dl_re.py
+│   │   ├── test_path_selector.py
+│   │   ├── test_file_validator.py
+│   │   ├── test_dependency_factory.py
+│   │   ├── test_header_manager.py
+│   │   ├── test_logger_config.py
+│   │   └── test_user_interaction_controller.py
+│   ├── integration/                 # 集成测试
+│   │   ├── test_download_flow.py
+│   │   └── __init__.py
+│   ├── functional/                  # 功能测试
+│   │   ├── test_user_interaction_controller.py
+│   │   └── __init__.py
+│   ├── fixtures/                    # 测试数据
+│   │   ├── browser_fixtures.py
+│   │   ├── cookie_fixtures.py
+│   │   ├── file_fixtures.py
+│   │   └── mock_fixtures.py
+│   ├── mocks/                       # Mock对象
+│   │   ├── mock_binary.py
+│   │   ├── mock_browser.py
+│   │   └── mock_network.py
 │   └── conftest.py                  # pytest配置
 ├── .gitignore                       # Git忽略文件
 ├── .trae/                           # Trae配置
@@ -212,6 +246,8 @@ DingTalk-Live-Playback-Download-Tool/
 | core/cookie_handler.py         | Cookie处理器    | CookieHandler                                           |
 | core/m3u8_parser.py            | M3U8解析器      | M3u8Parser                                              |
 | core/m3u8_download_service.py  | M3U8下载服务    | M3u8DownloadService                                     |
+| core/user_interaction_controller.py | 用户交互控制器 | UserInteractionController                                 |
+| core/dependency_factory.py     | 依赖工厂        | DependencyFactory                                        |
 | browser/browser_factory.py     | 浏览器工厂      | BrowserFactory                                          |
 | browser/browser_driver.py      | 浏览器驱动基类  | BrowserDriver                                           |
 | binary/n_m3u8dl_re.py          | N_m3u8DL-RE封装 | NM3u8DLRE                                               |
@@ -219,8 +255,10 @@ DingTalk-Live-Playback-Download-Tool/
 | utils/validator.py             | 输入验证        | validate_input(), validate_dingtalk_url()               |
 | utils/file_reader.py           | 文件读取        | FileReader                                              |
 | utils/path_selector.py         | 路径选择        | PathSelector                                            |
+| utils/file_validator.py        | 文件验证        | FileValidator                                           |
 | config/yaml_config.py          | YAML配置管理    | YamlConfig                                              |
 | config/logger_config.py        | 日志配置        | LoggerConfig                                            |
+| config/header_manager.py       | 请求头管理      | HeaderManager                                           |
 
 ---
 
@@ -290,7 +328,6 @@ git checkout -b docs/update-readme
 from typing import Optional, List, Dict
 from dataclasses import dataclass
 
-
 class ClassName:
     """类描述"""
 
@@ -326,7 +363,6 @@ class ClassName:
 ```python
 import pytest
 from dingtalk_downloader.utils.models import CookieData
-
 
 class TestCookieData:
     """测试CookieData类"""
@@ -653,7 +689,6 @@ def some_function():
 
 ```bash
 # 进入调试模式后,可以使用以下命令:
-
 n  # 执行下一行
 s  # 进入函数
 c  # 继续执行
@@ -732,15 +767,37 @@ def some_function():
     driver.save_screenshot("debug.png")
 ```
 
-### 5.5 性能分析
+### 5.5 依赖注入调试
 
-#### 5.5.1 使用cProfile
+#### 5.5.1 查看依赖实例
+
+```python
+# 在DependencyFactory中添加调试方法
+def debug_instances(self):
+    """查看所有缓存的实例"""
+    for key, instance in self._instances.items():
+        print(f"{key}: {instance}")
+```
+
+#### 5.5.2 清除依赖缓存
+
+```python
+# 在测试中清除依赖缓存
+def test_something():
+    factory = DependencyFactory()
+    factory.clear_instances()
+    # 现在可以创建新的实例
+```
+
+### 5.6 性能分析
+
+#### 5.6.1 使用cProfile
 
 ```bash
 python -m cProfile -o profile.stats -m dingtalk_downloader.main
 ```
 
-#### 5.5.2 查看性能报告
+#### 5.6.2 查看性能报告
 
 ```python
 import pstats
@@ -750,9 +807,9 @@ p.sort_stats('cumulative')
 p.print_stats(10)  # 显示前10个最耗时的函数
 ```
 
-### 5.6 内存分析
+### 5.7 内存分析
 
-#### 5.6.1 使用memory_profiler
+#### 5.7.1 使用memory_profiler
 
 ```bash
 pip install memory_profiler
@@ -781,7 +838,7 @@ python -m memory_profiler dingtalk_downloader/main.py
 **症状**:
 
 ```text
-ERROR: Could not find a version that satisfies the requirement xxx
+ERROR: Could not find a version that satisfies requirement xxx
 ```
 
 **解决方案**:
@@ -877,6 +934,7 @@ Coverage: 80%
 #### 问题7: 下载速度慢
 
 **症状**:
+
 下载速度很慢
 
 **解决方案**:
@@ -888,6 +946,7 @@ Coverage: 80%
 #### 问题8: 内存占用高
 
 **症状**:
+
 程序运行时内存占用很高
 
 **解决方案**:
@@ -949,6 +1008,13 @@ Coverage: 80%
 3. **使用HTTPS**: 使用安全的通信协议
 4. **定期更新依赖**: 及时更新第三方库
 5. **最小权限原则**: 只给程序必要的权限
+
+### 7.7 依赖注入
+
+1. **使用依赖工厂**: 通过DependencyFactory创建依赖
+2. **支持依赖注入**: 在构造函数中注入依赖
+3. **便于测试**: 依赖注入使得单元测试更容易
+4. **降低耦合**: 减少模块间的直接依赖
 
 ---
 

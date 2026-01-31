@@ -26,6 +26,7 @@
 3. **依赖倒置**: 高层模块不依赖低层模块,都依赖抽象
 4. **开闭原则**: 对扩展开放,对修改关闭
 5. **接口隔离**: 通过接口定义模块间交互
+6. **依赖注入**: 使用工厂模式实现依赖注入,降低耦合度
 
 ### 1.2 整体架构图
 
@@ -33,6 +34,7 @@
 graph TB
     subgraph "用户交互层"
         MAIN[main.py<br/>程序入口]
+        USER_CTRL[UserInteractionController<br/>用户交互控制器]
     end
 
     subgraph "业务逻辑层"
@@ -41,6 +43,7 @@ graph TB
         COOKIE_HDL[CookieHandler<br/>Cookie处理器]
         M3U8_SVC[M3u8DownloadService<br/>M3U8下载服务]
         M3U8_PARSER[M3u8Parser<br/>M3U8解析器]
+        DEP_FACTORY[DependencyFactory<br/>依赖工厂]
     end
 
     subgraph "浏览器自动化层"
@@ -56,6 +59,7 @@ graph TB
         FILE_READER[FileReader<br/>文件读取]
         PATH_SELECTOR[PathSelector<br/>路径选择]
         PATH_HELPER[PathHelper<br/>路径工具]
+        FILE_VALIDATOR[FileValidator<br/>文件验证]
     end
 
     subgraph "二进制工具层"
@@ -82,15 +86,25 @@ graph TB
         FILE_SYS[本地文件系统]
     end
 
+    MAIN --> USER_CTRL
     MAIN --> DOWNLOADER
     MAIN --> VALIDATOR
     MAIN --> FILE_READER
 
     DOWNLOADER --> VIDEO_MGR
+    DOWNLOADER --> DEP_FACTORY
+
     VIDEO_MGR --> COOKIE_HDL
     VIDEO_MGR --> M3U8_SVC
     VIDEO_MGR --> PATH_SELECTOR
     VIDEO_MGR --> NM3U8DL
+    VIDEO_MGR --> MODELS
+
+    DEP_FACTORY --> COOKIE_HDL
+    DEP_FACTORY --> M3U8_PARSER
+    DEP_FACTORY --> M3U8_SVC
+    DEP_FACTORY --> PATH_SELECTOR
+    DEP_FACTORY --> NM3U8DL
 
     COOKIE_HDL --> BROWSER_FACTORY
     BROWSER_FACTORY --> BROWSER_DRIVER
@@ -103,10 +117,6 @@ graph TB
 
     COOKIE_HDL --> HEADER_MGR
     COOKIE_HDL --> CONSTANTS
-
-    VIDEO_MGR --> MODELS
-    COOKIE_HDL --> MODELS
-    M3U8_SVC --> MODELS
 
     DOWNLOADER --> YAML_CONFIG
     MAIN --> YAML_CONFIG
@@ -121,6 +131,7 @@ graph TB
     style COOKIE_HDL fill:#fff4e1
     style M3U8_SVC fill:#fff4e1
     style M3U8_PARSER fill:#fff4e1
+    style DEP_FACTORY fill:#fff4e1
     style BROWSER_FACTORY fill:#f0e1ff
     style BROWSER_DRIVER fill:#f0e1ff
     style YAML_CONFIG fill:#ffe1f0
@@ -132,7 +143,7 @@ graph TB
 #### 1.3.1 用户交互层
 
 - **职责**: 接收用户输入,提供命令行交互界面
-- **组件**: main.py
+- **组件**: main.py, UserInteractionController
 - **特点**: 简洁的命令行界面,支持单个和批量下载模式
 
 #### 1.3.2 业务逻辑层
@@ -144,7 +155,8 @@ graph TB
   - CookieHandler: Cookie获取和管理
   - M3u8DownloadService: M3U8文件下载
   - M3u8Parser: M3U8链接解析
-- **特点**: 采用外观模式简化接口,职责清晰
+  - DependencyFactory: 依赖工厂,管理组件创建
+- **特点**: 采用外观模式简化接口,职责清晰,支持依赖注入
 
 #### 1.3.3 浏览器自动化层
 
@@ -153,7 +165,7 @@ graph TB
   - BrowserFactory: 工厂类,创建浏览器实例
   - BrowserDriver: 抽象基类,定义浏览器驱动接口
   - EdgeDriver/ChromeDriver/FirefoxDriver: 具体浏览器驱动实现
-- **特点**: 采用工厂模式和抽象工厂模式
+- **特点**: 采用工厂模式和抽象工厂模式,支持多种浏览器
 
 #### 1.3.4 工具层
 
@@ -163,6 +175,7 @@ graph TB
   - FileReader: 文件读取(CSV/Excel)
   - PathSelector: 路径选择
   - PathHelper: 路径处理
+  - FileValidator: 文件验证
 - **特点**: 独立可复用,无业务逻辑
 
 #### 1.3.5 二进制工具层
@@ -196,7 +209,7 @@ graph TB
 | 技术类别     | 技术选型 | 版本要求 | 选型依据                            |
 | ------------ | -------- | -------- | ----------------------------------- |
 | 编程语言     | Python   | 3.8+     | 生态丰富,开发效率高,跨平台支持好    |
-| 浏览器自动化 | Selenium | 4.6.0+   | 成熟稳定,支持多种浏览器,社区活跃    |
+| 浏览器自动化 | Selenium | 4.0.0+   | 成熟稳定,支持多种浏览器,社区活跃    |
 | HTTP请求     | Requests | 2.28.0+  | 简洁易用,功能完善,性能优秀          |
 | 数据处理     | Pandas   | 最新版   | 强大的数据处理能力,支持多种文件格式 |
 | Excel处理    | OpenPyXL | 3.0.0+   | 纯Python实现,功能完善,性能良好      |
@@ -228,7 +241,7 @@ graph TB
 - Python 3.6+: 类型提示支持较弱
 - Python 3.10+: 部分依赖可能不兼容
 
-#### 2.3.2 Selenium 4.6.0+
+#### 2.3.2 Selenium 4.0.0+
 
 **选型理由**:
 
@@ -301,6 +314,8 @@ src/dingtalk_downloader/
 │   ├── cookie_handler.py            # Cookie处理器
 │   ├── m3u8_parser.py              # M3U8解析器
 │   ├── m3u8_download_service.py    # M3U8下载服务
+│   ├── user_interaction_controller.py # 用户交互控制器
+│   ├── dependency_factory.py       # 依赖工厂
 │   └── exceptions.py                # 自定义异常
 ├── browser/                         # 浏览器自动化
 │   ├── __init__.py
@@ -319,6 +334,7 @@ src/dingtalk_downloader/
 │   ├── file_reader.py               # 文件读取
 │   ├── path_selector.py             # 路径选择
 │   ├── path_helper.py               # 路径工具
+│   ├── file_validator.py            # 文件验证
 │   └── m3u8_file_manager.py       # M3U8文件管理
 └── config/                          # 配置管理
     ├── __init__.py
@@ -347,14 +363,41 @@ src/dingtalk_downloader/
 - `batch_mode()`: 批量下载模式
 - `_get_user_inputs()`: 获取用户输入
 - `_create_downloader()`: 创建下载器实例
+- `_handle_download_error()`: 处理下载错误
+- `_handle_interrupt()`: 处理用户中断
 
 **设计特点**:
 
 - 简洁的命令行界面
 - 完善的输入验证
 - 友好的错误提示
+- 良好的异常处理
 
-#### 3.2.2 core/downloader.py - 下载器(外观类)
+#### 3.2.2 core/user_interaction_controller.py - 用户交互控制器
+
+**职责**:
+
+1. 统一管理用户交互
+2. 获取用户输入
+3. 询问用户是否继续
+
+**关键类**:
+
+- `UserInteractionController`: 用户交互控制器
+
+**关键方法**:
+
+- `get_user_input()`: 获取用户输入
+- `ask_continue_download()`: 询问是否继续下载
+- `ask_file_path()`: 询问文件路径
+
+**设计特点**:
+
+- 封装用户交互逻辑
+- 提供统一的交互接口
+- 支持输入验证
+
+#### 3.2.3 core/downloader.py - 下载器(外观类)
 
 **职责**:
 
@@ -376,8 +419,9 @@ src/dingtalk_downloader/
 **设计模式**:
 
 - **外观模式**: 简化接口,隐藏复杂性
+- **依赖注入**: 使用DependencyFactory注入依赖
 
-#### 3.2.3 core/video_download_manager.py - 视频下载管理器
+#### 3.2.4 core/video_download_manager.py - 视频下载管理器
 
 **职责**:
 
@@ -385,6 +429,7 @@ src/dingtalk_downloader/
 2. 协调Cookie获取、M3U8解析、视频下载
 3. 管理下载上下文
 4. 处理下载状态和错误
+5. 支持自动重试机制
 
 **关键类**:
 
@@ -393,17 +438,18 @@ src/dingtalk_downloader/
 **关键方法**:
 
 - `initialize_download()`: 初始化下载环境
-- `repeat_get_context()`: 重复获取下载上下文
 - `process_video()`: 处理单个视频下载
 - `close()`: 关闭浏览器,释放资源
+- `cleanup_context()`: 清理下载上下文
 
 **设计特点**:
 
 - 职责清晰,专注流程管理
 - 支持单个和批量下载
 - 完善的错误处理
+- 自动重试机制(最大20次)
 
-#### 3.2.4 core/cookie_handler.py - Cookie处理器
+#### 3.2.5 core/cookie_handler.py - Cookie处理器
 
 **职责**:
 
@@ -419,7 +465,7 @@ src/dingtalk_downloader/
 **关键方法**:
 
 - `get_cookie()`: 获取Cookie和请求头
-- `repeat_get_cookie()`: 重复获取Cookie
+- `_collect_browser_data()`: 从浏览器收集数据
 - `_get_live_name()`: 获取直播名称
 - `close()`: 关闭浏览器
 
@@ -428,8 +474,9 @@ src/dingtalk_downloader/
 - 支持多种浏览器
 - 自动获取请求头
 - 多选择器获取直播名称
+- 支持上下文管理器
 
-#### 3.2.5 core/m3u8_parser.py - M3U8解析器
+#### 3.2.6 core/m3u8_parser.py - M3U8解析器
 
 **职责**:
 
@@ -451,17 +498,18 @@ src/dingtalk_downloader/
 
 **设计特点**:
 
-- 支持重试机制
+- 支持重试机制(最大5次)
 - 从浏览器日志提取链接
 - 使用JavaScript执行fetch请求
 
-#### 3.2.6 core/m3u8_download_service.py - M3U8下载服务
+#### 3.2.7 core/m3u8_download_service.py - M3U8下载服务
 
 **职责**:
 
 1. 获取并下载M3U8文件
 2. 验证下载结果
 3. 返回M3U8链接对象
+4. 清理临时文件
 
 **关键类**:
 
@@ -470,14 +518,42 @@ src/dingtalk_downloader/
 **关键方法**:
 
 - `fetch_and_download_m3u8()`: 获取并下载M3U8文件
+- `cleanup_temp_file()`: 清理临时文件
 
 **设计特点**:
 
 - 单一职责,专注M3U8下载
 - 完善的错误处理
 - 返回值对象
+- 自动清理临时文件
 
-#### 3.2.7 browser/browser_factory.py - 浏览器工厂
+#### 3.2.8 core/dependency_factory.py - 依赖工厂
+
+**职责**:
+
+1. 创建和管理各种依赖实例
+2. 使用单例模式确保相同参数返回相同实例
+3. 实现依赖注入
+
+**关键类**:
+
+- `DependencyFactory`: 依赖工厂类
+
+**关键方法**:
+
+- `get_cookie_handler()`: 获取Cookie处理器
+- `get_m3u8_parser()`: 获取M3U8解析器
+- `get_path_selector()`: 获取路径选择器
+- `get_n_m3u8dl_re()`: 获取NM3u8DLRE实例
+- `get_m3u8_download_service()`: 获取M3U8下载服务
+- `clear_instances()`: 清除所有缓存的实例
+
+**设计模式**:
+
+- **工厂模式**: 封装对象创建逻辑
+- **单例模式**: 确保相同参数返回相同实例
+
+#### 3.2.9 browser/browser_factory.py - 浏览器工厂
 
 **职责**:
 
@@ -497,7 +573,7 @@ src/dingtalk_downloader/
 - **工厂模式**: 封装对象创建逻辑
 - **简单工厂**: 根据类型创建不同浏览器
 
-#### 3.2.8 browser/browser_driver.py - 浏览器驱动基类
+#### 3.2.10 browser/browser_driver.py - 浏览器驱动基类
 
 **职责**:
 
@@ -515,13 +591,15 @@ src/dingtalk_downloader/
 - `get_log()`: 获取浏览器日志(抽象方法)
 - `get_cookies()`: 获取Cookie(通用方法)
 - `navigate()`: 导航到URL(通用方法)
+- `wait_for_video()`: 等待视频加载(通用方法)
 - `close()`: 关闭浏览器(通用方法)
+- `extract_m3u8_links_from_logs()`: 从日志中提取M3U8链接(通用方法)
 
 **设计模式**:
 
 - **模板方法模式**: 定义算法骨架,子类实现具体步骤
 
-#### 3.2.9 binary/n_m3u8dl_re.py - N_m3u8DL-RE封装
+#### 3.2.11 binary/n_m3u8dl_re.py - N_m3u8DL-RE封装
 
 **职责**:
 
@@ -546,7 +624,7 @@ src/dingtalk_downloader/
 - 支持Cookie和请求头
 - 完善的错误处理
 
-#### 3.2.10 utils/models.py - 数据模型
+#### 3.2.12 utils/models.py - 数据模型
 
 **职责**:
 
@@ -567,7 +645,7 @@ src/dingtalk_downloader/
 - 不可变性(frozen=True)
 - 类型验证
 
-#### 3.2.11 utils/validator.py - 输入验证
+#### 3.2.13 utils/validator.py - 输入验证
 
 **职责**:
 
@@ -588,7 +666,7 @@ src/dingtalk_downloader/
 - 友好的错误提示
 - 支持自定义验证
 
-#### 3.2.12 utils/file_reader.py - 文件读取
+#### 3.2.14 utils/file_reader.py - 文件读取
 
 **职责**:
 
@@ -605,6 +683,7 @@ src/dingtalk_downloader/
 - `read_links()`: 读取链接
 - `_read_csv()`: 读取CSV文件
 - `_read_excel()`: 读取Excel文件
+- `_extract_links_from_dataframe()`: 从DataFrame中提取链接
 
 **设计特点**:
 
@@ -612,7 +691,7 @@ src/dingtalk_downloader/
 - 支持CSV和Excel
 - 完善的错误处理
 
-#### 3.2.13 utils/path_selector.py - 路径选择
+#### 3.2.15 utils/path_selector.py - 路径选择
 
 **职责**:
 
@@ -635,7 +714,33 @@ src/dingtalk_downloader/
 - 使用tkinter文件选择对话框
 - 从配置文件读取默认路径
 
-#### 3.2.14 config/yaml_config.py - YAML配置管理
+#### 3.2.16 utils/file_validator.py - 文件验证
+
+**职责**:
+
+1. 验证文件路径
+2. 检查文件格式
+3. 检查文件大小
+
+**关键类**:
+
+- `FileValidator`: 文件验证器
+
+**关键方法**:
+
+- `validate_file_path()`: 验证文件路径
+- `_check_file_exists()`: 检查文件是否存在
+- `_check_file_readable()`: 检查文件是否可读
+- `_check_file_format()`: 检查文件格式
+- `_check_file_size()`: 检查文件大小
+
+**设计特点**:
+
+- 统一的文件验证接口
+- 完善的错误提示
+- 支持多种文件格式
+
+#### 3.2.17 config/yaml_config.py - YAML配置管理
 
 **职责**:
 
@@ -667,7 +772,7 @@ src/dingtalk_downloader/
 - 配置验证机制
 - 支持嵌套配置
 
-#### 3.2.15 config/logger_config.py - 日志配置
+#### 3.2.18 config/logger_config.py - 日志配置
 
 **职责**:
 
@@ -852,74 +957,76 @@ flowchart LR
 
     subgraph "验证层"
         C[Validator<br/>输入验证]
+        D[FileValidator<br/>文件验证]
     end
 
     subgraph "业务处理层"
-        D[Downloader<br/>外观类]
-        E[VideoDownloadManager<br/>流程管理]
-        F[CookieHandler<br/>Cookie处理]
-        G[M3u8DownloadService<br/>M3U8下载]
+        E[Downloader<br/>外观类]
+        F[VideoDownloadManager<br/>流程管理]
+        G[CookieHandler<br/>Cookie处理]
+        H[M3u8DownloadService<br/>M3U8下载]
     end
 
     subgraph "浏览器自动化层"
-        H[BrowserDriver<br/>浏览器驱动]
-        I[钉钉网站<br/>外部系统]
+        I[BrowserDriver<br/>浏览器驱动]
+        J[钉钉网站<br/>外部系统]
     end
 
     subgraph "工具层"
-        J[FileReader<br/>文件读取]
-        K[PathSelector<br/>路径选择]
+        K[FileReader<br/>文件读取]
+        L[PathSelector<br/>路径选择]
     end
 
     subgraph "二进制工具层"
-        L[NM3u8DLRE<br/>视频下载]
+        M[NM3u8DLRE<br/>视频下载]
     end
 
     subgraph "数据模型层"
-        M[CookieData<br/>Cookie值对象]
-        N[HeadersData<br/>请求头值对象]
-        O[M3u8Link<br/>M3U8链接值对象]
-        P[VideoDownloadContext<br/>下载上下文]
+        N[CookieData<br/>Cookie值对象]
+        O[HeadersData<br/>请求头值对象]
+        P[M3u8Link<br/>M3U8链接值对象]
+        Q[VideoDownloadContext<br/>下载上下文]
     end
 
     subgraph "输出数据"
-        Q[视频文件<br/>.mp4/.ts]
-        R[日志文件<br/>.log]
+        R[视频文件<br/>.mp4/.ts]
+        S[日志文件<br/>.log]
     end
 
     A --> C
-    B --> J
-    J --> C
+    B --> K
+    K --> D
 
-    C --> D
+    C --> E
     D --> E
     E --> F
-    E --> G
-
+    F --> G
     F --> H
-    H --> I
-    I --> H
-    H --> F
 
-    F --> M
-    F --> N
-    M --> P
-    N --> P
+    G --> I
+    I --> J
+    J --> I
+    I --> G
 
-    G --> H
+    G --> N
     G --> O
-    O --> P
+    N --> Q
+    O --> Q
 
-    E --> K
-    E --> L
-    L --> Q
+    H --> I
+    H --> P
+    P --> Q
 
-    E --> R
+    F --> L
+    F --> M
+    M --> R
+
+    F --> S
 
     style A fill:#E6F3FF
     style B fill:#E6F3FF
-    style Q fill:#FFE6E6
     style R fill:#FFE6E6
+    style S fill:#FFE6E6
 ```
 
 ### 5.2 数据模型设计
@@ -1013,7 +1120,7 @@ class VideoDownloadContext:
 
 ```python
 class Downloader:
-    def __init__(self, browser_type: str, save_mode: str):
+    def __init__(self, browser_type: str, save_mode: str, user_controller: UserInteractionController):
         self.video_manager = VideoDownloadManager(browser_type, save_mode)
 
     def download_single_video(self, url: str) -> None:
@@ -1029,7 +1136,7 @@ class Downloader:
 
 ### 6.2 工厂模式
 
-**应用场景**: [BrowserFactory](src/dingtalk_downloader/browser/browser_factory.py)
+**应用场景**: [BrowserFactory](src/dingtalk_downloader/browser/browser_factory.py), [DependencyFactory](src/dingtalk_downloader/core/dependency_factory.py)
 
 **设计意图**: 定义一个用于创建对象的接口,让子类决定实例化哪一个类。
 
@@ -1136,6 +1243,35 @@ class CookieData:
 2. 类型安全
 3. 易于测试
 
+### 6.6 依赖注入模式
+
+**应用场景**: [Downloader](src/dingtalk_downloader/core/downloader.py), [VideoDownloadManager](src/dingtalk_downloader/core/video_download_manager.py)
+
+**设计意图**: 将依赖的创建和使用分离,通过构造函数或工厂方法注入依赖。
+
+**实现方式**:
+
+```python
+class Downloader:
+    def __init__(
+        self,
+        browser_type: str,
+        save_mode: str,
+        user_controller: UserInteractionController,
+        dependency_factory: Optional[DependencyFactory] = None,
+    ):
+        self.dependency_factory = dependency_factory or DependencyFactory()
+        cookie_handler = self.dependency_factory.get_cookie_handler(browser_type)
+        path_selector = self.dependency_factory.get_path_selector(save_mode)
+        n_m3u8dl_re = self.dependency_factory.get_n_m3u8dl_re()
+```
+
+**优点**:
+
+1. 降低模块间耦合度
+2. 提高代码可测试性
+3. 便于单元测试和Mock
+
 ---
 
 ## 七、关键技术实现
@@ -1162,7 +1298,7 @@ class BrowserDriver(ABC):
 从浏览器性能日志中提取M3U8链接:
 
 ```python
-def extract_m3u8_links_from_logs(self, logs: List[dict]) -> List[str]:
+def extract_m3u8_links_from_logs(self, logs: List[dict], live_uuid: str) -> List[str]:
     m3u8_links = []
     for log in logs:
         if "message" in log:
@@ -1171,7 +1307,8 @@ def extract_m3u8_links_from_logs(self, logs: List[dict]) -> List[str]:
                 start_idx = log_message.find('url":"') + len('url":"')
                 end_idx = log_message.find('"', start_idx)
                 m3u8_url = log_message[start_idx:end_idx]
-                m3u8_links.append(m3u8_url)
+                if live_uuid in m3u8_url:
+                    m3u8_links.append(m3u8_url)
     return m3u8_links
 ```
 
@@ -1285,6 +1422,47 @@ def clean_old_logs(days: int = None) -> None:
             os.remove(filepath)
 ```
 
+### 7.6 依赖注入
+
+#### 7.6.1 依赖工厂实现
+
+使用DependencyFactory实现依赖注入:
+
+```python
+class DependencyFactory:
+    def __init__(self):
+        self._instances: Dict[str, object] = {}
+
+    def get_cookie_handler(self, browser_type: str) -> CookieHandler:
+        key = f"cookie_handler_{browser_type}"
+        if key not in self._instances:
+            self._instances[key] = CookieHandler(browser_type)
+        return self._instances[key]
+```
+
+#### 7.6.2 依赖注入使用
+
+在构造函数中注入依赖:
+
+```python
+class VideoDownloadManager:
+    def __init__(
+        self,
+        browser_type: str,
+        save_mode: str,
+        cookie_handler: Optional[CookieHandler] = None,
+        m3u8_parser: Optional[M3u8Parser] = None,
+        m3u8_download_service: Optional[M3u8DownloadService] = None,
+        path_selector: Optional[PathSelector] = None,
+        n_m3u8dl_re: Optional[NM3u8DLRE] = None,
+    ):
+        self.cookie_handler = cookie_handler
+        self.m3u8_parser = m3u8_parser
+        self.m3u8_download_service = m3u8_download_service
+        self.path_selector = path_selector
+        self.n_m3u8dl_re = n_m3u8dl_re
+```
+
 ---
 
 ## 八、架构演进方向
@@ -1309,7 +1487,7 @@ def clean_old_logs(days: int = None) -> None:
 ### 8.2 中期规划
 
 1. **架构重构**
-   - 引入依赖注入
+   - 引入依赖注入容器
    - 实现插件化架构
    - 支持自定义下载策略
 
@@ -1351,5 +1529,6 @@ def clean_old_logs(days: int = None) -> None:
 1. **分层架构**: 清晰的层次划分,职责明确
 2. **设计模式**: 合理应用设计模式,提高代码质量
 3. **单一职责**: 每个模块只负责一个功能领域
-4. **可扩展性**: 易于扩展新功能和浏览器类型
-5. **可维护性**: 代码结构清晰,易于理解和维护
+4. **依赖注入**: 降低模块间耦合度,提高可测试性
+5. **可扩展性**: 易于扩展新功能和浏览器类型
+6. **可维护性**: 代码结构清晰,易于理解和维护
