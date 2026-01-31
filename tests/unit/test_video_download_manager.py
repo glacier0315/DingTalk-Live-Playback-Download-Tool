@@ -130,12 +130,10 @@ def test_initialize_download_success(
     mock_n_m3u8dl_re = Mock()
     mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
 
-    mock_browser = Mock()
     mock_cookie_data = CookieData({"session": "test"})
     mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
 
     mock_cookie_handler.get_cookie.return_value = (
-        mock_browser,
         mock_cookie_data,
         mock_headers_data,
         "测试直播",
@@ -183,78 +181,7 @@ def test_initialize_download_cookie_error(
     mock_cookie_handler.get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
 
 
-@patch("dingtalk_downloader.core.video_download_manager.CookieHandler")
-@patch("dingtalk_downloader.core.video_download_manager.PathSelector")
-@patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
-def test_repeat_get_context_success(
-    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
-):
-    """测试重复获取上下文成功"""
-    mock_cookie_handler = Mock()
-    mock_cookie_handler_class.return_value = mock_cookie_handler
 
-    mock_path_selector = Mock()
-    mock_path_selector.save_mode = SAVE_MODE_DEFAULT
-    mock_path_selector_class.return_value = mock_path_selector
-
-    mock_n_m3u8dl_re = Mock()
-    mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
-
-    mock_cookie_data = CookieData({"session": "test"})
-    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    manager = VideoDownloadManager(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
-    context = manager.repeat_get_context("https://n.dingtalk.com/test")
-
-    assert context.url == "https://n.dingtalk.com/test"
-    assert context.cookie_data == mock_cookie_data
-    assert context.headers_data == mock_headers_data
-    assert context.live_name == "测试直播"
-    assert context.save_mode == SAVE_MODE_DEFAULT
-    mock_cookie_handler.repeat_get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
-
-
-@patch("dingtalk_downloader.core.video_download_manager.CookieHandler")
-@patch("dingtalk_downloader.core.video_download_manager.PathSelector")
-@patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
-def test_repeat_get_context_first_call(
-    mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_handler_class
-):
-    """测试重复获取上下文首次调用"""
-    mock_cookie_handler = Mock()
-    mock_cookie_handler_class.return_value = mock_cookie_handler
-
-    mock_path_selector = Mock()
-    mock_path_selector.save_mode = SAVE_MODE_DEFAULT
-    mock_path_selector_class.return_value = mock_path_selector
-
-    mock_n_m3u8dl_re = Mock()
-    mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
-
-    mock_cookie_data = CookieData({"session": "test"})
-    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    manager = VideoDownloadManager(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
-    context = manager.repeat_get_context("https://n.dingtalk.com/test")
-
-    assert context.url == "https://n.dingtalk.com/test"
-    assert context.cookie_data == mock_cookie_data
-    assert context.headers_data == mock_headers_data
-    assert context.live_name == "测试直播"
-    assert context.save_mode == SAVE_MODE_DEFAULT
-    mock_cookie_handler.repeat_get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
 
 
 @patch("dingtalk_downloader.core.video_download_manager.CookieHandler")
@@ -277,12 +204,10 @@ def test_process_video_success(
     mock_n_m3u8dl_re = Mock()
     mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
 
-    mock_browser = Mock()
     mock_cookie_data = CookieData({"session": "test"})
     mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
 
     mock_cookie_handler.get_cookie.return_value = (
-        mock_browser,
         mock_cookie_data,
         mock_headers_data,
         "测试直播",
@@ -335,18 +260,10 @@ def test_process_video_failure(
     mock_n_m3u8dl_re = Mock()
     mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
 
-    mock_browser = Mock()
     mock_cookie_data = CookieData({"session": "test"})
     mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
 
     mock_cookie_handler.get_cookie.return_value = (
-        mock_browser,
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
         mock_cookie_data,
         mock_headers_data,
         "测试直播",
@@ -398,18 +315,10 @@ def test_process_video_m3u8_download_error(
     mock_n_m3u8dl_re = Mock()
     mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
 
-    mock_browser = Mock()
     mock_cookie_data = CookieData({"session": "test"})
     mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
 
     mock_cookie_handler.get_cookie.return_value = (
-        mock_browser,
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
         mock_cookie_data,
         mock_headers_data,
         "测试直播",
@@ -484,12 +393,10 @@ def test_initialize_download_with_injected_dependencies():
     mock_m3u8_download_service = Mock()
     mock_n_m3u8dl_re = Mock()
 
-    mock_browser = Mock()
     mock_cookie_data = CookieData({"session": "test"})
     mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
 
     mock_cookie_handler.get_cookie.return_value = (
-        mock_browser,
         mock_cookie_data,
         mock_headers_data,
         "测试直播",
@@ -517,35 +424,7 @@ def test_initialize_download_with_injected_dependencies():
     mock_cookie_handler.get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
 
 
-def test_repeat_get_context_with_injected_dependencies():
-    """测试使用注入的依赖重复获取上下文"""
-    mock_cookie_handler = Mock()
-    mock_path_selector = Mock()
-    mock_path_selector.save_mode = str(SAVE_MODE_DEFAULT)
 
-    mock_cookie_data = CookieData({"session": "test"})
-    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    manager = VideoDownloadManager(
-        BROWSER_TYPE_EDGE,
-        str(SAVE_MODE_DEFAULT),
-        cookie_handler=mock_cookie_handler,
-        path_selector=mock_path_selector,
-    )
-
-    context = manager.repeat_get_context("https://n.dingtalk.com/test")
-
-    assert context.url == "https://n.dingtalk.com/test"
-    assert context.cookie_data == mock_cookie_data
-    assert context.headers_data == mock_headers_data
-    assert context.live_name == "测试直播"
-    mock_cookie_handler.repeat_get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
 
 
 @patch("os.path.exists")
@@ -623,7 +502,7 @@ def test_cleanup_context_with_injected_dependencies():
 
 
 @patch("dingtalk_downloader.core.video_download_manager.time.sleep")
-@patch("dingtalk_downloader.core.video_download_manager.random.uniform")
+@patch("dingtalk_downloader.core.video_download_manager.random.randint")
 @patch("os.path.exists")
 def test_process_video_with_retry_success(mock_exists, mock_random, mock_sleep):
     """测试重试机制在失败后重试成功"""
@@ -643,7 +522,7 @@ def test_process_video_with_retry_success(mock_exists, mock_random, mock_sleep):
     mock_cookie_data = CookieData({"session": "test"})
     mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
 
-    mock_cookie_handler.repeat_get_cookie.return_value = (
+    mock_cookie_handler.get_cookie.return_value = (
         mock_cookie_data,
         mock_headers_data,
         "测试直播",
@@ -653,7 +532,7 @@ def test_process_video_with_retry_success(mock_exists, mock_random, mock_sleep):
     mock_path_selector.get_save_dir.return_value = "/downloads"
 
     mock_n_m3u8dl_re.download.side_effect = [False, True]
-    mock_random.return_value = 5.0
+    mock_random.return_value = 5
 
     manager = VideoDownloadManager(
         BROWSER_TYPE_EDGE,
@@ -676,189 +555,16 @@ def test_process_video_with_retry_success(mock_exists, mock_random, mock_sleep):
 
     assert result is True
     assert mock_n_m3u8dl_re.download.call_count == 2
-    mock_sleep.assert_called_once_with(5.0)
-    mock_cookie_handler.repeat_get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
+    mock_sleep.assert_called_once_with(5)
 
 
-@patch("dingtalk_downloader.core.video_download_manager.time.sleep")
-@patch("dingtalk_downloader.core.video_download_manager.random.uniform")
-@patch("os.path.exists")
-def test_process_video_with_retry_max_attempts(mock_exists, mock_random, mock_sleep):
-    """测试重试机制达到最大重试次数后停止"""
-    mock_exists.return_value = True
-
-    mock_cookie_handler = Mock()
-    mock_path_selector = Mock()
-    mock_path_selector.save_mode = str(SAVE_MODE_DEFAULT)
-    mock_m3u8_download_service = Mock()
-    mock_n_m3u8dl_re = Mock()
-
-    mock_m3u8_link = Mock()
-    mock_m3u8_link.url = "https://test.com/video.m3u8"
-    mock_m3u8_link.prefix = "https://test.com/"
-    mock_m3u8_link.local_file_path = "/path/to/video.m3u8"
-
-    mock_cookie_data = CookieData({"session": "test"})
-    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    mock_m3u8_download_service.fetch_and_download_m3u8.return_value = mock_m3u8_link
-    mock_path_selector.get_save_dir.return_value = "/downloads"
-
-    mock_n_m3u8dl_re.download.return_value = False
-    mock_random.return_value = 5.0
-
-    manager = VideoDownloadManager(
-        BROWSER_TYPE_EDGE,
-        str(SAVE_MODE_DEFAULT),
-        cookie_handler=mock_cookie_handler,
-        m3u8_download_service=mock_m3u8_download_service,
-        path_selector=mock_path_selector,
-        n_m3u8dl_re=mock_n_m3u8dl_re,
-    )
-
-    context = VideoDownloadContext(
-        url="https://n.dingtalk.com/test",
-        cookie_data=mock_cookie_data,
-        headers_data=mock_headers_data,
-        live_name="测试直播",
-        save_mode=str(SAVE_MODE_DEFAULT),
-    )
-
-    result = manager.process_video(context)
-
-    assert result is False
-    assert mock_n_m3u8dl_re.download.call_count == 20
-    assert mock_sleep.call_count == 19
-    assert mock_cookie_handler.repeat_get_cookie.call_count == 19
 
 
-@patch("dingtalk_downloader.core.video_download_manager.time.sleep")
-@patch("dingtalk_downloader.core.video_download_manager.random.uniform")
-@patch("os.path.exists")
-def test_process_video_with_retry_random_wait(mock_exists, mock_random, mock_sleep):
-    """测试重试机制在每次重试前等待3-10秒"""
-    mock_exists.return_value = True
-
-    mock_cookie_handler = Mock()
-    mock_path_selector = Mock()
-    mock_path_selector.save_mode = str(SAVE_MODE_DEFAULT)
-    mock_m3u8_download_service = Mock()
-    mock_n_m3u8dl_re = Mock()
-
-    mock_m3u8_link = Mock()
-    mock_m3u8_link.url = "https://test.com/video.m3u8"
-    mock_m3u8_link.prefix = "https://test.com/"
-    mock_m3u8_link.local_file_path = "/path/to/video.m3u8"
-
-    mock_cookie_data = CookieData({"session": "test"})
-    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    mock_m3u8_download_service.fetch_and_download_m3u8.return_value = mock_m3u8_link
-    mock_path_selector.get_save_dir.return_value = "/downloads"
-
-    mock_n_m3u8dl_re.download.side_effect = [False, False, True]
-    mock_random.side_effect = [3.5, 7.2]
-
-    manager = VideoDownloadManager(
-        BROWSER_TYPE_EDGE,
-        str(SAVE_MODE_DEFAULT),
-        cookie_handler=mock_cookie_handler,
-        m3u8_download_service=mock_m3u8_download_service,
-        path_selector=mock_path_selector,
-        n_m3u8dl_re=mock_n_m3u8dl_re,
-    )
-
-    context = VideoDownloadContext(
-        url="https://n.dingtalk.com/test",
-        cookie_data=mock_cookie_data,
-        headers_data=mock_headers_data,
-        live_name="测试直播",
-        save_mode=str(SAVE_MODE_DEFAULT),
-    )
-
-    result = manager.process_video(context)
-
-    assert result is True
-    assert mock_n_m3u8dl_re.download.call_count == 3
-    assert mock_random.call_count == 2
-    mock_sleep.assert_has_calls([call(3.5), call(7.2)])
 
 
-@patch("dingtalk_downloader.core.video_download_manager.time.sleep")
-@patch("dingtalk_downloader.core.video_download_manager.random.uniform")
-@patch("os.path.exists")
-def test_process_video_with_retry_refresh_m3u8_link(mock_exists, mock_random, mock_sleep):
-    """测试重试机制在每次重试前重新获取m3u8链接"""
-    mock_exists.return_value = True
 
-    mock_cookie_handler = Mock()
-    mock_path_selector = Mock()
-    mock_path_selector.save_mode = str(SAVE_MODE_DEFAULT)
-    mock_m3u8_download_service = Mock()
-    mock_n_m3u8dl_re = Mock()
 
-    mock_m3u8_link1 = Mock()
-    mock_m3u8_link1.url = "https://test.com/video1.m3u8"
-    mock_m3u8_link1.prefix = "https://test.com/"
-    mock_m3u8_link1.local_file_path = "/path/to/video1.m3u8"
 
-    mock_m3u8_link2 = Mock()
-    mock_m3u8_link2.url = "https://test.com/video2.m3u8"
-    mock_m3u8_link2.prefix = "https://test.com/"
-    mock_m3u8_link2.local_file_path = "/path/to/video2.m3u8"
-
-    mock_cookie_data = CookieData({"session": "test"})
-    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    mock_m3u8_download_service.fetch_and_download_m3u8.side_effect = [
-        mock_m3u8_link1,
-        mock_m3u8_link2,
-    ]
-    mock_path_selector.get_save_dir.return_value = "/downloads"
-
-    mock_n_m3u8dl_re.download.side_effect = [False, True]
-    mock_random.return_value = 5.0
-
-    manager = VideoDownloadManager(
-        BROWSER_TYPE_EDGE,
-        str(SAVE_MODE_DEFAULT),
-        cookie_handler=mock_cookie_handler,
-        m3u8_download_service=mock_m3u8_download_service,
-        path_selector=mock_path_selector,
-        n_m3u8dl_re=mock_n_m3u8dl_re,
-    )
-
-    context = VideoDownloadContext(
-        url="https://n.dingtalk.com/test",
-        cookie_data=mock_cookie_data,
-        headers_data=mock_headers_data,
-        live_name="测试直播",
-        save_mode=str(SAVE_MODE_DEFAULT),
-    )
-
-    result = manager.process_video(context)
-
-    assert result is True
-    assert mock_m3u8_download_service.fetch_and_download_m3u8.call_count == 2
-    mock_cookie_handler.repeat_get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
 
 
 @patch("dingtalk_downloader.core.video_download_manager.time.sleep")
@@ -910,64 +616,6 @@ def test_process_video_no_retry_on_first_success(mock_exists, mock_random, mock_
     assert mock_n_m3u8dl_re.download.call_count == 1
     mock_sleep.assert_not_called()
     mock_random.assert_not_called()
-    mock_cookie_handler.repeat_get_cookie.assert_not_called()
 
 
-@patch("dingtalk_downloader.core.video_download_manager.time.sleep")
-@patch("dingtalk_downloader.core.video_download_manager.random.uniform")
-@patch("os.path.exists")
-def test_process_video_with_exception_retry(mock_exists, mock_random, mock_sleep):
-    """测试重试机制在异常情况下也能正常工作"""
-    mock_exists.return_value = True
 
-    mock_cookie_handler = Mock()
-    mock_path_selector = Mock()
-    mock_path_selector.save_mode = str(SAVE_MODE_DEFAULT)
-    mock_m3u8_download_service = Mock()
-    mock_n_m3u8dl_re = Mock()
-
-    mock_m3u8_link = Mock()
-    mock_m3u8_link.url = "https://test.com/video.m3u8"
-    mock_m3u8_link.prefix = "https://test.com/"
-    mock_m3u8_link.local_file_path = "/path/to/video.m3u8"
-
-    mock_cookie_data = CookieData({"session": "test"})
-    mock_headers_data = HeadersData({"User-Agent": "Mozilla/5.0"})
-
-    mock_cookie_handler.repeat_get_cookie.return_value = (
-        mock_cookie_data,
-        mock_headers_data,
-        "测试直播",
-    )
-
-    mock_m3u8_download_service.fetch_and_download_m3u8.return_value = mock_m3u8_link
-    mock_path_selector.get_save_dir.return_value = "/downloads"
-
-    from dingtalk_downloader.core.exceptions import DownloadError
-
-    mock_n_m3u8dl_re.download.side_effect = [DownloadError("下载失败"), True]
-    mock_random.return_value = 5.0
-
-    manager = VideoDownloadManager(
-        BROWSER_TYPE_EDGE,
-        str(SAVE_MODE_DEFAULT),
-        cookie_handler=mock_cookie_handler,
-        m3u8_download_service=mock_m3u8_download_service,
-        path_selector=mock_path_selector,
-        n_m3u8dl_re=mock_n_m3u8dl_re,
-    )
-
-    context = VideoDownloadContext(
-        url="https://n.dingtalk.com/test",
-        cookie_data=mock_cookie_data,
-        headers_data=mock_headers_data,
-        live_name="测试直播",
-        save_mode=str(SAVE_MODE_DEFAULT),
-    )
-
-    result = manager.process_video(context)
-
-    assert result is True
-    assert mock_n_m3u8dl_re.download.call_count == 2
-    mock_sleep.assert_called_once_with(5.0)
-    mock_cookie_handler.repeat_get_cookie.assert_called_once_with("https://n.dingtalk.com/test")

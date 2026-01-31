@@ -80,9 +80,8 @@ def test_single_download_flow_continue(mock_validate_url, mock_video_manager_cla
     mock_context1.live_name = "测试直播1"
     mock_context2 = Mock(spec=VideoDownloadContext)
     mock_context2.live_name = "测试直播2"
-    mock_video_manager.initialize_download.return_value = mock_context1
+    mock_video_manager.initialize_download.side_effect = [mock_context1, mock_context2]
     mock_video_manager.process_video.return_value = True
-    mock_video_manager.repeat_get_context.return_value = mock_context2
     mock_validate_url.return_value = "https://n.dingtalk.com/test2?liveUuid=abc"
     mock_user_controller = Mock()
     mock_user_controller.get_user_input.side_effect = [
@@ -91,12 +90,10 @@ def test_single_download_flow_continue(mock_validate_url, mock_video_manager_cla
     ]
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
-
     downloader.download_single_video("https://n.dingtalk.com/test1?liveUuid=abc")
 
-    mock_video_manager.initialize_download.assert_called_once()
+    assert mock_video_manager.initialize_download.call_count == 2
     assert mock_video_manager.process_video.call_count == 2
-    mock_video_manager.repeat_get_context.assert_called_once()
 
 
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
@@ -109,9 +106,7 @@ def test_batch_download_flow_success(mock_video_manager_class):
     mock_context1.live_name = "测试直播1"
     mock_context2 = Mock(spec=VideoDownloadContext)
     mock_context2.live_name = "测试直播2"
-
-    mock_video_manager.initialize_download.return_value = mock_context1
-    mock_video_manager.repeat_get_context.return_value = mock_context2
+    mock_video_manager.initialize_download.side_effect = [mock_context1, mock_context2]
     mock_video_manager.process_video.return_value = True
 
     mock_user_controller = Mock()
@@ -126,9 +121,8 @@ def test_batch_download_flow_success(mock_video_manager_class):
 
     downloader.download_batch_videos(urls)
 
-    mock_video_manager.initialize_download.assert_called_once()
+    assert mock_video_manager.initialize_download.call_count == 2
     assert mock_video_manager.process_video.call_count == 2
-    mock_video_manager.repeat_get_context.assert_called_once()
 
 
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
@@ -141,7 +135,7 @@ def test_batch_download_flow_failure(mock_video_manager_class):
 
     mock_context = Mock(spec=VideoDownloadContext)
     mock_context.live_name = "测试直播"
-    mock_video_manager.initialize_download.return_value = mock_context
+    mock_video_manager.initialize_download.side_effect = [mock_context, mock_context]
     mock_video_manager.process_video.side_effect = DownloadError("下载失败")
 
     mock_user_controller = Mock()
@@ -156,6 +150,5 @@ def test_batch_download_flow_failure(mock_video_manager_class):
 
     downloader.download_batch_videos(urls)
 
-    mock_video_manager.initialize_download.assert_called_once()
+    assert mock_video_manager.initialize_download.call_count == 2
     assert mock_video_manager.process_video.call_count == 2
-    mock_video_manager.repeat_get_context.assert_called_once()

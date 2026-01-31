@@ -65,7 +65,6 @@ def test_cookie_handler_get_cookie_success(
     """测试获取Cookie成功"""
     mock_header_manager_class.return_value = mock_header_manager
     mock_browser_factory.create_browser.return_value = mock_browser
-
     mock_browser.get_cookies.return_value = [{"name": "test", "value": "value"}]
 
     def get_element_by_xpath_side_effect(xpath):
@@ -76,9 +75,8 @@ def test_cookie_handler_get_cookie_success(
     mock_browser.get_element_by_xpath.side_effect = get_element_by_xpath_side_effect
 
     handler = CookieHandler(BROWSER_TYPE_EDGE)
-
     with patch("builtins.input", return_value=""):
-        browser, cookie_data, headers_data, live_name = handler.get_cookie(
+        cookie_data, headers_data, live_name = handler.get_cookie(
             "https://n.dingtalk.com/test"
         )
 
@@ -107,73 +105,7 @@ def test_cookie_handler_get_cookie_browser_error(mock_header_manager_class, mock
         handler.get_cookie("https://n.dingtalk.com/test")
 
 
-@patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
-@patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
-def test_cookie_handler_repeat_get_cookie_success(
-    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
-):
-    """测试重复获取Cookie成功"""
-    mock_header_manager_class.return_value = mock_header_manager
-    mock_browser_factory.create_browser.return_value = mock_browser
 
-    mock_browser.get_cookies.return_value = [{"name": "test", "value": "value"}]
-
-    def get_element_by_xpath_side_effect(xpath):
-        mock_element = Mock()
-        mock_element.text = "测试直播"
-        return mock_element
-
-    mock_browser.get_element_by_xpath.side_effect = get_element_by_xpath_side_effect
-
-    handler = CookieHandler(BROWSER_TYPE_EDGE)
-
-    with patch("builtins.input", return_value=""):
-        handler.get_cookie("https://n.dingtalk.com/test")
-
-    with patch("builtins.input", return_value=""):
-        cookie_data, headers_data, live_name = handler.repeat_get_cookie(
-            "https://n.dingtalk.com/test2"
-        )
-
-    assert len(cookie_data) == 1
-    assert cookie_data.get("test") == "value"
-    assert "User-Agent" in headers_data
-    assert "Referer" in headers_data
-    assert live_name == "测试直播"
-    mock_header_manager.get_headers.assert_called()
-
-
-@patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
-@patch("dingtalk_downloader.core.cookie_handler.HeaderManager")
-def test_cookie_handler_repeat_get_cookie_first_call(
-    mock_header_manager_class, mock_browser_factory, mock_browser, mock_header_manager
-):
-    """测试重复获取Cookie首次调用"""
-    mock_header_manager_class.return_value = mock_header_manager
-    mock_browser_factory.create_browser.return_value = mock_browser
-
-    mock_browser.get_cookies.return_value = [{"name": "test", "value": "value"}]
-
-    def get_element_by_xpath_side_effect(xpath):
-        mock_element = Mock()
-        mock_element.text = "测试直播"
-        return mock_element
-
-    mock_browser.get_element_by_xpath.side_effect = get_element_by_xpath_side_effect
-
-    handler = CookieHandler(BROWSER_TYPE_EDGE)
-
-    with patch("builtins.input", return_value=""):
-        cookie_data, headers_data, live_name = handler.repeat_get_cookie(
-            "https://n.dingtalk.com/test"
-        )
-
-    assert len(cookie_data) == 1
-    assert cookie_data.get("test") == "value"
-    assert "User-Agent" in headers_data
-    assert "Referer" in headers_data
-    assert live_name == "测试直播"
-    mock_header_manager.get_headers.assert_called_once()
 
 
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")
