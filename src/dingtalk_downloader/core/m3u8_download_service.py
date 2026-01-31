@@ -45,7 +45,6 @@ class M3u8DownloadService:
     def fetch_and_download_m3u8(
         self,
         url: str,
-        m3u8_headers: dict,
     ) -> M3u8Link:
         """
         获取并下载m3u8文件。
@@ -53,7 +52,6 @@ class M3u8DownloadService:
 
         Args:
             url: 钉钉直播回放分享链接
-            m3u8_headers: 请求头字典
 
         Returns:
             M3u8Link: m3u8链接对象，包含URL和本地文件路径
@@ -68,7 +66,7 @@ class M3u8DownloadService:
         logger.debug(f"准备下载 m3u8 文件到: {m3u8_file}")
 
         try:
-            m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_link, m3u8_file, m3u8_headers)
+            m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_link, m3u8_file)
 
             if not m3u8_file or not os.path.exists(m3u8_file):
                 raise DownloadError(f"m3u8 文件下载失败或文件不存在: {m3u8_file}")

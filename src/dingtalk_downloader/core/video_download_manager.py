@@ -195,7 +195,7 @@ class VideoDownloadManager:
             self._prepare_retry(context, attempt)
 
         m3u8_link = self.m3u8_download_service.fetch_and_download_m3u8(
-            context.url, context.get_headers_dict()
+            context.url
         )
         return m3u8_link
 

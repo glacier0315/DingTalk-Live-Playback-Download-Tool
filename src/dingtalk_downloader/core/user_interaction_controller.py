@@ -31,7 +31,7 @@ class UserInteractionController:
         """
         初始化用户交互控制器。
         """
-        self.logger = logging.getLogger(__name__)
+        pass
 
     def get_user_input(
         self,

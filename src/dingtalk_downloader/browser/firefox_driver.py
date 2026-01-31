@@ -95,7 +95,7 @@ class FirefoxDriver(BrowserDriver):
             return logs
         return []
 
-    def extract_m3u8_links_from_logs(self, logs: List[dict]) -> List[str]:
+    def extract_m3u8_links_from_logs(self, logs: List[dict], live_uuid: str) -> List[str]:
         """
         从浏览器日志中提取m3u8链接。
 
@@ -103,6 +103,7 @@ class FirefoxDriver(BrowserDriver):
 
         Args:
             logs: 浏览器日志列表
+            live_uuid: 直播UUID，用于过滤m3u8链接
 
         Returns:
             List[str]: m3u8链接列表
@@ -117,6 +118,10 @@ class FirefoxDriver(BrowserDriver):
 
                 if found_links:
                     cleaned_link = re.sub(r'[\]\s\\\'"]+$', "", found_links[0])
+                    if live_uuid not in cleaned_link:
+                        continue
+                    if cleaned_link in m3u8_links:
+                        continue
                     m3u8_links.append(cleaned_link)
             except Exception as e:
                 logger.error(f"提取m3u8链接时发生错误: {e}", exc_info=True)
