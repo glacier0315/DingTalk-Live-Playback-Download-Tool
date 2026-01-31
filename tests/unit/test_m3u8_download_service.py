@@ -46,7 +46,6 @@ def test_fetch_and_download_m3u8_success(mock_getsize, mock_exists):
     mock_m3u8_parser.fetch_m3u8_link.return_value = "https://test.com/video.m3u8"
     mock_m3u8_parser.download_m3u8_file.return_value = "/path/to/video.m3u8"
     mock_m3u8_parser.extract_prefix.return_value = "https://test.com/"
-
     mock_m3u8_file_manager = Mock()
     mock_m3u8_file_manager.get_temp_file_path.return_value = "/path/to/video.m3u8"
 
@@ -57,11 +56,10 @@ def test_fetch_and_download_m3u8_success(mock_getsize, mock_exists):
         "dingtalk_downloader.core.m3u8_download_service.M3u8FileManager"
     ) as mock_m3u8_file_manager_class:
         mock_m3u8_file_manager_class.return_value = mock_m3u8_file_manager
-
         service = M3u8DownloadService(mock_m3u8_parser)
 
         m3u8_link = service.fetch_and_download_m3u8(
-            "https://n.dingtalk.com/test", {"User-Agent": "Mozilla/5.0"}
+            "https://n.dingtalk.com/test"
         )
 
         assert m3u8_link.url == "https://test.com/video.m3u8"
@@ -90,7 +88,7 @@ def test_fetch_and_download_m3u8_fetch_error():
 
         with pytest.raises(Exception, match="获取m3u8链接失败"):
             service.fetch_and_download_m3u8(
-                "https://n.dingtalk.com/test", {"User-Agent": "Mozilla/5.0"}
+                "https://n.dingtalk.com/test"
             )
 
         mock_m3u8_parser.fetch_m3u8_link.assert_called_once_with("https://n.dingtalk.com/test")
@@ -116,7 +114,7 @@ def test_fetch_and_download_m3u8_download_error():
 
         with pytest.raises(DownloadError, match="下载 m3u8 文件失败"):
             service.fetch_and_download_m3u8(
-                "https://n.dingtalk.com/test", {"User-Agent": "Mozilla/5.0"}
+                "https://n.dingtalk.com/test"
             )
 
         mock_m3u8_parser.fetch_m3u8_link.assert_called_once_with("https://n.dingtalk.com/test")
@@ -144,7 +142,7 @@ def test_fetch_and_download_m3u8_file_not_exist():
 
         with pytest.raises(DownloadError, match="m3u8 文件下载失败或文件不存在"):
             service.fetch_and_download_m3u8(
-                "https://n.dingtalk.com/test", {"User-Agent": "Mozilla/5.0"}
+                "https://n.dingtalk.com/test"
             )
 
     mock_m3u8_parser.fetch_m3u8_link.assert_called_once_with("https://n.dingtalk.com/test")

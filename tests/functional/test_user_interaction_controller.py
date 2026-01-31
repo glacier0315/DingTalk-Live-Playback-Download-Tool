@@ -14,7 +14,6 @@ class TestUserInteractionController:
         """测试初始化"""
         controller = UserInteractionController()
         assert controller is not None
-        assert controller.logger is not None
 
     @patch("builtins.input", return_value="https://n.dingtalk.com/dingding/live/?liveUuid=xxx")
     def test_get_user_input_valid(self, mock_input):

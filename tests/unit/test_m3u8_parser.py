@@ -126,12 +126,10 @@ def test_m3u8_parser_download_m3u8_file_success(mock_browser, tmp_path):
 
     temp_file = tmp_path / "test.m3u8"
     mock_browser.driver.execute_script.return_value = "#EXTM3U\n#EXT-X-VERSION:3\n"
-    result = parser.download_m3u8_file("https://test.com/test.m3u8", str(temp_file), {})
-
+    result = parser.download_m3u8_file("https://test.com/test.m3u8", str(temp_file))
     assert result == str(temp_file)
     assert temp_file.exists()
     mock_browser.driver.execute_script.assert_called_once()
-
 
 def test_m3u8_parser_download_m3u8_file_failure(mock_browser, tmp_path):
     """测试下载m3u8文件失败"""
@@ -141,7 +139,7 @@ def test_m3u8_parser_download_m3u8_file_failure(mock_browser, tmp_path):
     mock_browser.driver.execute_script.side_effect = Exception("下载失败")
 
     with pytest.raises(M3u8ParseError):
-        parser.download_m3u8_file("https://test.com/test.m3u8", str(temp_file), {})
+        parser.download_m3u8_file("https://test.com/test.m3u8", str(temp_file))
 
 
 def test_m3u8_parser_extract_prefix_success():

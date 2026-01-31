@@ -261,52 +261,71 @@ class TestFirefoxDriverExtractM3u8Links:
     def test_extract_m3u8_links_from_logs_no_links(self):
         """测试提取m3u8链接（无链接）"""
         driver = FirefoxDriver()
-        logs = [{"name": "test", "duration": 100}]
-        result = driver.extract_m3u8_links_from_logs(logs)
+        logs = []
+        live_uuid = "test-uuid"
+        result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert result == []
 
     def test_extract_m3u8_links_from_logs_multiple_links(self):
         """测试提取m3u8链接（多个链接）"""
         driver = FirefoxDriver()
+        live_uuid = "test-uuid"
         logs = [
-            "https://example.com/video1.m3u8?token=abc",
-            "https://example.com/video2.m3u8?token=def"
+            "Network request: https://example.com/video1.m3u8?token=abc&uuid=test-uuid",
+            "Network request: https://example.com/video2.m3u8?token=def&uuid=test-uuid"
         ]
-        result = driver.extract_m3u8_links_from_logs(logs)
+        result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert len(result) == 2
-        assert "https://example.com/video1.m3u8?token=abc" in result
-        assert "https://example.com/video2.m3u8?token=def" in result
+        assert "https://example.com/video1.m3u8?token=abc&uuid=test-uuid" in result
+        assert "https://example.com/video2.m3u8?token=def&uuid=test-uuid" in result
 
     def test_extract_m3u8_links_from_logs_exception(self):
         """测试提取m3u8链接（异常）"""
         driver = FirefoxDriver()
         logs = [{"name": "test"}]
-        result = driver.extract_m3u8_links_from_logs(logs)
+        live_uuid = "test-uuid"
+        result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert result == []
 
     def test_extract_m3u8_links_from_logs_invalid_object(self):
         """测试提取m3u8链接（无效对象）"""
         driver = FirefoxDriver()
         logs = [None, 123, True]
-        result = driver.extract_m3u8_links_from_logs(logs)
+        live_uuid = "test-uuid"
+        result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert result == []
 
     def test_extract_m3u8_links_from_logs_dingtalk_links(self):
         """测试提取钉钉m3u8链接"""
         driver = FirefoxDriver()
         logs = [
-            "https://n.dingtalk.com/live/123.m3u8?auth=abc"
+            "Network request: https://n.dingtalk.com/live/123.m3u8?auth=abc&uuid=test-uuid"
         ]
-        result = driver.extract_m3u8_links_from_logs(logs)
+        live_uuid = "test-uuid"
+        result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert len(result) == 1
-        assert "https://n.dingtalk.com/live/123.m3u8?auth=abc" in result
+        assert "https://n.dingtalk.com/live/123.m3u8?auth=abc&uuid=test-uuid" in result
 
     def test_extract_m3u8_links_from_logs_cleaned_links(self):
         """测试提取并清理m3u8链接"""
         driver = FirefoxDriver()
         logs = [
-            "https://example.com/video.m3u8?token=abc\"]"
+            "Network request: https://example.com/video.m3u8?token=abc&uuid=test-uuid\"]"
         ]
-        result = driver.extract_m3u8_links_from_logs(logs)
+        live_uuid = "test-uuid"
+        result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert len(result) == 1
-        assert result[0] == "https://example.com/video.m3u8?token=abc"
+        assert result[0] == "https://example.com/video.m3u8?token=abc&uuid=test-uuid"
+
+    def test_extract_m3u8_links_from_logs_filter_by_live_uuid(self):
+        """测试根据live_uuid过滤m3u8链接"""
+        driver = FirefoxDriver()
+        live_uuid = "test-uuid-123"
+        logs = [
+            "Network request: https://example.com/video1.m3u8?token=abc&uuid=other-uuid",
+            "Network request: https://example.com/video2.m3u8?token=def&uuid=test-uuid-123",
+            "Network request: https://example.com/video3.m3u8?token=ghi&uuid=another-uuid"
+        ]
+        result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
+        assert len(result) == 1
+        assert "https://example.com/video2.m3u8?token=def&uuid=test-uuid-123" in result
