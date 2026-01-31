@@ -14,9 +14,8 @@
 """
 
 import logging
-from typing import Dict, Tuple, Any
+from typing import Tuple
 from ..browser.browser_factory import BrowserFactory
-from ..browser.browser_driver import BrowserDriver
 from ..config.constants import LIVE_NAME_SELECTORS, BROWSER_WAIT_TIMEOUT
 from ..config.header_manager import HeaderManager
 from ..utils.models import CookieData, HeadersData
@@ -69,6 +68,24 @@ class CookieHandler:
         self.close()
         return False
 
+
+    def initialize_browser(self) -> bool:
+        """
+        初始化浏览器实例。
+
+        Returns:
+            bool: 是否为新实例
+        """
+        is_new = False
+        if self.browser is None:
+            self.browser = BrowserFactory.create_browser(self.browser_type)
+            logger.debug("浏览器实例创建成功")
+
+            self.browser.create_driver()
+            logger.debug("浏览器驱动创建成功")
+            is_new = True
+        return is_new
+
     def _collect_browser_data(
         self,
     ) -> Tuple[CookieData, HeadersData, str]:
@@ -98,7 +115,7 @@ class CookieHandler:
 
         return cookie_data, headers_data, live_name
 
-    def get_cookie(self, url: str) -> Tuple[BrowserDriver, CookieData, HeadersData, str]:
+    def get_cookie(self, url: str) -> Tuple[CookieData, HeadersData, str]:
         """
         获取 Cookie 和请求头信息。
 
@@ -109,7 +126,6 @@ class CookieHandler:
 
         Returns:
             tuple: 包含四个元素的元组
-                - browser: 浏览器实例
                 - cookie_data: Cookie 数据值对象
                 - headers_data: 请求头数据值对象
                 - live_name: 直播视频名称
@@ -117,75 +133,29 @@ class CookieHandler:
         Raises:
             CookieError: 获取失败时
         """
-        logger.info(f"开始获取 Cookie - URL: {url}")
+        logger.info(f"开始获取 Cookie, headers, live_name")
 
         try:
-            self.browser = BrowserFactory.create_browser(self.browser_type)
-            logger.debug("浏览器实例创建成功")
-
-            self.browser.create_driver()
-            logger.debug("浏览器驱动创建成功")
+            is_new = self.initialize_browser()
 
             self.browser.navigate(url)
             logger.debug(f"导航到指定 URL: {url}")
 
-            input("请在浏览器中登录钉钉账户后，按Enter键继续...")
+            if is_new:
+                input("请在浏览器中登录钉钉账户后，按Enter键继续...")
+            else:
+                try:
+                    self.browser.wait_for_video(BROWSER_WAIT_TIMEOUT)
+                    logger.debug("视频加载完成")
+                except Exception as e:
+                    logger.warning(f"等待视频加载时发生错误: {e}")
+                    input("未能确定页面是否成功加载。请在页面加载后，按Enter键继续...")
 
-            cookie_data, headers_data, live_name = self._collect_browser_data()
-
-            return self.browser, cookie_data, headers_data, live_name
-
+            return self._collect_browser_data()
         except Exception as e:
+            self.close()
             logger.error(f"获取Cookie时发生错误: {e}", exc_info=True)
-            if self.browser:
-                self.browser.close()
             raise CookieError(f"获取Cookie失败: {e}") from e
-
-    def repeat_get_cookie(self, url: str) -> Tuple[CookieData, HeadersData, str]:
-        """
-        重复获取 Cookie 和请求头信息。
-
-        使用已有的浏览器实例重复获取 Cookie 和请求头信息。
-
-        Args:
-            url: 钉钉直播回放分享链接
-
-        Returns:
-            tuple: 包含三个元素的元组
-                - cookie_data: Cookie 数据值对象
-                - headers_data: 请求头数据值对象
-                - live_name: 直播视频名称
-
-        Raises:
-            CookieError: 获取失败时
-        """
-        logger.info("重复获取 Cookie")
-
-        try:
-            if self.browser is None:
-                logger.debug("浏览器实例不存在，调用 get_cookie")
-                browser, cookie_data, headers_data, live_name = self.get_cookie(url)
-                return cookie_data, headers_data, live_name
-
-            self.browser.navigate(url)
-            logger.debug(f"导航到指定 URL: {url}")
-
-            try:
-                self.browser.wait_for_video(BROWSER_WAIT_TIMEOUT)
-                logger.debug("视频加载完成")
-            except Exception as e:
-                logger.warning(f"等待视频加载时发生错误: {e}")
-                input("未能确定页面是否成功加载。请在页面加载后，按Enter键继续...")
-
-            cookie_data, headers_data, live_name = self._collect_browser_data()
-
-            return cookie_data, headers_data, live_name
-
-        except Exception as e:
-            logger.error(f"重复获取Cookie时发生错误: {e}", exc_info=True)
-            if self.browser:
-                self.browser.close()
-            raise CookieError(f"重复获取Cookie失败: {e}") from e
 
     def _get_live_name(self) -> str:
         """

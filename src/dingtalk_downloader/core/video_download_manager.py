@@ -14,16 +14,15 @@ import os
 import logging
 import time
 import random
-from typing import Dict, Optional
-from .cookie_handler import CookieHandler, CookieError
+from typing import  Optional
+from .cookie_handler import CookieHandler
 from .m3u8_parser import M3u8Parser, M3u8ParseError
-from ..utils.models import CookieData, HeadersData, VideoDownloadContext, M3u8Link
+from ..utils.models import VideoDownloadContext, M3u8Link
 from .m3u8_download_service import M3u8DownloadService
 from .exceptions import (
     DownloadError,
     BrowserError,
     NetworkError,
-    ValidationError,
 )
 from ..binary.n_m3u8dl_re import NM3u8DLRE
 from ..utils.path_selector import PathSelector
@@ -31,7 +30,6 @@ from ..config.constants import (
     VIDEO_DOWNLOAD_MAX_RETRIES,
     VIDEO_DOWNLOAD_RETRY_WAIT_MIN,
     VIDEO_DOWNLOAD_RETRY_WAIT_MAX,
-    BROWSER_WAIT_TIMEOUT,
 )
 logger = logging.getLogger(__name__)
 
@@ -104,11 +102,11 @@ class VideoDownloadManager:
         if not self.path_selector:
             self.path_selector = PathSelector(self.save_mode)
 
-        browser, cookie_data, headers_data, live_name = self.cookie_handler.get_cookie(url)
+        cookie_data, headers_data, live_name = self.cookie_handler.get_cookie(url)
         logger.info(f"获取到 Cookie 和请求头 - 直播名称: {live_name}")
 
         if not self.m3u8_parser:
-            self.m3u8_parser = M3u8Parser(browser)
+            self.m3u8_parser = M3u8Parser(self.cookie_handler.browser)
 
         if not self.m3u8_download_service:
             self.m3u8_download_service = M3u8DownloadService(self.m3u8_parser)
@@ -144,7 +142,7 @@ class VideoDownloadManager:
         if not self.path_selector:
             self.path_selector = PathSelector(self.save_mode)
 
-        cookie_data, headers_data, live_name = self.cookie_handler.repeat_get_cookie(url)
+        cookie_data, headers_data, live_name = self.cookie_handler.get_cookie(url)
         logger.info(f"获取到 Cookie 和请求头，直播名称: {live_name}")
 
         return VideoDownloadContext(

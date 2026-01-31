@@ -16,7 +16,6 @@
 import re
 import logging
 from urllib.parse import urlparse, parse_qs
-from typing import List, Optional
 from ..browser.browser_driver import BrowserDriver
 from ..config.constants import MAX_RETRY_COUNT
 from .exceptions import M3u8ParseError
@@ -91,7 +90,6 @@ class M3u8Parser:
                     logger.warning(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接")
                     continue
 
-                logger.info(f"提取到 {len(m3u8_links)} 个 m3u8 链接")
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug(f"提取到的 m3u8 链接: {m3u8_links}")
                 # 预期仅 1 个 m3u8 链接，返回最后一个
