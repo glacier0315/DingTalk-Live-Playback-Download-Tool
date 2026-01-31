@@ -2,7 +2,7 @@
 
 ## 模块概述
 
-本模块是钉钉直播回放下载工具的核心业务逻辑层，负责协调 Cookie 获取、m3u8 解析、视频下载等核心功能，是整个下载流程的协调者。采用分层架构和设计模式，提供高内聚、低耦合的业务逻辑实现。
+本模块是钉钉直播回放下载工具的核心业务逻辑层，负责协调Cookie获取、m3u8解析、视频下载等核心功能，是整个下载流程的协调者。采用分层架构和设计模式，提供高内聚、低耦合的业务逻辑实现。
 
 ## 模块架构
 
@@ -12,7 +12,7 @@
 - **开闭原则**：对扩展开放，对修改关闭
 - **依赖倒置原则**：依赖抽象而非具体实现
 - **接口隔离原则**：使用最小化接口
-- **外观模式**：Downloader 作为统一入口，简化子系统调用
+- **外观模式**：Downloader作为统一入口，简化子系统调用
 
 ### 类图结构
 
@@ -79,9 +79,39 @@
 
 **设计模式**：外观模式（Facade Pattern）
 
+**核心实现**：
+
+```python
+class Downloader:
+    def __init__(
+        self,
+        browser_type: str,
+        save_mode: str,
+        user_controller: UserInteractionController,
+        dependency_factory: Optional[DependencyFactory] = None,
+    ):
+        self.browser_type = browser_type
+        self.save_mode = save_mode
+        self.user_controller = user_controller
+
+        self.dependency_factory = dependency_factory or DependencyFactory()
+
+        cookie_handler = self.dependency_factory.get_cookie_handler(browser_type)
+        path_selector = self.dependency_factory.get_path_selector(save_mode)
+        n_m3u8dl_re = self.dependency_factory.get_n_m3u8dl_re()
+
+        self.video_manager = VideoDownloadManager(
+            browser_type,
+            save_mode,
+            cookie_handler=cookie_handler,
+            path_selector=path_selector,
+            n_m3u8dl_re=n_m3u8dl_re,
+        )
+```
+
 ### VideoDownloadManager - 视频下载管理器
 
-**职责**：协调 Cookie 获取、m3u8 解析、视频下载的整个流程
+**职责**：协调Cookie获取、m3u8解析、视频下载的整个流程
 
 **功能**：
 
@@ -89,19 +119,48 @@
 - 重复获取下载上下文
 - 处理单个视频下载
 - 管理下载资源
+- 自动重试机制（最大20次）
 
 **设计模式**：协调器模式（Coordinator Pattern）
 
-### CookieHandler - Cookie 处理模块
+**核心实现**：
 
-**职责**：获取和管理 Cookie 及请求头
+```python
+class VideoDownloadManager:
+    def process_video(self, context: VideoDownloadContext) -> bool:
+        max_retries = VIDEO_DOWNLOAD_MAX_RETRIES
+        m3u8_link = None
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                m3u8_link = self._attempt_download(context, attempt, max_retries)
+                download_success = self._download_video(m3u8_link, context)
+
+                if download_success:
+                    logger.info(f"视频下载成功: {context.live_name} (第 {attempt} 次尝试)")
+                    return True
+
+            except (DownloadError, BrowserError, NetworkError, M3u8ParseError) as e:
+                self._handle_download_exception(context, e, attempt, max_retries)
+                if attempt == max_retries:
+                    return False
+            finally:
+                if m3u8_link and m3u8_link.local_file_path:
+                    self.m3u8_download_service.cleanup_temp_file(m3u8_link.local_file_path)
+
+        return False
+```
+
+### CookieHandler - Cookie处理模块
+
+**职责**：获取和管理Cookie及请求头
 
 **功能**：
 
-- 通过 Selenium 自动化浏览器获取登录后的 Cookie
-- 获取请求头信息（User-Agent、Referer 等）
+- 通过Selenium自动化浏览器获取登录后的Cookie
+- 获取请求头信息（User-Agent、Referer等）
 - 获取直播视频名称
-- 支持重复获取 Cookie（复用浏览器实例）
+- 支持重复获取Cookie（复用浏览器实例）
 - 提取并构建请求头
 
 **核心算法**：
@@ -109,81 +168,225 @@
 - 多选择器策略获取直播名称（XPath/CSS Selector）
 - 请求头动态构建和合并
 
-### M3u8Parser - m3u8 解析模块
+**核心实现**：
 
-**职责**：从浏览器网络日志中提取 m3u8 链接
+```python
+class CookieHandler:
+    def _get_live_name(self) -> str:
+        for selector_type, selector_value in LIVE_NAME_SELECTORS:
+            try:
+                if selector_type == "xpath":
+                    live_name = self.browser.get_element_by_xpath(selector_value).text
+                elif selector_type == "css":
+                    live_name = self.browser.get_element_by_class_name(selector_value).text
+                return live_name
+            except Exception:
+                continue
+        return "直播视频名称不可获取"
+```
+
+### M3u8Parser - m3u8解析模块
+
+**职责**：从浏览器网络日志中提取m3u8链接
 
 **功能**：
 
-- 从浏览器性能日志中提取 m3u8 链接
-- 下载 m3u8 文件
-- 提取基础 URL（prefix）
-- 支持重试机制（最多 MAX_RETRY_COUNT 次）
-- 支持 Edge、Chrome、Firefox 三种浏览器
+- 从浏览器性能日志中提取m3u8链接
+- 下载m3u8文件
+- 提取基础URL（prefix）
+- 支持重试机制（最多MAX_RETRY_COUNT次）
+- 支持Edge、Chrome、Firefox三种浏览器
 
 **核心算法**：
 
-- 日志解析算法：从性能日志中提取包含 liveUuid 的 m3u8 链接
-- URL 解析算法：使用 urllib.parse 提取 liveUuid 参数
+- 日志解析算法：从性能日志中提取包含liveUuid的m3u8链接
+- URL解析算法：使用urllib.parse提取liveUuid参数
 - 重试机制：失败后自动刷新页面重试
 
-### M3u8DownloadService - m3u8 下载服务
+**核心实现**：
 
-**职责**：封装 m3u8 文件下载逻辑
+```python
+class M3u8Parser:
+    def fetch_m3u8_link(self, url: str) -> str:
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        live_uuid = query_params.get("liveUuid", [None])[FIRST_ELEMENT_INDEX]
+
+        if not live_uuid:
+            logger.error("未能从 URL 提取 liveUuid")
+            raise M3u8ParseError("未能从 URL 提取 liveUuid 参数")
+
+        for attempt in range(self.max_retries):
+            try:
+                logger.info(f"第 {attempt + 1} 次尝试获取到 m3u8 链接")
+                self._refresh_page()
+                logs = self.browser.get_log(LOG_TYPE_PERFORMANCE)
+                m3u8_links = self.browser.extract_m3u8_links_from_logs(logs, live_uuid)
+                if not m3u8_links:
+                    logger.warning(f"第 {attempt + 1} 次尝试未获取到 m3u8 链接")
+                    continue
+
+                if len(m3u8_links) >= 1:
+                    logger.info(
+                        f"提取到 {len(m3u8_links)} 个 m3u8 链接，预期仅 1 个, "
+                        f"返回最后一个链接: {m3u8_links[-1]}"
+                    )
+                    return m3u8_links[-1]
+            except Exception as e:
+                logger.error(f"第 {attempt + 1} 次尝试获取 m3u8 链接时发生错误: {e}", exc_info=True)
+
+        logger.warning(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
+        raise M3u8ParseError(f"经过 {self.max_retries} 次重试后仍未获取到 m3u8 链接")
+```
+
+### M3u8DownloadService - m3u8下载服务
+
+**职责**：封装m3u8文件下载逻辑
 
 **功能**：
 
-- 获取并下载 m3u8 文件
-- 验证 m3u8 文件完整性
-- 提取基础 URL
+- 获取并下载m3u8文件
+- 验证m3u8文件完整性
+- 提取基础URL
 - 生成临时文件路径
+- 清理临时文件
 
 **设计模式**：服务模式（Service Pattern）
 
-### PathSelector - 路径选择器
+**核心实现**：
 
-**职责**：根据保存模式选择下载路径
+```python
+class M3u8DownloadService:
+    def fetch_and_download_m3u8(
+        self,
+        url: str,
+        m3u8_headers: dict,
+    ) -> M3u8Link:
+        m3u8_link = self.m3u8_parser.fetch_m3u8_link(url)
+        logger.info(f"获取到 m3u8 链接: {m3u8_link}")
+
+        m3u8_file = self.m3u8_file_manager.get_temp_file_path()
+        logger.debug(f"准备下载 m3u8 文件到: {m3u8_file}")
+
+        try:
+            m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_link, m3u8_file, m3u8_headers)
+
+            if not m3u8_file or not os.path.exists(m3u8_file):
+                raise DownloadError(f"m3u8 文件下载失败或文件不存在: {m3u8_file}")
+
+            file_size = os.path.getsize(m3u8_file)
+            logger.debug(f"m3u8 文件大小: {file_size} bytes")
+
+        except Exception as e:
+            logger.error(f"下载 m3u8 文件时发生错误: {e}", exc_info=True)
+            raise DownloadError(f"下载 m3u8 文件失败: {e}") from e
+
+        prefix = self.m3u8_parser.extract_prefix(m3u8_link)
+        logger.info(f"提取到基础 URL: {prefix}")
+
+        return M3u8Link(url=m3u8_link, prefix=prefix, local_file_path=m3u8_file)
+```
+
+### DependencyFactory - 依赖工厂
+
+**职责**：创建和管理各种依赖实例，实现依赖注入和工厂模式
 
 **功能**：
 
-- 支持默认路径模式
-- 支持手动选择路径模式
-- 路径验证和创建
+- 创建CookieHandler实例
+- 创建M3u8Parser实例
+- 创建PathSelector实例
+- 创建NM3u8DLRE实例
+- 创建M3u8DownloadService实例
+- 实例缓存，避免重复创建
 
-**设计模式**：策略模式（Strategy Pattern）
+**设计模式**：工厂模式（Factory Pattern）、依赖注入（Dependency Injection）
 
-### HeaderManager - 请求头管理器
+**核心实现**：
 
-**职责**：统一管理请求头配置
+```python
+class DependencyFactory:
+    def __init__(self):
+        self._instances: Dict[str, object] = {}
+
+    def get_cookie_handler(self, browser_type: str) -> CookieHandler:
+        key = f"cookie_handler_{browser_type}"
+        if key not in self._instances:
+            self._instances[key] = CookieHandler(browser_type)
+            logger.debug(f"创建Cookie处理器实例 - 浏览器类型: {browser_type}")
+        return self._instances[key]
+
+    def get_m3u8_parser(self, browser_driver) -> M3u8Parser:
+        key = f"m3u8_parser_{id(browser_driver)}"
+        if key not in self._instances:
+            self._instances[key] = M3u8Parser(browser_driver)
+            logger.debug(f"创建m3u8解析器实例 - 浏览器驱动ID: {id(browser_driver)}")
+        return self._instances[key]
+```
+
+### UserInteractionController - 用户交互控制器
+
+**职责**：处理用户交互逻辑
 
 **功能**：
 
-- 从配置文件加载请求头
-- 支持请求头动态覆盖
-- 提供请求头缓存机制
+- 获取用户输入
+- 验证用户输入
+- 询问用户是否继续下载
+- 询问用户文件路径
 
-**设计模式**：管理器模式（Manager Pattern）
+**核心实现**：
+
+```python
+class UserInteractionController:
+    def get_user_input(
+        self,
+        prompt: str,
+        validation_func: Optional[Callable[[str], bool]] = None,
+        error_message: Optional[str] = None,
+        input_name: str = "输入",
+    ) -> str:
+        while True:
+            try:
+                user_input = input(prompt)
+
+                if validation_func:
+                    if validation_func(user_input):
+                        return user_input
+                    else:
+                        if error_message:
+                            print(error_message)
+                        continue
+
+                return user_input
+
+            except EOFError:
+                raise
+            except KeyboardInterrupt:
+                print("\n用户中断输入")
+                raise
+```
 
 ## 核心实现原理
 
-### Cookie 获取流程
+### Cookie获取流程
 
 ```text
 创建浏览器实例 (BrowserFactory)
   ↓
-导航到指定 URL
+导航到指定URL
   ↓
 等待用户手动登录
   ↓
-获取 User-Agent 和 Referer (JavaScript 执行)
+获取User-Agent和Referer (JavaScript执行)
   ↓
 构建请求头 (HeaderManager)
   ↓
 获取直播名称 (多选择器策略)
   ↓
-获取 Cookie (Selenium API)
+获取Cookie (Selenium API)
   ↓
-返回浏览器实例、CookieData、HeadersData、直播名称
+返回CookieData、HeadersData、直播名称
 ```
 
 ### 直播名称获取算法
@@ -204,9 +407,9 @@ def _get_live_name(self) -> str:
     return "直播视频名称不可获取"
 ```
 
-### m3u8 链接提取算法
+### m3u8链接提取算法
 
-#### URL 解析
+#### URL解析
 
 ```python
 parsed_url = urlparse(url)
@@ -248,17 +451,17 @@ raise M3u8ParseError("重试次数耗尽")
 ```text
 初始化下载环境 (VideoDownloadManager.initialize_download)
   ↓
-获取 Cookie 和请求头 (CookieHandler.get_cookie)
+获取Cookie和请求头 (CookieHandler.get_cookie)
   ↓
-创建 m3u8 解析器 (M3u8Parser)
+创建m3u8解析器 (M3u8Parser)
   ↓
-获取并下载 m3u8 文件 (M3u8DownloadService.fetch_and_download_m3u8)
+获取并下载m3u8文件 (M3u8DownloadService.fetch_and_download_m3u8)
   ↓
-提取基础 URL (M3u8Parser.extract_prefix)
+提取基础URL (M3u8Parser.extract_prefix)
   ↓
 选择保存路径 (PathSelector.get_save_dir)
   ↓
-调用 N_m3u8DL-RE 下载视频 (NM3u8DLRE.download)
+调用N_m3u8DL-RE下载视频 (NM3u8DLRE.download)
   ↓
 验证下载结果
   ↓
@@ -268,7 +471,7 @@ raise M3u8ParseError("重试次数耗尽")
 ### 单个视频下载流程
 
 ```text
-用户输入 URL
+用户输入URL
   ↓
 创建下载器 (Downloader)
   ↓
@@ -308,7 +511,7 @@ raise M3u8ParseError("重试次数耗尽")
 **属性**：
 
 - `url`: 钉钉直播回放分享链接
-- `cookie_data`: Cookie 数据值对象
+- `cookie_data`: Cookie数据值对象
 - `headers_data`: 请求头数据值对象
 - `live_name`: 直播视频名称
 - `save_dir`: 保存目录
@@ -316,13 +519,13 @@ raise M3u8ParseError("重试次数耗尽")
 
 **设计模式**：数据传输对象（DTO）
 
-### CookieData - Cookie 数据值对象
+### CookieData - Cookie数据值对象
 
-**用途**：封装 Cookie 数据，提供类型安全和不可变性
+**用途**：封装Cookie数据，提供类型安全和不可变性
 
 **属性**：
 
-- `cookies`: Cookie 字典
+- `cookies`: Cookie字典
 
 **特性**：
 
@@ -334,7 +537,7 @@ raise M3u8ParseError("重试次数耗尽")
 
 ### HeadersData - 请求头数据值对象
 
-**用途**：封装 HTTP 请求头数据
+**用途**：封装HTTP请求头数据
 
 **属性**：
 
@@ -348,26 +551,26 @@ raise M3u8ParseError("重试次数耗尽")
 
 **设计模式**：值对象（Value Object）
 
-### M3u8Link - m3u8 链接值对象
+### M3u8Link - m3u8链接值对象
 
-**用途**：封装 m3u8 链接和相关信息
+**用途**：封装m3u8链接和相关信息
 
 **属性**：
 
-- `url`: m3u8 文件 URL
-- `prefix`: 基础 URL
-- `local_file_path`: 本地 m3u8 文件路径
+- `url`: m3u8文件URL
+- `prefix`: 基础URL
+- `local_file_path`: 本地m3u8文件路径
 
 **特性**：
 
 - 不可变（frozen=True）
-- URL 格式验证
+- URL格式验证
 
 **设计模式**：值对象（Value Object）
 
 ## 使用方法
 
-### Downloader 使用示例
+### Downloader使用示例
 
 ```python
 from dingtalk_downloader.core.downloader import Downloader
@@ -377,7 +580,7 @@ from dingtalk_downloader.config.constants import (
 )
 
 # 创建下载器
-downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT)
+downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, user_controller)
 
 # 下载单个视频
 downloader.download_single_video("https://n.dingtalk.com/xxx")
@@ -394,24 +597,24 @@ downloader.download_batch_videos(urls)
 downloader.close()
 ```
 
-### CookieHandler 使用示例
+### CookieHandler使用示例
 
 ```python
 from dingtalk_downloader.core.cookie_handler import CookieHandler
 from dingtalk_downloader.config.constants import BROWSER_TYPE_EDGE
 
-# 创建 Cookie 处理器
+# 创建Cookie处理器
 cookie_handler = CookieHandler(BROWSER_TYPE_EDGE)
 
-# 获取 Cookie 和请求头
-browser, cookie_data, headers_data, live_name = cookie_handler.get_cookie(
+# 获取Cookie和请求头
+cookie_data, headers_data, live_name = cookie_handler.get_cookie(
     "https://n.dingtalk.com/xxx"
 )
 
 print(f"直播名称: {live_name}")
-print(f"Cookie 数量: {len(cookie_data)}")
+print(f"Cookie数量: {len(cookie_data)}")
 
-# 重复获取 Cookie（复用浏览器实例）
+# 重复获取Cookie（复用浏览器实例）
 cookie_data, headers_data, live_name = cookie_handler.repeat_get_cookie(
     "https://n.dingtalk.com/yyy"
 )
@@ -420,34 +623,34 @@ cookie_data, headers_data, live_name = cookie_handler.repeat_get_cookie(
 cookie_handler.close()
 ```
 
-### M3u8Parser 使用示例
+### M3u8Parser使用示例
 
 ```python
 from dingtalk_downloader.core.m3u8_parser import M3u8Parser
 from dingtalk_downloader.config.constants import BROWSER_TYPE_EDGE
 
-# 创建 m3u8 解析器
+# 创建m3u8解析器
 parser = M3u8Parser(browser)
 
-# 获取 m3u8 链接
+# 获取m3u8链接
 m3u8_link = parser.fetch_m3u8_link("https://n.dingtalk.com/xxx")
 
 if m3u8_link:
-    print(f"获取到 m3u8 链接: {m3u8_link}")
+    print(f"获取到m3u8链接: {m3u8_link}")
 
-    # 下载 m3u8 文件
+    # 下载m3u8文件
     m3u8_file = parser.download_m3u8_file(
         m3u8_link,
         "output.m3u8",
         headers
     )
 
-    # 提取基础 URL
+    # 提取基础URL
     prefix = parser.extract_prefix(m3u8_link)
-    print(f"基础 URL: {prefix}")
+    print(f"基础URL: {prefix}")
 ```
 
-### VideoDownloadManager 使用示例
+### VideoDownloadManager使用示例
 
 ```python
 from dingtalk_downloader.core.video_download_manager import VideoDownloadManager
@@ -470,16 +673,39 @@ success2 = manager.process_video(context2)
 manager.close()
 ```
 
+### DependencyFactory使用示例
+
+```python
+from dingtalk_downloader.core.dependency_factory import DependencyFactory
+
+# 创建依赖工厂
+factory = DependencyFactory()
+
+# 获取Cookie处理器
+cookie_handler = factory.get_cookie_handler("edge")
+
+# 获取路径选择器
+path_selector = factory.get_path_selector("1")
+
+# 获取N_m3u8DL-RE实例
+n_m3u8dl_re = factory.get_n_m3u8dl_re()
+
+# 清除所有缓存的实例
+factory.clear_instances()
+```
+
 ## 接口参数说明
 
-### Downloader 类
+### Downloader类
 
-#### **init**(browser_type: str, save_mode: str)
+#### **init**(browser_type: str, save_mode: str, user_controller: UserInteractionController, dependency_factory: Optional[DependencyFactory] = None)
 
 **参数**：
 
 - `browser_type`：浏览器类型（edge/chrome/firefox）
 - `save_mode`：保存模式（1：默认路径，2：手动选择）
+- `user_controller`：用户交互控制器
+- `dependency_factory`：依赖工厂（可选，用于依赖注入）
 
 **功能**：初始化下载器
 
@@ -511,124 +737,19 @@ manager.close()
 
 **功能**：关闭浏览器，释放资源
 
-### CookieHandler 类
+### VideoDownloadManager类
 
-#### **init**(browser_type: str)
-
-**参数**：
-
-- `browser_type`：浏览器类型（edge/chrome/firefox）
-
-**功能**：初始化 Cookie 处理器
-
-#### get_cookie(url: str) -> Tuple[Any, CookieData, HeadersData, str]
-
-**参数**：
-
-- `url`：钉钉直播回放分享链接
-
-**返回值**：
-
-- `Tuple`：包含四个元素的元组
-  - `browser`：浏览器实例
-  - `cookie_data`：Cookie 数据值对象
-  - `headers_data`：请求头数据值对象
-  - `live_name`：直播视频名称
-
-**功能**：获取 Cookie 和请求头信息
-
-**异常**：
-
-- `CookieError`：获取失败时
-
-#### repeat_get_cookie(url: str) -> Tuple[CookieData, HeadersData, str]
-
-**参数**：
-
-- `url`：钉钉直播回放分享链接
-
-**返回值**：
-
-- `Tuple`：包含三个元素的元组
-  - `cookie_data`：Cookie 数据值对象
-  - `headers_data`：请求头数据值对象
-  - `live_name`：直播视频名称
-
-**功能**：重复获取 Cookie 和请求头信息
-
-**异常**：
-
-- `CookieError`：获取失败时
-
-#### close() -> None
-
-**功能**：关闭浏览器，释放资源
-
-### M3u8Parser 类
-
-#### **init**(browser: BrowserDriver, max_retries: int = MAX_RETRY_COUNT)
-
-**参数**：
-
-- `browser`：浏览器实例
-- `max_retries`：最大重试次数，默认为 5
-
-**功能**：初始化 m3u8 解析器
-
-#### fetch_m3u8_link(url: str) -> str
-
-**参数**：
-
-- `url`：钉钉直播回放分享链接
-
-**返回值**：
-
-- `str`：m3u8 链接
-
-**功能**：从浏览器网络日志中提取 m3u8 链接
-
-**异常**：
-
-- `M3u8ParseError`：提取失败时
-
-#### download_m3u8_file(url: str, filename: str, headers: dict) -> str
-
-**参数**：
-
-- `url`：m3u8 文件 URL
-- `filename`：保存的文件名
-- `headers`：请求头字典
-
-**返回值**：
-
-- `str`：m3u8 文件路径
-
-**功能**：下载 m3u8 文件
-
-**异常**：
-
-- `M3u8ParseError`：下载失败时
-
-#### extract_prefix(url: str) -> str
-
-**参数**：
-
-- `url`：m3u8 文件 URL
-
-**返回值**：
-
-- `str`：基础 URL
-
-**功能**：提取基础 URL
-
-### VideoDownloadManager 类
-
-#### **init**(browser_type: str, save_mode: str)
+#### **init**(browser_type: str, save_mode: str, cookie_handler: Optional[CookieHandler] = None, m3u8_parser: Optional[M3u8Parser] = None, m3u8_download_service: Optional[M3u8DownloadService] = None, path_selector: Optional[PathSelector] = None, n_m3u8dl_re: Optional[NM3u8DLRE] = None)
 
 **参数**：
 
 - `browser_type`：浏览器类型（edge/chrome/firefox）
 - `save_mode`：保存模式（1：默认路径，2：手动选择）
+- `cookie_handler`：Cookie处理器（可选，用于依赖注入）
+- `m3u8_parser`：m3u8解析器（可选，用于依赖注入）
+- `m3u8_download_service`：m3u8下载服务（可选，用于依赖注入）
+- `path_selector`：路径选择器（可选，用于依赖注入）
+- `n_m3u8dl_re`：NM3u8DLRE实例（可选，用于依赖注入）
 
 **功能**：初始化视频下载管理器
 
@@ -644,18 +765,6 @@ manager.close()
 
 **功能**：初始化下载环境
 
-#### repeat_get_context(url: str) -> VideoDownloadContext
-
-**参数**：
-
-- `url`：钉钉直播回放分享链接
-
-**返回值**：
-
-- `VideoDownloadContext`：视频下载上下文
-
-**功能**：重复获取下载上下文
-
 #### process_video(context: VideoDownloadContext) -> bool
 
 **参数**：
@@ -664,7 +773,7 @@ manager.close()
 
 **返回值**：
 
-- `bool`：下载成功返回 True，下载失败返回 False
+- `bool`：下载成功返回True，下载失败返回False
 
 **功能**：处理单个视频下载
 
@@ -676,18 +785,108 @@ manager.close()
 
 **功能**：关闭浏览器，释放资源
 
+### CookieHandler类
+
+#### **init**(browser_type: str)
+
+**参数**：
+
+- `browser_type`：浏览器类型（edge/chrome/firefox）
+
+**功能**：初始化Cookie处理器
+
+#### get_cookie(url: str) -> Tuple[CookieData, HeadersData, str]
+
+**参数**：
+
+- `url`：钉钉直播回放分享链接
+
+**返回值**：
+
+- `Tuple`：包含三个元素的元组
+  - `cookie_data`：Cookie数据值对象
+  - `headers_data`：请求头数据值对象
+  - `live_name`：直播视频名称
+
+**功能**：获取Cookie和请求头信息
+
+**异常**：
+
+- `CookieError`：获取失败时
+
+#### close() -> None
+
+**功能**：关闭浏览器，释放资源
+
+### M3u8Parser类
+
+#### **init**(browser: BrowserDriver, max_retries: int = MAX_RETRY_COUNT)
+
+**参数**：
+
+- `browser`：浏览器实例
+- `max_retries`：最大重试次数，默认为5
+
+**功能**：初始化m3u8解析器
+
+#### fetch_m3u8_link(url: str) -> str
+
+**参数**：
+
+- `url`：钉钉直播回放分享链接
+
+**返回值**：
+
+- `str`：m3u8链接
+
+**功能**：从浏览器网络日志中提取m3u8链接
+
+**异常**：
+
+- `M3u8ParseError`：提取失败时
+
+#### download_m3u8_file(url: str, filename: str, headers: dict) -> str
+
+**参数**：
+
+- `url`：m3u8文件URL
+- `filename`：保存的文件名
+- `headers`：请求头字典
+
+**返回值**：
+
+- `str`：m3u8文件路径
+
+**功能**：下载m3u8文件
+
+**异常**：
+
+- `M3u8ParseError`：下载失败时
+
+#### extract_prefix(url: str) -> str
+
+**参数**：
+
+- `url`：m3u8文件URL
+
+**返回值**：
+
+- `str`：基础URL
+
+**功能**：提取基础URL
+
 ## 依赖关系
 
 ### 依赖的模块
 
 1. `browser.browser_factory` - 浏览器工厂
 2. `browser.*_driver` - 浏览器驱动
-3. `binary.n_m3u8dl_re` - N_m3u8DL-RE 调用封装
+3. `binary.n_m3u8dl_re` - N_m3u8DL-RE调用封装
 4. `utils.path_helper` - 路径处理工具
 5. `utils.path_selector` - 路径选择器
 6. `utils.models` - 数据模型
 7. `config.constants` - 常量定义
-8. `config.yaml_config` - YAML 配置管理
+8. `config.yaml_config` - YAML配置管理
 9. `config.header_manager` - 请求头管理
 
 ### 被依赖的模块
@@ -696,58 +895,58 @@ manager.close()
 
 ## 数据流程
 
-### Cookie 获取流程
+### Cookie获取流程
 
 ```text
 创建浏览器实例
   ↓
-导航到指定 URL
+导航到指定URL
   ↓
 等待用户登录
   ↓
-获取 User-Agent 和 Referer
+获取User-Agent和Referer
   ↓
 构建请求头
   ↓
 获取直播名称（多选择器策略）
   ↓
-获取 Cookie
+获取Cookie
   ↓
-返回浏览器实例、Cookie、请求头、直播名称
+返回CookieData、HeadersData、直播名称
 ```
 
-### m3u8 解析流程
+### m3u8解析流程
 
 ```text
-解析 URL 获取 liveUuid
+解析URL获取liveUuid
   ↓
 获取浏览器性能日志
   ↓
-遍历日志查找包含 liveUuid 的 m3u8 链接
+遍历日志查找包含liveUuid的m3u8链接
   ↓
 如果未找到，刷新页面重试
   ↓
-最多重试 MAX_RETRY_COUNT 次
+最多重试MAX_RETRY_COUNT次
   ↓
-返回 m3u8 链接
+返回m3u8链接
 ```
 
 ### 视频下载流程
 
 ```text
-获取 Cookie 和请求头
+获取Cookie和请求头
   ↓
-创建 m3u8 解析器
+创建m3u8解析器
   ↓
-获取 m3u8 链接
+获取m3u8链接
   ↓
-下载 m3u8 文件
+下载m3u8文件
   ↓
-提取基础 URL
+提取基础URL
   ↓
 选择保存路径
   ↓
-调用 N_m3u8DL-RE 下载视频
+调用N_m3u8DL-RE下载视频
   ↓
 验证下载结果
   ↓
@@ -760,23 +959,23 @@ manager.close()
 
 **应用类**：Downloader
 
-**说明**：Downloader 作为统一入口，隐藏了 VideoDownloadManager、CookieHandler、M3u8Parser 等子系统的复杂性，为客户端提供简单的接口。
+**说明**：Downloader作为统一入口，隐藏了VideoDownloadManager、CookieHandler、M3u8Parser等子系统的复杂性，为客户端提供简单的接口。
 
 ### 2. 工厂模式（Factory Pattern）
 
-**应用类**：BrowserFactory（在 browser 模块中）
+**应用类**：BrowserFactory（在browser模块中）、DependencyFactory
 
-**说明**：根据浏览器类型创建对应的浏览器实例。
+**说明**：根据浏览器类型创建对应的浏览器实例；根据依赖类型创建对应的依赖实例。
 
 ### 3. 单例模式（Singleton Pattern）
 
-**应用类**：YamlConfig（在 config 模块中）
+**应用类**：YamlConfig（在config模块中）
 
 **说明**：确保配置文件在应用生命周期内只被加载一次。
 
 ### 4. 策略模式（Strategy Pattern）
 
-**应用类**：PathSelector
+**应用类**：PathSelector（在utils模块中）
 
 **说明**：根据不同的保存模式（默认路径/手动选择）采用不同的路径选择策略。
 
@@ -792,6 +991,18 @@ manager.close()
 
 **说明**：封装视频下载所需的所有上下文信息，在模块间传递。
 
+### 7. 依赖注入（Dependency Injection）
+
+**应用类**：DependencyFactory
+
+**说明**：通过依赖工厂管理依赖实例的创建和生命周期，降低模块间耦合度。
+
+### 8. 协调器模式（Coordinator Pattern）
+
+**应用类**：VideoDownloadManager
+
+**说明**：协调Cookie获取、m3u8解析、视频下载的整个流程。
+
 ## 异常处理
 
 ### 异常层次结构
@@ -799,9 +1010,12 @@ manager.close()
 ```tree
 Exception
   └── DownloadError (下载异常)
-        ├── CookieError (Cookie 处理异常)
-        ├── M3u8ParseError (m3u8 解析异常)
-        └── FileReaderError (文件读取异常)
+        ├── CookieError (Cookie处理异常)
+        ├── M3u8ParseError (m3u8解析异常)
+        ├── FileReaderError (文件读取异常)
+        ├── BrowserError (浏览器操作异常)
+        ├── NetworkError (网络请求异常)
+        └── ValidationError (输入验证异常)
 ```
 
 ### 异常处理策略
@@ -810,20 +1024,22 @@ Exception
 2. **记录日志**：记录详细的错误信息和堆栈跟踪
 3. **资源清理**：异常时自动关闭浏览器，释放资源
 4. **用户友好**：向用户显示友好的错误信息
+5. **重试机制**：支持自动重试，提高成功率
 
 ## 注意事项
 
 ### 1. 浏览器资源管理
 
-- 使用完毕后必须调用 `close()` 方法
+- 使用完毕后必须调用`close()`方法
 - 避免浏览器进程残留
-- 使用上下文管理器（with 语句）自动管理资源
+- 使用上下文管理器（with语句）自动管理资源
 
 ### 2. 重试机制
 
-- m3u8 链接提取失败时会自动重试
-- 最多重试 `MAX_RETRY_COUNT` 次
+- m3u8链接提取失败时会自动重试
+- 视频下载失败时会自动重试（最多20次）
 - 每次重试前会刷新页面
+- 每次重试前会等待3-10秒
 
 ### 3. 异常处理
 
@@ -833,7 +1049,7 @@ Exception
 
 ### 4. 用户交互
 
-- Cookie 获取时需要用户手动登录
+- Cookie获取时需要用户手动登录
 - 支持继续下载新链接
 - 支持批量下载
 
@@ -845,9 +1061,15 @@ Exception
 
 ### 6. 配置管理
 
-- 使用 YamlConfig 单例模式
+- 使用YamlConfig单例模式
 - 支持配置热重载
 - 配置验证确保数据有效性
+
+### 7. 依赖注入
+
+- 使用DependencyFactory管理依赖实例
+- 避免重复创建相同实例
+- 支持自定义依赖注入
 
 ## 性能优化
 
@@ -858,13 +1080,18 @@ Exception
 
 ### 2. 请求头缓存
 
-- HeaderManager 缓存请求头
+- HeaderManager缓存请求头
 - 避免重复构建
 
 ### 3. 临时文件管理
 
-- 使用临时目录存储 m3u8 文件
+- 使用临时目录存储m3u8文件
 - 下载完成后自动清理
+
+### 4. 依赖注入
+
+- 使用DependencyFactory管理依赖实例
+- 避免重复创建相同实例
 
 ## 扩展方向
 
@@ -903,22 +1130,25 @@ Exception
 ### 1. 单元测试
 
 - 测试各个类的独立功能
-- Mock 浏览器和网络请求
+- Mock浏览器和网络请求
+- 测试重试机制
 
 ### 2. 集成测试
 
 - 测试完整的下载流程
 - 测试批量下载
+- 测试异常处理
 
 ### 3. 异常测试
 
 - 测试各种异常情况
 - 验证异常处理逻辑
+- 测试边界条件
 
 ## 维护责任人
 
 - **主要维护者**：项目团队
-- **最后更新日期**：2026-01-27
+- **最后更新日期**：2026-01-31
 
 ## 相关文档
 
