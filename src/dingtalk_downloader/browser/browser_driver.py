@@ -12,7 +12,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from typing import List, Optional
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait

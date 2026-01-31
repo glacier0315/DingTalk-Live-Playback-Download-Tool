@@ -12,8 +12,7 @@
 
 import os
 import logging
-from typing import Tuple, Optional
-from .m3u8_parser import M3u8Parser, M3u8ParseError
+from .m3u8_parser import M3u8Parser
 from ..utils.models import M3u8Link
 from .exceptions import DownloadError
 from ..utils.m3u8_file_manager import M3u8FileManager

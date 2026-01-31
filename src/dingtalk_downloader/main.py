@@ -26,7 +26,6 @@ from .core.user_interaction_controller import UserInteractionController
 from .core.exceptions import CookieError, M3u8ParseError, FileReaderError
 from .utils.validator import (
     validate_input,
-    validate_required_input,
     validate_dingtalk_url,
     validate_file_path,
 )

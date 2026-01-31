@@ -13,7 +13,6 @@
 import os
 import logging
 from pathlib import Path
-from typing import List
 from ..config.constants import MAX_FILE_SIZE
 
 logger = logging.getLogger(__name__)

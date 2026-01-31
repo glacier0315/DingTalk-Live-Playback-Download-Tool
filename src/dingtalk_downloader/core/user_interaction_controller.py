@@ -12,11 +12,7 @@
 
 import logging
 from typing import Callable, Optional
-from ..utils.validator import (
-    validate_required_input,
-    validate_dingtalk_url,
-    validate_file_path,
-)
+from ..utils.validator import validate_required_input
 
 logger = logging.getLogger(__name__)
 

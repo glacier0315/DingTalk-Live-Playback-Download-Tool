@@ -11,7 +11,7 @@
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Dict
 from .cookie_handler import CookieHandler
 from .m3u8_parser import M3u8Parser
 from .m3u8_download_service import M3u8DownloadService
