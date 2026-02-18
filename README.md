@@ -7,6 +7,9 @@
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Black](https://img.shields.io/badge/Code%20Style-Black-black.svg)](https://github.com/psf/black)
+[![CI](https://github.com/glacier0315/DingTalk-Live-Playback-Download-Tool/workflows/CI/badge.svg)](https://github.com/glacier0315/DingTalk-Live-Playback-Download-Tool/actions)
+[![Coverage](https://img.shields.io/badge/coverage-92.48%25-brightgreen.svg)](https://github.com/glacier0315/DingTalk-Live-Playback-Download-Tool/actions)
+[![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen.svg)](https://github.com/glacier0315/DingTalk-Live-Playback-Download-Tool/actions)
 
 </div>
 
