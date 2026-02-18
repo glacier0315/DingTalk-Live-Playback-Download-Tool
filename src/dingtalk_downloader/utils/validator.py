@@ -81,20 +81,6 @@ def _handle_eof_error(
     raise EOFError()
 
 
-def _validate_choice(choice: str, valid_options: List[str]) -> bool:
-    """
-    验证选项是否有效。
-
-    Args:
-        choice: 用户输入
-        valid_options: 有效选项列表
-
-    Returns:
-        选项是否有效
-    """
-    return choice in valid_options
-
-
 def _process_user_choice(
     choice: str,
     valid_options: List[str],
@@ -116,7 +102,7 @@ def _process_user_choice(
     if not _validate_input(choice, validation_func, error_message):
         return None
 
-    if _validate_choice(choice, valid_options):
+    if choice in valid_options:
         return choice
 
     print("无效的选择，请重新输入。")

@@ -169,17 +169,4 @@ class FileReader:
                 if isinstance(value, str) and value.startswith("https://n.dingtalk.com"):
                     links[i] = value
 
-    @staticmethod
-    def clean_file_path(file_path: str) -> str:
-        """
-        清理文件路径。
 
-        去除路径中的多余引号和空格。
-
-        Args:
-            file_path: 文件路径
-
-        Returns:
-            清理后的文件路径
-        """
-        return clean_file_path(file_path)
