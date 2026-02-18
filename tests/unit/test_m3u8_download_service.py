@@ -10,10 +10,11 @@
     - 2026-01-27: 初始版本
 """
 
-import sys
 import os
+import sys
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
@@ -58,9 +59,7 @@ def test_fetch_and_download_m3u8_success(mock_getsize, mock_exists):
         mock_m3u8_file_manager_class.return_value = mock_m3u8_file_manager
         service = M3u8DownloadService(mock_m3u8_parser)
 
-        m3u8_link = service.fetch_and_download_m3u8(
-            "https://n.dingtalk.com/test"
-        )
+        m3u8_link = service.fetch_and_download_m3u8("https://n.dingtalk.com/test")
 
         assert m3u8_link.url == "https://test.com/video.m3u8"
         assert m3u8_link.prefix == "https://test.com/"
@@ -87,9 +86,7 @@ def test_fetch_and_download_m3u8_fetch_error():
         service = M3u8DownloadService(mock_m3u8_parser)
 
         with pytest.raises(Exception, match="获取m3u8链接失败"):
-            service.fetch_and_download_m3u8(
-                "https://n.dingtalk.com/test"
-            )
+            service.fetch_and_download_m3u8("https://n.dingtalk.com/test")
 
         mock_m3u8_parser.fetch_m3u8_link.assert_called_once_with("https://n.dingtalk.com/test")
 
@@ -113,9 +110,7 @@ def test_fetch_and_download_m3u8_download_error():
         service = M3u8DownloadService(mock_m3u8_parser)
 
         with pytest.raises(DownloadError, match="下载 m3u8 文件失败"):
-            service.fetch_and_download_m3u8(
-                "https://n.dingtalk.com/test"
-            )
+            service.fetch_and_download_m3u8("https://n.dingtalk.com/test")
 
         mock_m3u8_parser.fetch_m3u8_link.assert_called_once_with("https://n.dingtalk.com/test")
         mock_m3u8_file_manager.get_temp_file_path.assert_called_once()
@@ -141,9 +136,7 @@ def test_fetch_and_download_m3u8_file_not_exist():
         service = M3u8DownloadService(mock_m3u8_parser)
 
         with pytest.raises(DownloadError, match="m3u8 文件下载失败或文件不存在"):
-            service.fetch_and_download_m3u8(
-                "https://n.dingtalk.com/test"
-            )
+            service.fetch_and_download_m3u8("https://n.dingtalk.com/test")
 
     mock_m3u8_parser.fetch_m3u8_link.assert_called_once_with("https://n.dingtalk.com/test")
     mock_m3u8_file_manager.get_temp_file_path.assert_called_once()

@@ -11,30 +11,31 @@
     - 2026-01-27: 重写-适配新的架构，使用VideoDownloadManager
 """
 
-import sys
 import os
+import sys
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.core.downloader import Downloader
-from dingtalk_downloader.core.dependency_factory import DependencyFactory
-from dingtalk_downloader.core.exceptions import (
-    DownloadError,
-    BrowserError,
-    NetworkError,
-    ValidationError,
-)
-from dingtalk_downloader.core.cookie_handler import CookieError
-from dingtalk_downloader.core.m3u8_parser import M3u8ParseError
 from dingtalk_downloader.config.constants import (
-    BROWSER_TYPE_EDGE,
     BROWSER_TYPE_CHROME,
+    BROWSER_TYPE_EDGE,
     BROWSER_TYPE_FIREFOX,
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
 )
+from dingtalk_downloader.core.cookie_handler import CookieError
+from dingtalk_downloader.core.dependency_factory import DependencyFactory
+from dingtalk_downloader.core.downloader import Downloader
+from dingtalk_downloader.core.exceptions import (
+    BrowserError,
+    DownloadError,
+    NetworkError,
+    ValidationError,
+)
+from dingtalk_downloader.core.m3u8_parser import M3u8ParseError
 from dingtalk_downloader.utils.models import VideoDownloadContext
 
 
@@ -232,6 +233,7 @@ def test_download_single_video_failure(mock_video_manager_class, mock_dependency
     mock_video_manager.process_video.assert_called_once_with(mock_context)
     mock_user_controller.get_user_input.assert_called_once()
 
+
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
 def test_download_single_video_exit(mock_video_manager_class, mock_dependency_factory_class):
@@ -407,7 +409,9 @@ def test_downloader_init_with_injected_dependency_factory():
     mock_dependency_factory.get_path_selector.return_value = mock_path_selector
     mock_dependency_factory.get_n_m3u8dl_re.return_value = mock_n_m3u8dl_re
 
-    with patch("dingtalk_downloader.core.downloader.VideoDownloadManager", return_value=mock_video_manager):
+    with patch(
+        "dingtalk_downloader.core.downloader.VideoDownloadManager", return_value=mock_video_manager
+    ):
         downloader = Downloader(
             BROWSER_TYPE_EDGE,
             SAVE_MODE_DEFAULT,
@@ -426,7 +430,9 @@ def test_downloader_init_with_injected_dependency_factory():
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_single_video_download_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_single_video_download_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试单个视频下载（下载错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -456,7 +462,9 @@ def test_download_single_video_download_error(mock_video_manager_class, mock_dep
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_single_video_browser_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_single_video_browser_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试单个视频下载（浏览器错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -486,7 +494,9 @@ def test_download_single_video_browser_error(mock_video_manager_class, mock_depe
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_single_video_network_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_single_video_network_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试单个视频下载（网络错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -516,7 +526,9 @@ def test_download_single_video_network_error(mock_video_manager_class, mock_depe
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_single_video_validation_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_single_video_validation_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试单个视频下载（验证错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -546,7 +558,9 @@ def test_download_single_video_validation_error(mock_video_manager_class, mock_d
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_single_video_keyboard_interrupt(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_single_video_keyboard_interrupt(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试单个视频下载（键盘中断）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -577,7 +591,9 @@ def test_download_single_video_keyboard_interrupt(mock_video_manager_class, mock
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_single_video_cookie_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_single_video_cookie_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试单个视频下载（Cookie错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -605,7 +621,9 @@ def test_download_single_video_cookie_error(mock_video_manager_class, mock_depen
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_single_video_m3u8_parse_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_single_video_m3u8_parse_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试单个视频下载（M3U8解析错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -633,7 +651,9 @@ def test_download_single_video_m3u8_parse_error(mock_video_manager_class, mock_d
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_single_video_unknown_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_single_video_unknown_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试单个视频下载（未知错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -691,7 +711,9 @@ def test_download_batch_videos_first_error(mock_video_manager_class, mock_depend
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_batch_videos_remaining_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_batch_videos_remaining_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试批量下载（剩余视频错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -719,15 +741,19 @@ def test_download_batch_videos_remaining_error(mock_video_manager_class, mock_de
     mock_user_controller.ask_continue_download.return_value = False
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
-    downloader.download_batch_videos({
-        0: "https://n.dingtalk.com/test1?liveUuid=abc",
-        1: "https://n.dingtalk.com/test2?liveUuid=def"
-    })
+    downloader.download_batch_videos(
+        {
+            0: "https://n.dingtalk.com/test1?liveUuid=abc",
+            1: "https://n.dingtalk.com/test2?liveUuid=def",
+        }
+    )
 
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_batch_videos_keyboard_interrupt(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_batch_videos_keyboard_interrupt(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试批量下载（键盘中断）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -758,7 +784,9 @@ def test_download_batch_videos_keyboard_interrupt(mock_video_manager_class, mock
 
 @patch("dingtalk_downloader.core.downloader.DependencyFactory")
 @patch("dingtalk_downloader.core.downloader.VideoDownloadManager")
-def test_download_batch_videos_unknown_error(mock_video_manager_class, mock_dependency_factory_class):
+def test_download_batch_videos_unknown_error(
+    mock_video_manager_class, mock_dependency_factory_class
+):
     """测试批量下载（未知错误）"""
     mock_video_manager = Mock()
     mock_video_manager_class.return_value = mock_video_manager
@@ -817,10 +845,12 @@ def test_continue_download_exit(mock_video_manager_class, mock_dependency_factor
     mock_user_controller.ask_continue_download.return_value = False
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)
-    downloader.download_batch_videos({
-        0: "https://n.dingtalk.com/test1?liveUuid=abc",
-        1: "https://n.dingtalk.com/test2?liveUuid=def"
-    })
+    downloader.download_batch_videos(
+        {
+            0: "https://n.dingtalk.com/test1?liveUuid=abc",
+            1: "https://n.dingtalk.com/test2?liveUuid=def",
+        }
+    )
 
     mock_user_controller.ask_continue_download.assert_called_once()
 

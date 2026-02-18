@@ -2,8 +2,10 @@
 用户交互控制器单元测试
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from dingtalk_downloader.core.user_interaction_controller import UserInteractionController
 
 
@@ -28,7 +30,10 @@ class TestUserInteractionController:
         assert result == "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"
         mock_input.assert_called_once()
 
-    @patch("builtins.input", side_effect=["invalid", "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"])
+    @patch(
+        "builtins.input",
+        side_effect=["invalid", "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"],
+    )
     def test_get_user_input_invalid_then_valid(self, mock_input):
         """测试获取无效后有效的用户输入"""
         controller = UserInteractionController()
@@ -41,7 +46,9 @@ class TestUserInteractionController:
         assert result == "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"
         assert mock_input.call_count == 2
 
-    @patch("builtins.input", side_effect=["", "", "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"])
+    @patch(
+        "builtins.input", side_effect=["", "", "https://n.dingtalk.com/dingding/live/?liveUuid=xxx"]
+    )
     def test_get_user_input_empty(self, mock_input):
         """测试获取空用户输入"""
         from dingtalk_downloader.utils.validator import validate_required_input

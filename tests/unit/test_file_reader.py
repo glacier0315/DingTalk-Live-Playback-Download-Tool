@@ -10,19 +10,20 @@
     - 2025-01-14: 初始版本
 """
 
-import sys
 import os
-import pytest
-import tempfile
 import shutil
-from unittest.mock import patch, Mock
+import sys
+import tempfile
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
+from dingtalk_downloader.core.exceptions import FileReaderError
 from dingtalk_downloader.utils.file_reader import FileReader
 from dingtalk_downloader.utils.path_helper import clean_file_path
-from dingtalk_downloader.core.exceptions import FileReaderError
 
 
 @pytest.fixture
@@ -51,9 +52,7 @@ def sample_excel_file(test_dir):
     import pandas as pd
 
     path = test_dir / "test.xlsx"
-    df = pd.DataFrame(
-        {"link": ["https://n.dingtalk.com/test1", "https://n.dingtalk.com/test2"]}
-    )
+    df = pd.DataFrame({"link": ["https://n.dingtalk.com/test1", "https://n.dingtalk.com/test2"]})
     df.to_excel(path, index=False)
     return str(path)
 
@@ -212,9 +211,7 @@ def test_check_is_file_directory(tmp_path, monkeypatch):
 
     with pytest.raises(ValueError) as exc_info:
         FileReader(str(dir_path))
-    assert "路径不是文件" in str(exc_info.value) or "文件格式不支持" in str(
-        exc_info.value
-    )
+    assert "路径不是文件" in str(exc_info.value) or "文件格式不支持" in str(exc_info.value)
 
 
 def test_check_file_size_too_large(tmp_path, monkeypatch):

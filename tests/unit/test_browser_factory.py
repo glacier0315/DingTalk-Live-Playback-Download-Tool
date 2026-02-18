@@ -10,22 +10,23 @@
     - 2025-01-14: 初始版本
 """
 
-import sys
 import os
-import pytest
+import sys
 from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from dingtalk_downloader.browser.browser_factory import BrowserFactory
+from dingtalk_downloader.browser.chrome_driver import ChromeDriver
+from dingtalk_downloader.browser.edge_driver import EdgeDriver
+from dingtalk_downloader.browser.firefox_driver import FirefoxDriver
 from dingtalk_downloader.config.constants import (
-    BROWSER_TYPE_EDGE,
     BROWSER_TYPE_CHROME,
+    BROWSER_TYPE_EDGE,
     BROWSER_TYPE_FIREFOX,
 )
-from dingtalk_downloader.browser.edge_driver import EdgeDriver
-from dingtalk_downloader.browser.chrome_driver import ChromeDriver
-from dingtalk_downloader.browser.firefox_driver import FirefoxDriver
 
 
 def test_browser_factory_create_edge():
@@ -103,7 +104,6 @@ def test_browser_factory_multiple_creations():
     ) as mock_chrome_webdriver, patch(
         "dingtalk_downloader.browser.firefox_driver.webdriver"
     ) as mock_firefox_webdriver:
-
         mock_edge_driver = Mock()
         mock_chrome_driver = Mock()
         mock_firefox_driver = Mock()

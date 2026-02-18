@@ -10,14 +10,15 @@
     - 2026-01-29: 初始版本
 """
 
-import sys
 import os
-import pytest
+import sys
 import tempfile
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.utils.path_helper import clean_file_path, join_paths, ensure_dir_exists
+from dingtalk_downloader.utils.path_helper import clean_file_path, ensure_dir_exists, join_paths
 
 
 def test_clean_file_path_normal():
@@ -90,9 +91,9 @@ def test_ensure_dir_exists_new_dir(tmp_path):
     """测试确保目录存在（新建目录）"""
     new_dir = tmp_path / "new_directory"
     assert not new_dir.exists()
-    
+
     ensure_dir_exists(str(new_dir))
-    
+
     assert new_dir.exists()
 
 
@@ -101,9 +102,9 @@ def test_ensure_dir_exists_existing_dir(tmp_path):
     existing_dir = tmp_path / "existing_directory"
     existing_dir.mkdir()
     assert existing_dir.exists()
-    
+
     ensure_dir_exists(str(existing_dir))
-    
+
     assert existing_dir.exists()
 
 
@@ -111,9 +112,9 @@ def test_ensure_dir_exists_nested(tmp_path):
     """测试确保目录存在（嵌套目录）"""
     nested_dir = tmp_path / "level1" / "level2" / "level3"
     assert not nested_dir.exists()
-    
+
     ensure_dir_exists(str(nested_dir))
-    
+
     assert nested_dir.exists()
 
 
@@ -121,7 +122,7 @@ def test_ensure_dir_exists_with_spaces(tmp_path):
     """测试确保目录存在（带空格的目录名）"""
     dir_with_spaces = tmp_path / "directory with spaces"
     assert not dir_with_spaces.exists()
-    
+
     ensure_dir_exists(str(dir_with_spaces))
-    
+
     assert dir_with_spaces.exists()

@@ -10,22 +10,23 @@
     - 2026-01-27: 初始版本
 """
 
-import sys
 import os
-import pytest
+import sys
 import time
-from unittest.mock import Mock, patch, call
+from unittest.mock import Mock, call, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.core.video_download_manager import VideoDownloadManager
 from dingtalk_downloader.config.constants import (
-    BROWSER_TYPE_EDGE,
     BROWSER_TYPE_CHROME,
+    BROWSER_TYPE_EDGE,
     BROWSER_TYPE_FIREFOX,
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
 )
+from dingtalk_downloader.core.video_download_manager import VideoDownloadManager
 from dingtalk_downloader.utils.models import CookieData, HeadersData, VideoDownloadContext
 
 
@@ -181,9 +182,6 @@ def test_initialize_download_cookie_error(
     mock_cookie_handler.get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
 
 
-
-
-
 @patch("dingtalk_downloader.core.video_download_manager.CookieHandler")
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
@@ -244,8 +242,12 @@ def test_process_video_success(
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 @patch("os.path.exists")
 def test_process_video_failure(
-    mock_exists, mock_n_m3u8dl_re_class, mock_path_selector_class, 
-    mock_cookie_handler_class, mock_random, mock_sleep
+    mock_exists,
+    mock_n_m3u8dl_re_class,
+    mock_path_selector_class,
+    mock_cookie_handler_class,
+    mock_random,
+    mock_sleep,
 ):
     """测试处理视频失败"""
     mock_exists.return_value = True
@@ -299,8 +301,11 @@ def test_process_video_failure(
 @patch("dingtalk_downloader.core.video_download_manager.PathSelector")
 @patch("dingtalk_downloader.core.video_download_manager.NM3u8DLRE")
 def test_process_video_m3u8_download_error(
-    mock_n_m3u8dl_re_class, mock_path_selector_class, 
-    mock_cookie_handler_class, mock_random, mock_sleep
+    mock_n_m3u8dl_re_class,
+    mock_path_selector_class,
+    mock_cookie_handler_class,
+    mock_random,
+    mock_sleep,
 ):
     """测试处理视频m3u8下载错误"""
     from dingtalk_downloader.core.exceptions import DownloadError
@@ -329,12 +334,12 @@ def test_process_video_m3u8_download_error(
     manager = VideoDownloadManager(BROWSER_TYPE_EDGE, str(SAVE_MODE_DEFAULT))
     context = manager.initialize_download("https://n.dingtalk.com/test")
     manager.m3u8_download_service = mock_m3u8_download_service
-    
+
     mock_random.return_value = 5.0
-    
+
     with pytest.raises(DownloadError):
         manager.process_video(context)
-    
+
     assert mock_m3u8_download_service.fetch_and_download_m3u8.call_count == 20
     mock_sleep.assert_called()
 
@@ -355,7 +360,7 @@ def test_close(mock_n_m3u8dl_re_class, mock_path_selector_class, mock_cookie_han
     mock_n_m3u8dl_re_class.return_value = mock_n_m3u8dl_re
 
     manager = VideoDownloadManager(BROWSER_TYPE_EDGE, str(SAVE_MODE_DEFAULT))
-    
+
     # 初始化cookie_handler以确保close()能够调用它
     manager.cookie_handler = mock_cookie_handler
 
@@ -422,9 +427,6 @@ def test_initialize_download_with_injected_dependencies():
     assert manager.m3u8_download_service == mock_m3u8_download_service
     assert manager.n_m3u8dl_re == mock_n_m3u8dl_re
     mock_cookie_handler.get_cookie.assert_called_once_with("https://n.dingtalk.com/test")
-
-
-
 
 
 @patch("os.path.exists")
@@ -558,15 +560,6 @@ def test_process_video_with_retry_success(mock_exists, mock_random, mock_sleep):
     mock_sleep.assert_called_once_with(5)
 
 
-
-
-
-
-
-
-
-
-
 @patch("dingtalk_downloader.core.video_download_manager.time.sleep")
 @patch("dingtalk_downloader.core.video_download_manager.random.uniform")
 @patch("os.path.exists")
@@ -616,6 +609,3 @@ def test_process_video_no_retry_on_first_success(mock_exists, mock_random, mock_
     assert mock_n_m3u8dl_re.download.call_count == 1
     mock_sleep.assert_not_called()
     mock_random.assert_not_called()
-
-
-

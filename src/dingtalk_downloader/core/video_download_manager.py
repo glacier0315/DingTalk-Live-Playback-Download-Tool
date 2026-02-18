@@ -10,27 +10,25 @@
     - 2026-01-26: 初始版本，从Downloader类中提取视频下载管理逻辑
 """
 
-import os
 import logging
-import time
+import os
 import random
-from typing import  Optional
-from .cookie_handler import CookieHandler
-from .m3u8_parser import M3u8Parser, M3u8ParseError
-from ..utils.models import VideoDownloadContext, M3u8Link
-from .m3u8_download_service import M3u8DownloadService
-from .exceptions import (
-    DownloadError,
-    BrowserError,
-    NetworkError,
-)
+import time
+from typing import Optional
+
 from ..binary.n_m3u8dl_re import NM3u8DLRE
-from ..utils.path_selector import PathSelector
 from ..config.constants import (
     VIDEO_DOWNLOAD_MAX_RETRIES,
-    VIDEO_DOWNLOAD_RETRY_WAIT_MIN,
     VIDEO_DOWNLOAD_RETRY_WAIT_MAX,
+    VIDEO_DOWNLOAD_RETRY_WAIT_MIN,
 )
+from ..utils.models import M3u8Link, VideoDownloadContext
+from ..utils.path_selector import PathSelector
+from .cookie_handler import CookieHandler
+from .exceptions import BrowserError, DownloadError, NetworkError
+from .m3u8_download_service import M3u8DownloadService
+from .m3u8_parser import M3u8ParseError, M3u8Parser
+
 logger = logging.getLogger(__name__)
 
 
@@ -80,9 +78,7 @@ class VideoDownloadManager:
         self.path_selector = path_selector
         self.n_m3u8dl_re = n_m3u8dl_re
 
-        logger.debug(
-            f"视频下载管理器初始化完成 - 浏览器类型: {browser_type}, " f"保存模式: {save_mode}"
-        )
+        logger.debug(f"视频下载管理器初始化完成 - 浏览器类型: {browser_type}, " f"保存模式: {save_mode}")
 
     def initialize_download(self, url: str) -> VideoDownloadContext:
         """
@@ -159,18 +155,14 @@ class VideoDownloadManager:
             except Exception as e:
                 logger.error(
                     f"处理视频时发生未知错误: {context.live_name} (第 {attempt} 次尝试), 错误: {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
                 if attempt == max_retries:
-                    logger.error(
-                        f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}"
-                    )
+                    logger.error(f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}")
                     raise DownloadError(f"处理视频失败: {context.live_name}, 错误: {e}") from e
             finally:
                 if m3u8_link and m3u8_link.local_file_path:
-                    self.m3u8_download_service.cleanup_temp_file(
-                        m3u8_link.local_file_path
-                    )
+                    self.m3u8_download_service.cleanup_temp_file(m3u8_link.local_file_path)
 
         return False
 
@@ -194,9 +186,7 @@ class VideoDownloadManager:
         if attempt > 1:
             self._prepare_retry(context, attempt)
 
-        m3u8_link = self.m3u8_download_service.fetch_and_download_m3u8(
-            context.url
-        )
+        m3u8_link = self.m3u8_download_service.fetch_and_download_m3u8(context.url)
         return m3u8_link
 
     def _prepare_retry(self, context: VideoDownloadContext, attempt: int) -> None:
@@ -232,14 +222,10 @@ class VideoDownloadManager:
             max_retries: 最大重试次数
         """
         error_type = type(error).__name__
-        logger.error(
-            f"{error_type}: {context.live_name} (第 {attempt} 次尝试), 错误: {error}"
-        )
+        logger.error(f"{error_type}: {context.live_name} (第 {attempt} 次尝试), 错误: {error}")
 
         if attempt == max_retries:
-            logger.error(
-                f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}"
-            )
+            logger.error(f"已达到最大重试次数 {max_retries}，下载终止: {context.live_name}")
 
     def _download_video(
         self,
@@ -320,18 +306,18 @@ class VideoDownloadManager:
         try:
             if context:
                 logger.debug(f"清理上下文资源: {context.live_name}")
-                
+
                 if hasattr(context, "cookie_data") and context.cookie_data:
                     logger.debug(f"清理Cookie数据: {context.live_name}")
-                    
+
                 if hasattr(self, "m3u8_parser") and self.m3u8_parser:
                     logger.debug(f"清理m3u8解析器: {context.live_name}")
                     self.m3u8_parser = None
-                    
+
                 if hasattr(self, "m3u8_download_service") and self.m3u8_download_service:
                     logger.debug(f"清理m3u8下载服务: {context.live_name}")
                     self.m3u8_download_service = None
-                    
+
                 logger.info(f"上下文资源清理完成: {context.live_name}")
         except Exception as e:
             logger.warning(f"清理上下文资源时发生错误: {context.live_name}, 错误: {e}", exc_info=True)

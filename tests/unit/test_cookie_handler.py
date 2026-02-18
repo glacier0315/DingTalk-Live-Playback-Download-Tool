@@ -11,15 +11,16 @@
     - 2026-01-27: 更新-适配新的架构，使用HeaderManager
 """
 
-import sys
 import os
-import pytest
+import sys
 from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.core.cookie_handler import CookieHandler
 from dingtalk_downloader.config.constants import BROWSER_TYPE_EDGE
+from dingtalk_downloader.core.cookie_handler import CookieHandler
 from dingtalk_downloader.utils.models import CookieData, HeadersData
 
 
@@ -76,9 +77,7 @@ def test_cookie_handler_get_cookie_success(
 
     handler = CookieHandler(BROWSER_TYPE_EDGE)
     with patch("builtins.input", return_value=""):
-        cookie_data, headers_data, live_name = handler.get_cookie(
-            "https://n.dingtalk.com/test"
-        )
+        cookie_data, headers_data, live_name = handler.get_cookie("https://n.dingtalk.com/test")
 
     assert len(cookie_data) == 1
     assert cookie_data.get("test") == "value"
@@ -103,9 +102,6 @@ def test_cookie_handler_get_cookie_browser_error(mock_header_manager_class, mock
 
     with pytest.raises(CookieError):
         handler.get_cookie("https://n.dingtalk.com/test")
-
-
-
 
 
 @patch("dingtalk_downloader.core.cookie_handler.BrowserFactory")

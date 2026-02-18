@@ -13,9 +13,10 @@
     - 2026-01-22: 重构-移除sys.exit调用,改为抛出M3u8ParseError
 """
 
-import re
 import logging
-from urllib.parse import urlparse, parse_qs
+import re
+from urllib.parse import parse_qs, urlparse
+
 from ..browser.browser_driver import BrowserDriver
 from ..config.constants import MAX_RETRY_COUNT
 from .exceptions import M3u8ParseError
@@ -95,8 +96,7 @@ class M3u8Parser:
                 # 预期仅 1 个 m3u8 链接，返回最后一个
                 if len(m3u8_links) >= 1:
                     logger.info(
-                        f"提取到 {len(m3u8_links)} 个 m3u8 链接，预期仅 1 个, "
-                        f"返回最后一个链接: {m3u8_links[-1]}"
+                        f"提取到 {len(m3u8_links)} 个 m3u8 链接，预期仅 1 个, " f"返回最后一个链接: {m3u8_links[-1]}"
                     )
                     return m3u8_links[-1]
             except Exception as e:
@@ -139,16 +139,10 @@ class M3u8Parser:
 
         except Exception as e:
             logger.error(
-                f"下载 m3u8 文件时发生错误: {e}, "
-                f"URL: {url}, "
-                f"文件名: {filename}",
-                exc_info=True
+                f"下载 m3u8 文件时发生错误: {e}, " f"URL: {url}, " f"文件名: {filename}",
+                exc_info=True,
             )
-            raise M3u8ParseError(
-                f"下载m3u8文件失败: {e}。"
-                f"URL: {url}, "
-                f"文件名: {filename}"
-            ) from e
+            raise M3u8ParseError(f"下载m3u8文件失败: {e}。" f"URL: {url}, " f"文件名: {filename}") from e
 
     def extract_prefix(self, url: str) -> str:
         """

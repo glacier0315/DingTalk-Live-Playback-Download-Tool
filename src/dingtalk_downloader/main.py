@@ -13,28 +13,17 @@
     - 2026-01-22: 完善用户输入校验机制
 """
 
-import sys
 import logging
+import sys
+
+from .config.constants import BROWSER_OPTION_MAP, DOWNLOAD_MODE_BATCH, DOWNLOAD_MODE_SINGLE
 from .config.logger_config import LoggerConfig
-from .config.yaml_config import (
-    YamlConfig,
-    ConfigLoadError,
-    ConfigValidationError,
-)
+from .config.yaml_config import ConfigLoadError, ConfigValidationError, YamlConfig
 from .core.downloader import Downloader
+from .core.exceptions import CookieError, FileReaderError, M3u8ParseError
 from .core.user_interaction_controller import UserInteractionController
-from .core.exceptions import CookieError, M3u8ParseError, FileReaderError
-from .utils.validator import (
-    validate_input,
-    validate_dingtalk_url,
-    validate_file_path,
-)
 from .utils.file_reader import FileReader
-from .config.constants import (
-    BROWSER_OPTION_MAP,
-    DOWNLOAD_MODE_SINGLE,
-    DOWNLOAD_MODE_BATCH,
-)
+from .utils.validator import validate_dingtalk_url, validate_file_path, validate_input
 
 logger = logging.getLogger(__name__)
 
@@ -77,25 +66,20 @@ def _get_user_inputs(
     dingtalk_url = user_controller.get_user_input(
         "请输入钉钉直播回放分享链接: ",
         validation_func=validate_dingtalk_url,
-        error_message=(
-            "链接格式不正确。请确保链接以 https://n.dingtalk.com "
-            "开头，并包含 liveUuid 参数。"
-        ),
+        error_message=("链接格式不正确。请确保链接以 https://n.dingtalk.com " "开头，并包含 liveUuid 参数。"),
         input_name="钉钉直播链接",
     )
     logger.debug(f"用户输入链接: {dingtalk_url}")
 
     save_mode = validate_input(
-        "请选择保存模式（输入1：保存到程序默认路径，"
-        "输入2：手动选择保存路径模式，直接回车默认选择1）: ",
+        "请选择保存模式（输入1：保存到程序默认路径，" "输入2：手动选择保存路径模式，直接回车默认选择1）: ",
         ["1", "2"],
         default_option="1",
     )
     logger.debug(f"用户选择保存模式: {save_mode}")
 
     browser_option = validate_input(
-        "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，"
-        "输入3：Firefox，直接回车默认选择1）: ",
+        "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，" "输入3：Firefox，直接回车默认选择1）: ",
         ["1", "2", "3"],
         default_option="1",
     )
@@ -186,16 +170,14 @@ def _get_batch_inputs(
     logger.info(f"从文件中读取到 {len(links_dict)} 个链接")
 
     save_mode = validate_input(
-        "请选择保存模式（输入1：保存到程序默认路径，"
-        "输入2：手动选择保存路径模式，直接回车默认选择1）: ",
+        "请选择保存模式（输入1：保存到程序默认路径，" "输入2：手动选择保存路径模式，直接回车默认选择1）: ",
         ["1", "2"],
         default_option="1",
     )
     logger.debug(f"用户选择保存模式: {save_mode}")
 
     browser_option = validate_input(
-        "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，"
-        "输入3：Firefox，直接回车默认选择1）: ",
+        "请选择您使用的浏览器（输入1：Edge，输入2：Chrome，" "输入3：Firefox，直接回车默认选择1）: ",
         ["1", "2", "3"],
         default_option="1",
     )

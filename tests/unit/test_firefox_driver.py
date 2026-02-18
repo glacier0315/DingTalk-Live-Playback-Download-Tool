@@ -11,15 +11,16 @@
     - 2026-01-24: 优化测试，删除重复测试，添加继承测试
 """
 
-import sys
 import os
+import sys
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.browser.firefox_driver import FirefoxDriver
 from dingtalk_downloader.browser.browser_driver import BrowserDriver
+from dingtalk_downloader.browser.firefox_driver import FirefoxDriver
 
 
 class TestFirefoxDriverInheritance:
@@ -272,7 +273,7 @@ class TestFirefoxDriverExtractM3u8Links:
         live_uuid = "test-uuid"
         logs = [
             "Network request: https://example.com/video1.m3u8?token=abc&uuid=test-uuid",
-            "Network request: https://example.com/video2.m3u8?token=def&uuid=test-uuid"
+            "Network request: https://example.com/video2.m3u8?token=def&uuid=test-uuid",
         ]
         result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert len(result) == 2
@@ -298,9 +299,7 @@ class TestFirefoxDriverExtractM3u8Links:
     def test_extract_m3u8_links_from_logs_dingtalk_links(self):
         """测试提取钉钉m3u8链接"""
         driver = FirefoxDriver()
-        logs = [
-            "Network request: https://n.dingtalk.com/live/123.m3u8?auth=abc&uuid=test-uuid"
-        ]
+        logs = ["Network request: https://n.dingtalk.com/live/123.m3u8?auth=abc&uuid=test-uuid"]
         live_uuid = "test-uuid"
         result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert len(result) == 1
@@ -309,9 +308,7 @@ class TestFirefoxDriverExtractM3u8Links:
     def test_extract_m3u8_links_from_logs_cleaned_links(self):
         """测试提取并清理m3u8链接"""
         driver = FirefoxDriver()
-        logs = [
-            "Network request: https://example.com/video.m3u8?token=abc&uuid=test-uuid\"]"
-        ]
+        logs = ['Network request: https://example.com/video.m3u8?token=abc&uuid=test-uuid"]']
         live_uuid = "test-uuid"
         result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert len(result) == 1
@@ -324,7 +321,7 @@ class TestFirefoxDriverExtractM3u8Links:
         logs = [
             "Network request: https://example.com/video1.m3u8?token=abc&uuid=other-uuid",
             "Network request: https://example.com/video2.m3u8?token=def&uuid=test-uuid-123",
-            "Network request: https://example.com/video3.m3u8?token=ghi&uuid=another-uuid"
+            "Network request: https://example.com/video3.m3u8?token=ghi&uuid=another-uuid",
         ]
         result = driver.extract_m3u8_links_from_logs(logs, live_uuid)
         assert len(result) == 1

@@ -11,15 +11,16 @@
     - 2026-01-27: 重写-适配新的架构
 """
 
-import sys
 import os
-import pytest
+import sys
 from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.core.downloader import Downloader
 from dingtalk_downloader.config.constants import BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT
+from dingtalk_downloader.core.downloader import Downloader
 from dingtalk_downloader.utils.models import VideoDownloadContext
 
 
@@ -86,7 +87,7 @@ def test_single_download_flow_continue(mock_validate_url, mock_video_manager_cla
     mock_user_controller = Mock()
     mock_user_controller.get_user_input.side_effect = [
         "https://n.dingtalk.com/test2?liveUuid=abc",
-        "q"
+        "q",
     ]
 
     downloader = Downloader(BROWSER_TYPE_EDGE, SAVE_MODE_DEFAULT, mock_user_controller)

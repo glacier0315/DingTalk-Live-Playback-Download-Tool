@@ -10,9 +10,10 @@
     - 2026-01-30: 初始版本，统一文件验证逻辑
 """
 
-import os
 import logging
+import os
 from pathlib import Path
+
 from ..config.constants import MAX_FILE_SIZE
 
 logger = logging.getLogger(__name__)
@@ -57,9 +58,7 @@ class FileValidator:
         FileValidator._check_file_readable(file_path)
         FileValidator._check_file_size(file_path)
 
-        logger.debug(
-            f"文件验证通过: {file_path}, 大小: {os.path.getsize(file_path)} bytes"
-        )
+        logger.debug(f"文件验证通过: {file_path}, 大小: {os.path.getsize(file_path)} bytes")
         return file_path
 
     @staticmethod
@@ -120,16 +119,11 @@ class FileValidator:
                 logger.error(f"检测到路径遍历攻击: {file_path}")
                 logger.error(f"当前工作目录: {current_dir}")
                 logger.error(f"文件绝对路径: {abs_path}")
-                raise ValueError(
-                    f"路径遍历攻击检测: 文件路径必须在当前工作目录内。"
-                    f"当前工作目录: {current_dir}"
-                )
+                raise ValueError(f"路径遍历攻击检测: 文件路径必须在当前工作目录内。" f"当前工作目录: {current_dir}")
 
             if ".." in str(abs_path.relative_to(current_dir)):
                 logger.error(f"检测到路径遍历尝试: {file_path}")
-                logger.error(
-                    f"相对路径包含父目录引用: {abs_path.relative_to(current_dir)}"
-                )
+                logger.error(f"相对路径包含父目录引用: {abs_path.relative_to(current_dir)}")
                 raise ValueError("路径遍历攻击检测: 路径包含父目录引用。")
 
         except (OSError, ValueError) as e:
@@ -193,8 +187,7 @@ class FileValidator:
 
         if file_size > MAX_FILE_SIZE:
             raise ValueError(
-                f"文件过大: {file_path} ({file_size} bytes, "
-                f"最大允许 {MAX_FILE_SIZE} bytes)"
+                f"文件过大: {file_path} ({file_size} bytes, " f"最大允许 {MAX_FILE_SIZE} bytes)"
             )
 
         if file_size == 0:

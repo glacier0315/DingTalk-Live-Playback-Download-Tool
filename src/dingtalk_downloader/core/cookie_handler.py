@@ -15,8 +15,9 @@
 
 import logging
 from typing import Tuple
+
 from ..browser.browser_factory import BrowserFactory
-from ..config.constants import LIVE_NAME_SELECTORS, BROWSER_WAIT_TIMEOUT
+from ..config.constants import BROWSER_WAIT_TIMEOUT, LIVE_NAME_SELECTORS
 from ..config.header_manager import HeaderManager
 from ..utils.models import CookieData, HeadersData
 from .exceptions import CookieError
@@ -67,7 +68,6 @@ class CookieHandler:
         """
         self.close()
         return False
-
 
     def initialize_browser(self) -> bool:
         """

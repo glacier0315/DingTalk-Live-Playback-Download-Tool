@@ -10,15 +10,16 @@
     - 2026-01-28: 初始版本
 """
 
-import sys
 import os
+import sys
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.core.dependency_factory import DependencyFactory
 from dingtalk_downloader.config.constants import BROWSER_TYPE_EDGE
+from dingtalk_downloader.core.dependency_factory import DependencyFactory
 
 
 @pytest.fixture
@@ -93,7 +94,9 @@ def test_get_cookie_handler_different_browser(mock_cookie_handler_class, depende
 
 
 @patch("dingtalk_downloader.core.dependency_factory.M3u8Parser")
-def test_get_m3u8_parser_first_call(mock_m3u8_parser_class, dependency_factory, mock_browser_driver):
+def test_get_m3u8_parser_first_call(
+    mock_m3u8_parser_class, dependency_factory, mock_browser_driver
+):
     """测试首次获取m3u8解析器"""
     mock_m3u8_parser = Mock()
     mock_m3u8_parser_class.return_value = mock_m3u8_parser

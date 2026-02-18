@@ -11,16 +11,17 @@
     - 2026-01-27: 更新-适配新的API，fetch_m3u8_link返回单个字符串
 """
 
-import sys
 import os
-import pytest
-from unittest.mock import Mock, MagicMock, patch, mock_open
+import sys
 import tempfile
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.core.m3u8_parser import M3u8Parser
 from dingtalk_downloader.core.exceptions import M3u8ParseError
+from dingtalk_downloader.core.m3u8_parser import M3u8Parser
 
 
 @pytest.fixture
@@ -130,6 +131,7 @@ def test_m3u8_parser_download_m3u8_file_success(mock_browser, tmp_path):
     assert result == str(temp_file)
     assert temp_file.exists()
     mock_browser.driver.execute_script.assert_called_once()
+
 
 def test_m3u8_parser_download_m3u8_file_failure(mock_browser, tmp_path):
     """测试下载m3u8文件失败"""

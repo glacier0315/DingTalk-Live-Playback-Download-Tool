@@ -13,11 +13,13 @@
 """
 
 import logging
-import pandas as pd
 from typing import Dict
-from .path_helper import clean_file_path
-from .file_validator import FileValidator
+
+import pandas as pd
+
 from ..core.exceptions import FileReaderError
+from .file_validator import FileValidator
+from .path_helper import clean_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -95,15 +97,8 @@ class FileReader:
         except FileReaderError:
             raise
         except Exception as e:
-            logger.error(
-                f"读取文件时发生错误: {e}, "
-                f"文件路径: {self.file_path}",
-                exc_info=True
-            )
-            raise FileReaderError(
-                f"读取文件失败: {e}。"
-                f"文件路径: {self.file_path}"
-            ) from e
+            logger.error(f"读取文件时发生错误: {e}, " f"文件路径: {self.file_path}", exc_info=True)
+            raise FileReaderError(f"读取文件失败: {e}。" f"文件路径: {self.file_path}") from e
 
     def _read_csv(self, links: Dict[int, str]) -> None:
         """
@@ -131,10 +126,7 @@ class FileReader:
                 logger.error(f"读取 CSV 文件时发生错误: {e}", exc_info=True)
                 raise FileReaderError(f"读取CSV文件失败: {e}") from e
 
-        logger.error(
-            f"文件 {self.file_path} 使用的编码无法识别，"
-            f"已尝试的编码: {', '.join(encodings)}"
-        )
+        logger.error(f"文件 {self.file_path} 使用的编码无法识别，" f"已尝试的编码: {', '.join(encodings)}")
         raise FileReaderError(f"文件编码无法识别: {last_error}") from last_error
 
     def _read_excel(self, links: Dict[int, str]) -> None:
@@ -168,5 +160,3 @@ class FileReader:
             for i, value in df[col].dropna().items():
                 if isinstance(value, str) and value.startswith("https://n.dingtalk.com"):
                     links[i] = value
-
-

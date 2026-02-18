@@ -10,22 +10,23 @@
     - 2025-01-14: 初始版本
 """
 
-import sys
 import os
-import pytest
+import sys
 from unittest.mock import Mock, patch
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from dingtalk_downloader.config.yaml_config import ConfigLoadError, ConfigValidationError
 from dingtalk_downloader.config.constants import (
-    BROWSER_TYPE_EDGE,
     BROWSER_TYPE_CHROME,
+    BROWSER_TYPE_EDGE,
     BROWSER_TYPE_FIREFOX,
     SAVE_MODE_DEFAULT,
     SAVE_MODE_MANUAL,
 )
-from dingtalk_downloader.main import main, single_mode, batch_mode
+from dingtalk_downloader.config.yaml_config import ConfigLoadError, ConfigValidationError
+from dingtalk_downloader.main import batch_mode, main, single_mode
 
 
 def test_single_mode_with_default_options():
@@ -34,7 +35,6 @@ def test_single_mode_with_default_options():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
-
         mock_user_controller.get_user_input.return_value = (
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
         )
@@ -57,7 +57,6 @@ def test_single_mode_with_manual_options():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
-
         mock_user_controller.get_user_input.return_value = (
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
         )
@@ -92,7 +91,6 @@ def test_single_mode_exception():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
-
         mock_input.side_effect = [
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab",
             "",
@@ -108,8 +106,8 @@ def test_single_mode_exception():
 
 def test_batch_mode_with_default_options():
     """测试批量下载模式 - 使用默认选项"""
-    import tempfile
     import os
+    import tempfile
 
     # 创建临时CSV文件
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as temp_file:
@@ -123,7 +121,6 @@ def test_batch_mode_with_default_options():
         ) as mock_file_reader_class, patch(
             "dingtalk_downloader.main.Downloader"
         ) as mock_downloader_class:
-
             mock_user_controller.get_user_input.return_value = temp_file_path
             mock_input.side_effect = ["", ""]
 
@@ -148,8 +145,8 @@ def test_batch_mode_with_default_options():
 
 def test_batch_mode_with_manual_options():
     """测试批量下载模式 - 手动选择选项"""
-    import tempfile
     import os
+    import tempfile
 
     # 创建临时Excel文件
     with tempfile.NamedTemporaryFile(mode="w", suffix=".xlsx", delete=False) as temp_file:
@@ -163,7 +160,6 @@ def test_batch_mode_with_manual_options():
         ) as mock_file_reader_class, patch(
             "dingtalk_downloader.main.Downloader"
         ) as mock_downloader_class:
-
             mock_user_controller.get_user_input.return_value = temp_file_path
             mock_input.side_effect = ["2", "2"]
 
@@ -201,8 +197,8 @@ def test_batch_mode_keyboard_interrupt():
 
 def test_batch_mode_exception():
     """测试批量下载模式 - 异常处理"""
-    import tempfile
     import os
+    import tempfile
 
     # 创建临时CSV文件
     with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as temp_file:
@@ -214,7 +210,6 @@ def test_batch_mode_exception():
         with patch("builtins.input") as mock_input, patch(
             "dingtalk_downloader.main.FileReader"
         ) as mock_file_reader_class:
-
             mock_user_controller.get_user_input.return_value = temp_file_path
             mock_input.side_effect = ["", ""]
             mock_file_reader_class.side_effect = Exception("文件读取失败")
@@ -233,7 +228,6 @@ def test_main_single_mode():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.YamlConfig"
     ) as mock_yaml_config_class, patch("dingtalk_downloader.main.single_mode") as mock_single_mode:
-
         mock_input.side_effect = ["1"]
 
         mock_config = Mock()
@@ -250,7 +244,6 @@ def test_main_batch_mode():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.YamlConfig"
     ) as mock_yaml_config_class, patch("dingtalk_downloader.main.batch_mode") as mock_batch_mode:
-
         mock_input.side_effect = ["2"]
 
         mock_config = Mock()
@@ -267,7 +260,6 @@ def test_main_keyboard_interrupt():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.YamlConfig"
     ) as mock_yaml_config_class:
-
         mock_input.side_effect = KeyboardInterrupt()
 
         mock_config = Mock()
@@ -285,7 +277,6 @@ def test_main_exception():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.YamlConfig"
     ) as mock_yaml_config_class:
-
         mock_input.side_effect = Exception("输入错误")
 
         mock_config = Mock()
@@ -303,7 +294,6 @@ def test_main_default_mode():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.YamlConfig"
     ) as mock_yaml_config_class, patch("dingtalk_downloader.main.single_mode") as mock_single_mode:
-
         mock_input.side_effect = [""]
 
         mock_config = Mock()
@@ -321,7 +311,6 @@ def test_single_mode_edge_browser():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
-
         mock_user_controller.get_user_input.return_value = (
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
         )
@@ -342,7 +331,6 @@ def test_single_mode_chrome_browser():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
-
         mock_user_controller.get_user_input.return_value = (
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
         )
@@ -363,7 +351,6 @@ def test_single_mode_firefox_browser():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
-
         mock_user_controller.get_user_input.return_value = (
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
         )
@@ -384,7 +371,6 @@ def test_single_mode_default_save_mode():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
-
         mock_user_controller.get_user_input.return_value = (
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
         )
@@ -405,7 +391,6 @@ def test_single_mode_manual_save_mode():
     with patch("builtins.input") as mock_input, patch(
         "dingtalk_downloader.main.Downloader"
     ) as mock_downloader_class:
-
         mock_user_controller.get_user_input.return_value = (
             "https://n.dingtalk.com/test?liveUuid=12345678-1234-1234-1234-1234567890ab"
         )
@@ -427,7 +412,6 @@ def test_main_config_loading():
     ) as mock_yaml_config_class, patch("builtins.print") as mock_print, patch(
         "dingtalk_downloader.main.single_mode"
     ):
-
         mock_input.side_effect = [""]
 
         mock_config = Mock()
@@ -456,7 +440,6 @@ def test_main_config_loading():
 def test_main_config_load_error():
     """测试主程序入口 - 配置加载失败"""
     with patch("dingtalk_downloader.main.YamlConfig") as mock_yaml_config_class:
-
         mock_yaml_config_class.get_instance.side_effect = ConfigLoadError(
             "配置文件不存在: config/app.yaml"
         )
@@ -470,7 +453,6 @@ def test_main_config_load_error():
 def test_main_config_validation_error():
     """测试主程序入口 - 配置验证失败"""
     with patch("dingtalk_downloader.main.YamlConfig") as mock_yaml_config_class:
-
         mock_config = Mock()
         mock_config.load.side_effect = ConfigValidationError("缺少必填配置项: app.build_date")
         mock_yaml_config_class.get_instance.return_value = mock_config

@@ -15,18 +15,15 @@
 
 import logging
 from typing import Dict, Optional
-from .cookie_handler import CookieError
-from .m3u8_parser import M3u8ParseError
-from .video_download_manager import VideoDownloadManager
-from .user_interaction_controller import UserInteractionController
-from .dependency_factory import DependencyFactory
-from .exceptions import (
-    DownloadError,
-    BrowserError,
-    NetworkError,
-    ValidationError,
-)
+
 from ..utils.validator import validate_dingtalk_url
+from .cookie_handler import CookieError
+from .dependency_factory import DependencyFactory
+from .exceptions import BrowserError, DownloadError, NetworkError, ValidationError
+from .m3u8_parser import M3u8ParseError
+from .user_interaction_controller import UserInteractionController
+from .video_download_manager import VideoDownloadManager
+
 logger = logging.getLogger(__name__)
 
 
