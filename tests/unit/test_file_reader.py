@@ -21,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from dingtalk_downloader.utils.file_reader import FileReader
+from dingtalk_downloader.utils.path_helper import clean_file_path
 from dingtalk_downloader.core.exceptions import FileReaderError
 
 
@@ -50,7 +51,9 @@ def sample_excel_file(test_dir):
     import pandas as pd
 
     path = test_dir / "test.xlsx"
-    df = pd.DataFrame({"link": ["https://n.dingtalk.com/test1", "https://n.dingtalk.com/test2"]})
+    df = pd.DataFrame(
+        {"link": ["https://n.dingtalk.com/test1", "https://n.dingtalk.com/test2"]}
+    )
     df.to_excel(path, index=False)
     return str(path)
 
@@ -62,6 +65,7 @@ def test_file_reader_csv(sample_csv_file):
     assert len(links) == 2
     assert "https://n.dingtalk.com/test1" in links.values()
     assert "https://n.dingtalk.com/test2" in links.values()
+
 
 def test_file_reader_excel(sample_excel_file):
     """测试读取 Excel 文件"""
@@ -81,14 +85,14 @@ def test_file_reader_invalid_format():
 def test_file_reader_clean_file_path():
     """测试清理文件路径"""
     path = '"test/path/file.txt"'
-    result = FileReader.clean_file_path(path)
+    result = clean_file_path(path)
     assert result == "test/path/file.txt"
 
 
 def test_file_reader_clean_file_path_with_spaces():
     """测试清理带空格的文件路径"""
     path = '  " test/path/file.txt "  '
-    result = FileReader.clean_file_path(path)
+    result = clean_file_path(path)
     assert result == " test/path/file.txt "
 
 
@@ -146,14 +150,14 @@ def test_file_reader_excel_multiple_sheets(test_dir):
 def test_check_path_traversal_symlink(tmp_path, monkeypatch):
     """测试路径遍历检查（符号链接）"""
     monkeypatch.chdir(tmp_path)
-    
+
     target_file = tmp_path / "target.csv"
     target_file.write_text("test")
-    
+
     try:
         symlink = tmp_path / "symlink.csv"
         symlink.symlink_to(target_file)
-        
+
         reader = FileReader(str(symlink))
         assert reader.file_path == str(symlink.resolve())
     except OSError:
@@ -163,7 +167,7 @@ def test_check_path_traversal_symlink(tmp_path, monkeypatch):
 def test_check_path_traversal_attack(tmp_path, monkeypatch):
     """测试路径遍历检查（攻击）"""
     monkeypatch.chdir(tmp_path)
-    
+
     with pytest.raises(ValueError) as exc_info:
         FileReader("../etc/passwd")
     assert "路径遍历攻击检测" in str(exc_info.value)
@@ -172,7 +176,7 @@ def test_check_path_traversal_attack(tmp_path, monkeypatch):
 def test_check_path_traversal_parent_dir(tmp_path, monkeypatch):
     """测试路径遍历检查（父目录）"""
     monkeypatch.chdir(tmp_path)
-    
+
     with pytest.raises(ValueError) as exc_info:
         FileReader("subdir/../../etc/passwd")
     assert "路径遍历攻击检测" in str(exc_info.value)
@@ -181,10 +185,10 @@ def test_check_path_traversal_parent_dir(tmp_path, monkeypatch):
 def test_check_file_extension_invalid(tmp_path, monkeypatch):
     """测试文件扩展名检查（无效）"""
     monkeypatch.chdir(tmp_path)
-    
+
     file_path = tmp_path / "test.txt"
     file_path.write_text("test")
-    
+
     with pytest.raises(ValueError) as exc_info:
         FileReader(str(file_path))
     assert "文件格式不支持" in str(exc_info.value)
@@ -193,7 +197,7 @@ def test_check_file_extension_invalid(tmp_path, monkeypatch):
 def test_check_file_exists_not_exists(tmp_path, monkeypatch):
     """测试文件存在性检查（不存在）"""
     monkeypatch.chdir(tmp_path)
-    
+
     with pytest.raises(FileNotFoundError) as exc_info:
         FileReader("nonexistent.csv")
     assert "文件不存在" in str(exc_info.value)
@@ -202,22 +206,24 @@ def test_check_file_exists_not_exists(tmp_path, monkeypatch):
 def test_check_is_file_directory(tmp_path, monkeypatch):
     """测试是否为文件（目录）"""
     monkeypatch.chdir(tmp_path)
-    
+
     dir_path = tmp_path / "test_dir"
     dir_path.mkdir()
-    
+
     with pytest.raises(ValueError) as exc_info:
         FileReader(str(dir_path))
-    assert "路径不是文件" in str(exc_info.value) or "文件格式不支持" in str(exc_info.value)
+    assert "路径不是文件" in str(exc_info.value) or "文件格式不支持" in str(
+        exc_info.value
+    )
 
 
 def test_check_file_size_too_large(tmp_path, monkeypatch):
     """测试文件大小检查（过大）"""
     monkeypatch.chdir(tmp_path)
-    
+
     file_path = tmp_path / "test.csv"
     file_path.write_text("test")
-    
+
     with patch("os.path.getsize") as mock_getsize:
         mock_getsize.return_value = 200 * 1024 * 1024  # 200MB
         with pytest.raises(ValueError) as exc_info:
@@ -228,10 +234,10 @@ def test_check_file_size_too_large(tmp_path, monkeypatch):
 def test_check_file_size_empty(tmp_path, monkeypatch):
     """测试文件大小检查（为空）"""
     monkeypatch.chdir(tmp_path)
-    
+
     file_path = tmp_path / "test.csv"
     file_path.write_text("")
-    
+
     with pytest.raises(ValueError) as exc_info:
         FileReader(str(file_path))
     assert "文件为空" in str(exc_info.value)
@@ -240,11 +246,11 @@ def test_check_file_size_empty(tmp_path, monkeypatch):
 def test_read_csv_unicode_decode_error(tmp_path, monkeypatch):
     """测试读取CSV（编码错误）"""
     monkeypatch.chdir(tmp_path)
-    
+
     path = tmp_path / "test.csv"
     with open(path, "wb") as f:
-        f.write(b'\xff\xfe\x00\x00')  # 无效的UTF-8
-    
+        f.write(b"\xff\xfe\x00\x00")  # 无效的UTF-8
+
     with pytest.raises(FileReaderError) as exc_info:
         FileReader(str(path)).read_links()
     assert "文件编码无法识别" in str(exc_info.value)
@@ -253,10 +259,10 @@ def test_read_csv_unicode_decode_error(tmp_path, monkeypatch):
 def test_read_excel_error(tmp_path, monkeypatch):
     """测试读取Excel（错误）"""
     monkeypatch.chdir(tmp_path)
-    
+
     path = tmp_path / "test.xlsx"
     path.write_text("invalid excel content")
-    
+
     with pytest.raises(FileReaderError) as exc_info:
         FileReader(str(path)).read_links()
     assert "读取Excel文件失败" in str(exc_info.value)
