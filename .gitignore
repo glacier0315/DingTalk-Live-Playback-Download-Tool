@@ -3,9 +3,12 @@
 .vscode/
 .idea/
 .history/
-.opencode/
 
-# Python缓存文件
+# opencode
+.sisyphus/
+
+
+## Python缓存文件
 __pycache__/
 *.pyc
 *.pyo
@@ -16,6 +19,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.ruff_cache/
+.mypy_cache/
 
 # 环境文件
 venv/
