@@ -1,6 +1,5 @@
 selenium>=4.6.0
-pandas
-openpyxl
-xlrd
-tkintertable
+pandas>=2.0.0
+openpyxl>=3.0.0
+xlrd>=2.0.0
 PyYAML>=6.0
