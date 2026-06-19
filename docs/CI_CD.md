@@ -148,28 +148,6 @@ make test      # 运行测试
 make security  # 安全检查
 ```
 
-### Pre-commit 钩子
-
-项目已配置 pre-commit 钩子，在每次提交前自动运行：
-
-```bash
-# 安装 pre-commit 钩子
-pre-commit install
-
-# 手动运行所有钩子
-pre-commit run --all-files
-```
-
-**包含的检查：**
-
-- Black（代码格式化）
-- Flake8（代码质量）
-- MyPy（类型检查）
-- isort（导入排序）
-- Bandit（安全检查）
-- Safety（依赖安全）
-- 其他通用检查（尾随空格、文件结尾等）
-
 ---
 
 ## 配置说明
@@ -199,18 +177,6 @@ pre-commit run --all-files
 - 测试目录：`tests/`
 - 最小覆盖率：80%
 - 输出格式：详细报告
-
-### 3. Pre-commit (`.pre-commit-config.yaml`)
-
-包含多个检查工具：
-
-- Black
-- Flake8
-- MyPy
-- isort
-- Bandit
-- Safety
-- Prettier
 
 ---
 
@@ -369,7 +335,6 @@ pytest tests/ --cov=src/dingtalk_downloader --cov-fail-under=80
 - [Black 文档](https://black.readthedocs.io/)
 - [Flake8 文档](https://flake8.pycqa.org/)
 - [MyPy 文档](https://mypy.readthedocs.io/)
-- [Pre-commit 文档](https://pre-commit.com/)
 
 ---
 

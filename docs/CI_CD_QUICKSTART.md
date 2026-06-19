@@ -10,10 +10,6 @@
 # 安装项目依赖和开发工具
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
-
-# 安装 pre-commit 钩子（推荐）
-pip install pre-commit
-pre-commit install
 ```
 
 ### 2. 本地测试
@@ -32,7 +28,6 @@ make ci
 ### 3. 提交代码
 
 ```bash
-# Pre-commit 会自动运行检查
 git add .
 git commit -m "feat: your feature"
 ```
@@ -119,11 +114,10 @@ make help
 
 ### 代码质量配置
 
-| 文件                      | 说明                |
-| ------------------------- | ------------------- |
-| `.flake8`                 | Flake8 配置         |
-| `mypy.ini`                | MyPy 配置           |
-| `.pre-commit-config.yaml` | Pre-commit 钩子配置 |
+| 文件       | 说明        |
+| ---------- | ----------- |
+| `.flake8`  | Flake8 配置 |
+| `mypy.ini` | MyPy 配置   |
 
 ### CI/CD 配置
 
@@ -175,16 +169,6 @@ make format
 ```bash
 # 查看详细错误
 flake8 src/ tests/ --count --statistics
-```
-
-### Pre-commit 失败
-
-```bash
-# 跳过 pre-commit（不推荐）
-git commit --no-verify -m "message"
-
-# 修复问题后重新提交
-pre-commit run --all-files
 ```
 
 ---

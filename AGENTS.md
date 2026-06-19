@@ -103,7 +103,6 @@ pytest -m browser                                # Browser tests only
 black src tests                                  # Format code
 flake8 src tests --max-line-length=100          # Lint
 mypy src --ignore-missing-imports               # Type check
-pre-commit run --all-files                       # Run all hooks
 
 # Build
 python -m build                                  # Build package

@@ -22,8 +22,6 @@ install: ## Install all dependencies
 
 install-dev: ## Install development dependencies only
 	$(PIP) install -r requirements-dev.txt
-	$(PIP) install pre-commit
-	pre-commit install
 
 test: ## Run all tests with coverage
 	$(PYTEST) tests/ -v --cov=src/dingtalk_downloader --cov-report=term-missing --cov-report=html --cov-fail-under=80
@@ -69,9 +67,6 @@ quality: ## Run complete quality analysis
 	@echo ""
 	@echo "=== Raw Metrics ==="
 	-radon raw src/ -s
-
-pre-commit: ## Run pre-commit on all files
-	pre-commit run --all-files
 
 clean: ## Clean up generated files
 	find . -type d -name "__pycache__" -exec rm -rf {} +
