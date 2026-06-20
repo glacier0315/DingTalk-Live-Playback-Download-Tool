@@ -264,12 +264,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 Create `tests/unit/test_models.py`:
 
 ```python
-"""Tests for the new DownloadOutcome value object."""
+"""Tests for the new DownloadOutcome value object + DownloadFailureKind enum."""
 
 import pytest
 
 from dingtalk_downloader.core.exceptions import AuthKeyExpiredError, DownloadFatalError
-from dingtalk_downloader.core.m3u8dl_process import DownloadFailureKind  # added in task 4, will fail import now
+from dingtalk_downloader.core.m3u8dl_process import DownloadFailureKind
 from dingtalk_downloader.utils.models import DownloadOutcome
 
 
@@ -321,32 +321,67 @@ def test_outcome_rejects_negative_attempts():
             last_error=None,
             elapsed_seconds=1.0,
         )
+
+
+def test_failure_kind_has_expected_values():
+    # Enum is fully defined in T2 (not stub) per pre-flight decision
+    assert DownloadFailureKind.AUTH_KEY_EXPIRED.value == "auth_key_expired"
+    assert DownloadFailureKind.NETWORK_TRANSIENT.value == "network_transient"
+    assert DownloadFailureKind.DISK_FULL.value == "disk_full"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/unit/test_models.py -v`
-Expected: ImportError on `DownloadOutcome` (and `DownloadFailureKind` — that's fine, fix in step 3+4, but the import for DownloadFailureKind will fail too).
+Expected: ImportError on `DownloadOutcome` (test file doesn't exist yet — fail at collection).
 
-- [ ] **Step 3: Add a placeholder `DownloadFailureKind` to unblock test import**
+- [ ] **Step 3: Create `src/dingtalk_downloader/core/m3u8dl_process.py` with FULL enum (not stub)**
 
-Create `src/dingtalk_downloader/core/m3u8dl_process.py` with a stub:
+> Pre-flight decision: complete enum defined here; classifier regex patterns come in T5.
 
 ```python
-"""Stub — full implementation in task 4."""
+"""N_m3u8DL-RE 子进程包装 + 失败分类器骨架。
 
+本任务（T2）只放 enum 和 RunResult 数据类；classify_failure 完整实现在 T5，
+M3u8DLProcess 完整实现在 T6。
+"""
+
+import logging
+from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 class DownloadFailureKind(Enum):
-    """Will be filled out in task 4."""
+    """下载失败原因分类。"""
 
-    PLACEHOLDER = "placeholder"
+    AUTH_KEY_EXPIRED = "auth_key_expired"
+    NETWORK_TRANSIENT = "network_transient"
+    DISK_FULL = "disk_full"
+    PERMISSION_DENIED = "permission_denied"
+    INVALID_PATH = "invalid_path"
+    EXE_MISSING = "exe_missing"
+    SOFT_FAIL = "soft_fail"
+    NONZERO_EXIT = "nonzero_exit"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True)
+class RunResult:
+    """M3u8DLProcess.wait 的返回值（在 T6 完整使用，T2 占位）。"""
+
+    returncode: int
+    stdout_tail: str
+    stderr_tail: str
+    failure_kind: Optional[DownloadFailureKind]
+    error: Optional[Exception]
 ```
 
 - [ ] **Step 4: Append `DownloadOutcome` to `src/dingtalk_downloader/utils/models.py`**
 
-Open the file. At the top, add `from dataclasses import dataclass, field` (replace existing `from dataclasses import dataclass`). At the bottom of the file, append:
+Open the file. At the top, replace `from dataclasses import dataclass` with `from dataclasses import dataclass, field`. At the bottom of the file, append:
 
 ```python
 @dataclass(frozen=True)
@@ -385,7 +420,7 @@ Note the forward reference `"DownloadFailureKind"` — it's defined in `core.m3u
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `pytest tests/unit/test_models.py -v`
-Expected: 4 passed.
+Expected: 5 passed.
 
 - [ ] **Step 6: Commit**
 
@@ -1409,29 +1444,34 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 8: Refactor `M3u8DownloadService` → `M3u8RefreshService`
+## Task 8: Refactor `M3u8DownloadService` → `M3u8RefreshService` (in-place, no new file)
 
 **Files:**
 - Modify: `src/dingtalk_downloader/core/m3u8_download_service.py` (class rename + signature change)
+- Modify: `src/dingtalk_downloader/core/dependency_factory.py` (factory method update)
 - Test: `tests/unit/test_m3u8_refresh_service.py` (new)
+- Test: `tests/fixtures/fake_browser.py` (new)
 
-**Context:** Spec section 3.3. File path stays the same. Changes:
-- Class `M3u8DownloadService` → `M3u8RefreshService`
-- `__init__` takes `BrowserDriver` directly (not `M3u8Parser`)
+**Context:** Spec section 3.3 + pre-flight fix. Per user decision: **do NOT create new file `m3u8_refresh_service.py`**. Just rename the class in place and update `dependency_factory.py` accordingly. File path `m3u8_download_service.py` stays.
+
+Changes:
+- Class `M3u8DownloadService` → `M3u8RefreshService` (in the same file)
+- `__init__` takes `BrowserDriver` directly (not `M3u8Parser`) — **DI inversion**
 - Method `fetch_and_download_m3u8` → `fetch` (returns `M3u8Link`, raises `M3u8RefreshError`)
-- No longer manages `fetch_m3u8_link` — the browser refresh+log extraction logic moves to a helper that the orchestrator can call multiple times.
+- `dependency_factory.get_m3u8_download_service(m3u8_parser)` → `get_m3u8_refresh_service(browser)` (note arg change)
+- Old `get_m3u8_parser` factory method stays (still used by `M3u8Parser` consumers; spec keeps `M3u8Parser` class alive for back-compat though our new code path doesn't use it)
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/unit/test_m3u8_refresh_service.py`:
 
 ```python
-"""Tests for the refactored M3u8RefreshService."""
+"""Tests for the refactored M3u8RefreshService (formerly M3u8DownloadService)."""
 
 import pytest
 
 from dingtalk_downloader.core.exceptions import M3u8RefreshError
-from dingtalk_downloader.core.m3u8_refresh_service import M3u8RefreshService
+from dingtalk_downloader.core.m3u8_download_service import M3u8RefreshService  # noqa: E402
 from dingtalk_downloader.utils.models import M3u8Link
 from tests.fixtures.fake_browser import FakeBrowser
 
@@ -1444,7 +1484,7 @@ def test_fetch_returns_m3u8_link_with_new_path():
     assert isinstance(link, M3u8Link)
     assert link.url == "https://x/v.m3u8?auth_key=NEW"
     assert link.local_file_path is not None
-    assert "xyz" in link.local_file_path or len(link.local_file_path) > 0
+    assert len(link.local_file_path) > 0
 
 
 def test_fetch_raises_m3u8_refresh_error_when_no_links():
@@ -1458,7 +1498,6 @@ def test_fetch_raises_m3u8_refresh_error_when_no_links():
 def test_fetch_retries_on_first_failure():
     browser = FakeBrowser(
         m3u8_links=["", "", "https://x/v.m3u8?auth_key=THIRD"],
-        refresh_attempts_before_success=2,
     )
     svc = M3u8RefreshService(browser=browser, file_manager=None, max_attempts=5)  # type: ignore[arg-type]
     link = svc.fetch("https://n.dingtalk.com/live/abc?liveUuid=xyz")
@@ -1477,7 +1516,7 @@ def test_fetch_generates_unique_local_path_each_call():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/unit/test_m3u8_refresh_service.py -v`
-Expected: ImportError on `M3u8RefreshService` or `FakeBrowser`.
+Expected: ImportError on `M3u8RefreshService` (class doesn't exist yet — only `M3u8DownloadService`) or `FakeBrowser`.
 
 - [ ] **Step 3: Create `tests/fixtures/fake_browser.py`**
 
@@ -1494,10 +1533,8 @@ class FakeBrowser:
         self,
         *,
         m3u8_links: Optional[List[str]] = None,
-        refresh_attempts_before_success: int = 0,
     ):
         self._m3u8_links = m3u8_links or []
-        self._refresh_attempts_before_success = refresh_attempts_before_success
         self.refresh_count = 0
         self.calls: List[str] = []
 
@@ -1510,6 +1547,7 @@ class FakeBrowser:
 
     def get_log(self, log_type: str):
         link = self._next_link()
+        self.refresh_count += 1
         if link:
             return [{"message": f'{{"url": "{link}"}}'}]
         return []
@@ -1519,7 +1557,6 @@ class FakeBrowser:
         return [link] if link and live_uuid in link else []
 
     def execute_script(self, script: str, *args):
-        # For m3u8 download — return the link text
         if args:
             return f"#EXTM3U\n#EXT-X-VERSION:3\n{args[0]}/seg-001.ts\n"
         return None
@@ -1531,10 +1568,16 @@ class FakeBrowser:
         return [{"name": "session", "value": "fake"}]
 ```
 
-- [ ] **Step 4: Create `src/dingtalk_downloader/core/m3u8_refresh_service.py` (new file, old file's content replaced)**
+- [ ] **Step 4: Rewrite `src/dingtalk_downloader/core/m3u8_download_service.py` (in-place)**
+
+> Per pre-flight decision: file path unchanged; class renamed `M3u8DownloadService → M3u8RefreshService`; signature change to accept `BrowserDriver` directly (not `M3u8Parser`).
 
 ```python
-"""M3u8RefreshService —— 拉取一个最新 m3u8（含新 auth_key）并落盘。"""
+"""M3u8RefreshService —— 拉取一个最新 m3u8（含新 auth_key）并落盘。
+
+类名 M3u8RefreshService（重命名自 M3u8DownloadService），但文件路径保留
+m3u8_download_service.py 以保持向后兼容（spec 3.3 + pre-flight 决定）。
+"""
 
 import logging
 import os
@@ -1544,7 +1587,6 @@ from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
 from ..browser.browser_driver import BrowserDriver
-from ..utils.file_helper import ensure_dir_exists
 from ..utils.m3u8_file_manager import M3u8FileManager
 from ..utils.models import M3u8Link
 from .exceptions import M3u8RefreshError
@@ -1555,7 +1597,7 @@ logger = logging.getLogger(__name__)
 class M3u8RefreshService:
     """每次调用 fetch() 都生成一个独立的本地 m3u8 文件。
 
-    不再持有 m3u8_parser；直接接受 BrowserDriver，自己驱动刷新+解析。
+    直接接受 BrowserDriver，自己驱动刷新+解析（不再依赖 M3u8Parser）。
     """
 
     def __init__(
@@ -1569,17 +1611,7 @@ class M3u8RefreshService:
         self.max_attempts = max_attempts
 
     def fetch(self, share_url: str) -> M3u8Link:
-        """拉取最新 m3u8 并下载到 temp/ 下的新 UUID 文件。
-
-        Args:
-            share_url: 钉钉直播回放分享链接
-
-        Returns:
-            M3u8Link（含新 auth_key 的 URL + 本地文件路径）
-
-        Raises:
-            M3u8RefreshError: 多次重试后仍无法获取 m3u8
-        """
+        """拉取最新 m3u8 并下载到 temp/ 下的新 UUID 文件。"""
         live_uuid = self._extract_live_uuid(share_url)
         if not live_uuid:
             raise M3u8RefreshError(f"无法从 URL 提取 liveUuid: {share_url}")
@@ -1620,7 +1652,6 @@ class M3u8RefreshService:
 
     def _download_m3u8(self, m3u8_url: str) -> str:
         """通过浏览器 fetch 下载 m3u8 内容到新 UUID 文件。"""
-        # 生成唯一路径
         uuid_str = str(uuid.uuid4())
         local_path = self.file_manager.get_temp_file_path(suffix=f"_{uuid_str}")
 
@@ -1629,7 +1660,7 @@ class M3u8RefreshService:
             ".then(response => response.text())"
         )
         content = self.browser.driver.execute_script(script, m3u8_url)
-        ensure_dir_exists(os.path.dirname(local_path))
+        os.makedirs(os.path.dirname(local_path) or ".", exist_ok=True)
         with open(local_path, "w", encoding="utf-8") as f:
             f.write(content or "")
         logger.info(f"m3u8 下载成功: {local_path}")
@@ -1641,50 +1672,68 @@ class M3u8RefreshService:
         return match.group(1) if match else m3u8_url
 ```
 
-Note: This adds a new file `m3u8_refresh_service.py` but spec says we keep the old path. The right move: rename the old `m3u8_download_service.py` content; we'll delete it in a follow-up cleanup task. For now, the new class lives at the new path and we'll update the old file to be a re-export shim.
+- [ ] **Step 5: Update `src/dingtalk_downloader/core/dependency_factory.py`**
 
-- [ ] **Step 5: Replace `src/dingtalk_downloader/core/m3u8_download_service.py` with a re-export shim**
+Per pre-flight: `get_m3u8_download_service(m3u8_parser)` → `get_m3u8_refresh_service(browser)`. The `M3u8Parser` factory method stays (legacy support, but no longer wired into the refresh service).
+
+Edit these specific lines in `dependency_factory.py`:
+
+- Line 17: change `from .m3u8_download_service import M3u8DownloadService` → `from .m3u8_download_service import M3u8RefreshService as M3u8RefreshService` (preserve the local name to keep `get_m3u8_refresh_service` method signature working)
+
+Actually simpler — just rename the import to use the new class name:
 
 ```python
-"""向后兼容 shim —— 实际类已迁移到 m3u8_refresh_service.py。
+from .m3u8_download_service import M3u8RefreshService
+```
 
-旧代码 `from .m3u8_download_service import M3u8DownloadService` 仍能工作，
-但会触发 DeprecationWarning。新代码请直接 import M3u8RefreshService。
-"""
+- Lines 100-114: replace `get_m3u8_download_service` method with `get_m3u8_refresh_service`:
 
-import warnings
+```python
+    def get_m3u8_refresh_service(self, browser: BrowserDriver) -> M3u8RefreshService:
+        """
+        获取 m3u8 刷新服务实例。
 
-from .m3u8_refresh_service import M3u8RefreshService
+        Args:
+            browser: 浏览器驱动实例
 
-warnings.warn(
-    "M3u8DownloadService 已重命名为 M3u8RefreshService；"
-    "请从 dingtalk_downloader.core.m3u8_refresh_service 导入",
-    DeprecationWarning,
-    stacklevel=2,
-)
+        Returns:
+            M3u8RefreshService: m3u8 刷新服务实例
+        """
+        key = f"m3u8_refresh_service_{id(browser)}"
+        if key not in self._instances:
+            self._instances[key] = M3u8RefreshService(browser)
+            logger.debug(f"创建 m3u8 刷新服务实例 - 浏览器驱动ID: {id(browser)}")
+        return self._instances[key]
+```
 
-
-class M3u8DownloadService(M3u8RefreshService):
-    """旧类名兼容，新代码请用 M3u8RefreshService。"""
-
-    pass
+Add `BrowserDriver` import at the top:
+```python
+from ..browser.browser_driver import BrowserDriver
 ```
 
 - [ ] **Step 6: Run test to verify it passes**
 
 Run: `pytest tests/unit/test_m3u8_refresh_service.py -v`
-Expected: 4 tests pass (warning may print but shouldn't fail).
+Expected: 4 tests pass.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Run existing tests to verify no regressions**
+
+Run: `pytest tests/unit/ -v`
+Expected: All previous tests still pass (none used `M3u8DownloadService` factory yet — `video_download_manager.py` uses it but only via direct construction `M3u8DownloadService(self.m3u8_parser)`, and we're rewriting that in T11).
+
+If `downloader.py` or `video_download_manager.py` import errors at module load (e.g. `from .dependency_factory import DependencyFactory` not broken, but the `download_single_video` flow uses `video_manager.initialize_download` which we're fixing in T11), defer those to T11. The unit tests should be green here.
+
+- [ ] **Step 8: Commit**
 
 ```bash
-git add src/dingtalk_downloader/core/m3u8_refresh_service.py src/dingtalk_downloader/core/m3u8_download_service.py tests/unit/test_m3u8_refresh_service.py tests/fixtures/fake_browser.py
-git commit -m "refactor(core): M3u8DownloadService -> M3u8RefreshService
+git add src/dingtalk_downloader/core/m3u8_download_service.py src/dingtalk_downloader/core/dependency_factory.py tests/unit/test_m3u8_refresh_service.py tests/fixtures/fake_browser.py
+git commit -m "refactor(core): M3u8DownloadService -> M3u8RefreshService (in-place)
 
-- New file m3u8_refresh_service.py with refactored class
-- __init__ takes BrowserDriver directly (DI inversion)
-- fetch() generates UUID-suffixed local path each call
-- Old m3u8_download_service.py kept as re-export shim with DeprecationWarning
+- File path kept (spec 3.3 + pre-flight fix)
+- Class renamed in place; __init__ now takes BrowserDriver (DI inversion)
+- Method renamed fetch_and_download_m3u8 -> fetch; raises M3u8RefreshError
+- dependency_factory: get_m3u8_download_service -> get_m3u8_refresh_service(browser)
+- M3u8Parser factory method retained for legacy back-compat
 - FakeBrowser fixture for orchestrator/service tests
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
@@ -2263,7 +2312,8 @@ class DownloadOrchestrator:
                 elapsed_seconds=0.0,
             )
 
-        save_name = context.live_name
+        # live_name comes from the session (DOM-extracted) — NOT from context
+        save_name = self._session.live_name()
         refresh = self._session.refresh_service()
         m3u8_link = refresh.fetch(context.url)
         self._session.track_temp_file(m3u8_link.local_file_path)
@@ -2391,13 +2441,22 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-## Task 11: Refactor `VideoDownloadManager` to thin wrapper
+## Task 11: Refactor `VideoDownloadManager` + `downloader.py` (compatibility shim)
 
 **Files:**
 - Modify: `src/dingtalk_downloader/core/video_download_manager.py` (replace body)
-- Test: `tests/unit/test_video_download_manager.py` (new, integration-style)
+- Modify: `src/dingtalk_downloader/core/downloader.py` (call sites updated)
+- Test: `tests/unit/test_video_download_manager.py` (new)
 
-**Context:** Spec section 7.4. Keep the 4 public methods (`__init__` / `process_video` / `close` / `cleanup_context`) but delegate work to `DownloadSession` + `DownloadOrchestrator`. `main.py` shouldn't need to change.
+**Context:** Spec section 7.4 + pre-flight fix. **Two important facts from `downloader.py` inspection:**
+
+1. `downloader.py:98, 127, 153, 174` all call `self.video_manager.initialize_download(url)` — this method must remain functional (cannot raise NotImplementedError)
+2. The orchestrator (T10) uses `self._session.live_name()` for `save_name` — NOT `context.live_name`. So `initialize_download` doesn't need to populate `live_name` in the context.
+
+**Strategy:**
+- `VideoDownloadManager.initialize_download(url)` becomes a thin shim: it just constructs a minimal `VideoDownloadContext(url, save_dir=path_selector.get_save_dir(), save_mode=save_mode, cookie_data=empty placeholder, headers_data=empty placeholder, live_name="直播视频")`. The actual cookie/headers/live_name extraction happens inside `process_video` via the session.
+- `VideoDownloadManager.process_video(context)` opens a `DownloadSession` (which extracts real cookies/headers/live_name from the browser), runs the orchestrator, returns bool.
+- `downloader.py` keeps calling `initialize_download` + `process_video` as before — minimal call-site impact.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -2413,7 +2472,12 @@ import pytest
 from dingtalk_downloader.core.video_download_manager import VideoDownloadManager
 from dingtalk_downloader.core.exceptions import AuthKeyExpiredError
 from dingtalk_downloader.core.m3u8dl_process import DownloadFailureKind
-from dingtalk_downloader.utils.models import VideoDownloadContext, CookieData, HeadersData, DownloadOutcome
+from dingtalk_downloader.utils.models import (
+    CookieData,
+    DownloadOutcome,
+    HeadersData,
+    VideoDownloadContext,
+)
 
 
 def _ctx():
@@ -2423,6 +2487,7 @@ def _ctx():
         headers_data=HeadersData(headers={}),
         live_name="live",
         save_dir="/save",
+        save_mode="1",
     )
 
 
@@ -2467,6 +2532,16 @@ def test_process_video_returns_false_on_failure_outcome():
     assert result is False
 
 
+def test_initialize_download_returns_minimal_context():
+    """initialize_download stays as a back-compat shim returning a minimal context."""
+    mgr = VideoDownloadManager(browser_type="edge", save_mode="1")
+    ctx = mgr.initialize_download("https://n.dingtalk.com/live/abc?liveUuid=xyz")
+    assert ctx.url == "https://n.dingtalk.com/live/abc?liveUuid=xyz"
+    assert ctx.save_mode == "1"
+    # save_dir is resolved by path_selector — may be None in default mode without a real selector
+    # live_name is a placeholder; real value comes from session inside process_video
+
+
 def test_close_is_safe_when_never_initialized():
     mgr = VideoDownloadManager(browser_type="edge", save_mode="1")
     mgr.close()  # should not raise
@@ -2480,17 +2555,18 @@ def test_cleanup_context_is_safe_with_none():
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/unit/test_video_download_manager.py -v`
-Expected: TypeError or assertion failure (current `process_video` returns True/False based on internal loop, not via orchestrator).
+Expected: at least 2 of the 5 tests fail (current `process_video` doesn't delegate, `initialize_download` does more than needed).
 
 - [ ] **Step 3: Replace `src/dingtalk_downloader/core/video_download_manager.py` body**
 
 Read the current file, then **replace from the `class VideoDownloadManager:` line to end of file** with:
 
 ```python
-"""视频下载管理器 —— 薄包装，委托给 DownloadOrchestrator。
+"""视频下载管理器 —— 薄包装，委托给 DownloadSession + DownloadOrchestrator。
 
-公开方法签名保留以兼容 main.py：
+公开方法签名保留以兼容 downloader.py：
 - __init__(browser_type, save_mode, ...)
+- initialize_download(url) -> VideoDownloadContext  (薄 shim)
 - process_video(context) -> bool
 - close()
 - cleanup_context(context)
@@ -2503,7 +2579,7 @@ from .download_orchestrator import DownloadOrchestrator
 from .download_session import DownloadSession
 from .retry_policy import RetryPolicy
 from ..binary.n_m3u8dl_re import NM3u8DLRE
-from ..utils.models import VideoDownloadContext
+from ..utils.models import CookieData, HeadersData, VideoDownloadContext
 from ..utils.path_selector import PathSelector
 
 logger = logging.getLogger(__name__)
@@ -2524,18 +2600,20 @@ class VideoDownloadManager:
     ):
         self.browser_type = browser_type
         self.save_mode = save_mode
-        # 旧参数保留但不再使用；保留以兼容旧调用方（如 DependencyFactory）
+        # 旧参数保留但不再使用；保留以兼容旧调用方（如 Downloader + DependencyFactory）
         self._path_selector = path_selector or PathSelector(save_mode)
         self._n_m3u8dl_re = n_m3u8dl_re or NM3u8DLRE()
 
     def initialize_download(self, url: str) -> VideoDownloadContext:
-        """兼容旧接口 —— 不再实际初始化，调用方应使用 process_video + context 传参。"""
-        logger.warning(
-            "initialize_download() 已废弃；直接调用 process_video(context)"
-        )
-        # 返回一个最小可用 context 供旧调用方使用
-        raise NotImplementedError(
-            "initialize_download() 已废弃；构造 VideoDownloadContext 直接传入 process_video()"
+        """构造一个最小 VideoDownloadContext。真正的 cookie/headers/live_name 提取在 process_video 内的 Session 完成。"""
+        save_dir = self._path_selector.get_save_dir()
+        return VideoDownloadContext(
+            url=url,
+            cookie_data=CookieData(cookies={}),
+            headers_data=HeadersData(headers={}),
+            live_name="直播视频",  # 占位；process_video 内的 session 会覆盖
+            save_dir=save_dir,
+            save_mode=self.save_mode,
         )
 
     def process_video(self, context: VideoDownloadContext) -> bool:
@@ -2562,30 +2640,42 @@ class VideoDownloadManager:
         """兼容旧接口。"""
         if context is None:
             return
-        logger.debug(f"VideoDownloadManager.cleanup_context() — no-op for {getattr(context, 'live_name', '?')}")
+        logger.debug(
+            f"VideoDownloadManager.cleanup_context() — no-op for {getattr(context, 'live_name', '?')}"
+        )
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 4: Update `src/dingtalk_downloader/core/downloader.py` import + cleanup**
+
+Two specific changes:
+1. **Line 23**: `from .m3u8_parser import M3u8ParseError` — keep this; `M3u8ParseError` is preserved (T1).
+2. **Line 29 (line that imports `M3u8DownloadService`)** — wait, downloader.py doesn't import it. Let me verify.
+
+Actually `downloader.py:23` only imports `M3u8ParseError` from `m3u8_parser`, which is unchanged. No other imports need updating. **`downloader.py` does NOT need code changes in T11.**
+
+But verify by running tests in step 5.
+
+- [ ] **Step 5: Run test to verify it passes**
 
 Run: `pytest tests/unit/test_video_download_manager.py -v`
-Expected: 4 tests pass.
+Expected: 5 tests pass.
 
-- [ ] **Step 5: Run the full unit test suite**
+- [ ] **Step 6: Run the full unit test suite**
 
 Run: `pytest tests/unit/ -v`
-Expected: All tests pass. If any old tests reference removed methods, fix the import in the test or update the production code to re-export the symbols.
+Expected: All tests pass. If `downloader.py` has import issues, fix them now.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add src/dingtalk_downloader/core/video_download_manager.py tests/unit/test_video_download_manager.py
 git commit -m "refactor(core): VideoDownloadManager becomes thin wrapper
 
 - process_video() delegates to DownloadSession + DownloadOrchestrator
-- Public method signatures preserved for main.py compatibility
+- initialize_download() becomes thin shim returning minimal context
+- Cookie/headers/live_name extraction moves inside session (via process_video)
 - Old DI parameters (cookie_handler/m3u8_parser/etc) accepted but ignored
-- initialize_download() raises NotImplementedError with migration hint
-- 4 tests cover delegation + close/cleanup safety
+- 5 tests cover delegation + initialize shim + close/cleanup safety
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
