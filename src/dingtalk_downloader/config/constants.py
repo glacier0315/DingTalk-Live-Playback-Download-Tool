@@ -57,3 +57,21 @@ MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
 
 # 浏览器等待超时时间（秒）
 BROWSER_WAIT_TIMEOUT = 20
+
+# ========================================
+# 视频下载重试配置（2026-06-20 spec）
+# ========================================
+
+# 单次运行总超时（秒），超过则 DownloadFatalError
+RUN_TIMEOUT_SECONDS = 1800  # 30 分钟
+
+# auth_key 过期类失败的最大重试次数（子上限，区别于总 max_attempts=20）
+AUTH_KEY_MAX_ATTEMPTS = 50
+
+# 各类 failure_kind 的退避区间（min, max），单位秒
+# RetryPolicy 默认值会引用这些
+BACKOFF_AUTH_KEY_EXPIRED = (3.0, 8.0)
+BACKOFF_NETWORK_TRANSIENT = (2.0, 5.0)
+BACKOFF_EXE_MISSING = (10.0, 15.0)
+BACKOFF_SOFT_FAIL = (3.0, 6.0)
+BACKOFF_NONZERO_EXIT = (5.0, 10.0)
