@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.30"]
 build-backend = "hatchling.build"
 
 [project]
@@ -7,7 +7,7 @@ name = "dingtalk-downloader"
 version = "1.5.0"
 description = "钉钉直播回放视频下载工具：通过 Selenium 抓取 Cookie、解析 m3u8 并调用 N_m3u8DL-RE 下载"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [
     { name = "项目团队" },
@@ -19,19 +19,17 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Multimedia :: Video",
     "Topic :: Internet :: WWW/HTTP",
 ]
 dependencies = [
-    "selenium>=4.6.0",
-    "pandas>=2.0.0",
-    "openpyxl>=3.0.0",
-    "PyYAML>=6.0",
+    "selenium>=4.40.0",
+    "pandas>=3.0.0",
+    "openpyxl>=3.1.5",
+    "PyYAML>=6.0.3",
 ]
 
 [project.scripts]
@@ -43,7 +41,7 @@ Repository = "https://github.com/opal1237/silt5339/DingTalk-Live-Playback-Downlo
 # PEP 735 依赖分组（uv 原生支持）
 [dependency-groups]
 dev = [
-    "pytest>=8.0",
+    "pytest>=9.0.0",
 ]
 
 # hatchling 构建配置（src-layout）
