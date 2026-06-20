@@ -12,12 +12,12 @@
 
 ## 环境要求
 
-| 依赖 | 版本 |
-|---|---|
-| Python | **>= 3.12**（开发环境用 3.14） |
+| 依赖     | 版本                                                       |
+| -------- | ---------------------------------------------------------- |
+| Python   | **>= 3.12**（开发环境用 3.14）                             |
 | 操作系统 | **Windows 10/11**（自带 `N_m3u8DL-RE.exe` / `ffmpeg.exe`） |
-| 浏览器 | Edge / Chrome / Firefox 任一（已登录钉钉账户） |
-| 包管理 | [uv](https://docs.astral.sh/uv/) 0.5+ |
+| 浏览器   | Edge / Chrome / Firefox 任一（已登录钉钉账户）             |
+| 包管理   | [uv](https://docs.astral.sh/uv/) 0.5+                      |
 
 > 非 Windows 平台需自行编译/下载 N_m3u8DL-RE 与 ffmpeg，修改 `config/app.yaml` 的 `n_m3u8dl_re.executable_path` 与 `ffmpeg.executable_path`。
 
@@ -53,6 +53,7 @@ python -m src.dingtalk_downloader.main
 ```
 
 按提示选择模式：
+
 1. **单个下载**：依次输入 URL → 保存模式 → 浏览器类型
 2. **批量下载**：输入 CSV/Excel 路径（可拖放文件）→ 程序自动提取所有钉钉链接 → 依次下载
 
@@ -62,25 +63,25 @@ python -m src.dingtalk_downloader.main
 
 ### 模式选择
 
-| 选项 | 含义 |
-|---|---|
-| `1` | 单个视频下载（默认） |
-| `2` | 批量下载 |
+| 选项 | 含义                 |
+| ---- | -------------------- |
+| `1`  | 单个视频下载（默认） |
+| `2`  | 批量下载             |
 
 ### 浏览器类型（每个 session 问一次）
 
-| 选项 | 浏览器 |
-|---|---|
-| `1` | Edge（默认） |
-| `2` | Chrome |
-| `3` | Firefox |
+| 选项 | 浏览器       |
+| ---- | ------------ |
+| `1`  | Edge（默认） |
+| `2`  | Chrome       |
+| `3`  | Firefox      |
 
 ### 保存模式
 
-| 选项 | 含义 |
-|---|---|
-| `1` | 用 `config/app.yaml` 的 `download.default_dir`（默认 `Downloads/`） |
-| `2` | 弹 tkinter 原生窗口手动选目录（**需要桌面 GUI**） |
+| 选项 | 含义                                                                |
+| ---- | ------------------------------------------------------------------- |
+| `1`  | 用 `config/app.yaml` 的 `download.default_dir`（默认 `Downloads/`） |
+| `2`  | 弹 tkinter 原生窗口手动选目录（**需要桌面 GUI**）                   |
 
 ### 批量模板
 
@@ -90,15 +91,15 @@ python -m src.dingtalk_downloader.main
 
 `config/app.yaml` 全部键启动时 schema 校验（缺/类型错/超范围 抛 `ConfigValidationError`）。顶层 7 节：
 
-| 段 | 关键键 | 默认 |
-|---|---|---|
-| `app` | `name` / `version` / `build_date` | 项目横幅 |
-| `download` | `default_dir` / `temp_dir` / `max_retry_count` | `Downloads` / `temp` / `5` |
-| `browser` | `default_type` / `headless` / `timeout` | `edge` / `false` / `30` |
-| `logging` | `level` / `dir` / `max_bytes` / `backup_count` / `retention_days` | `INFO` / `logs` / `10MB` / `5` / `30` |
-| `headers` | `user_agent` / `referer` / `accept_*` / `sec_fetch_*` | 见 YAML |
-| `n_m3u8dl_re` | `executable_path` / `ui_language` / `temp_dir` / `log_dir` | `assets/bin/N_m3u8DL-RE.exe` |
-| `ffmpeg` | `executable_path` | `assets/bin/ffmpeg.exe` |
+| 段            | 关键键                                                            | 默认                                  |
+| ------------- | ----------------------------------------------------------------- | ------------------------------------- |
+| `app`         | `name` / `version` / `build_date`                                 | 项目横幅                              |
+| `download`    | `default_dir` / `temp_dir` / `max_retry_count`                    | `Downloads` / `temp` / `5`            |
+| `browser`     | `default_type` / `headless` / `timeout`                           | `edge` / `false` / `30`               |
+| `logging`     | `level` / `dir` / `max_bytes` / `backup_count` / `retention_days` | `INFO` / `logs` / `10MB` / `5` / `30` |
+| `headers`     | `user_agent` / `referer` / `accept_*` / `sec_fetch_*`             | 见 YAML                               |
+| `n_m3u8dl_re` | `executable_path` / `ui_language` / `temp_dir` / `log_dir`        | `assets/bin/N_m3u8DL-RE.exe`          |
+| `ffmpeg`      | `executable_path`                                                 | `assets/bin/ffmpeg.exe`               |
 
 **覆盖配置路径**（优先级高于 `config/app.yaml`）：
 
@@ -113,7 +114,7 @@ export DINGTALK_DOWNLOADER_CONFIG_PATH=/path/to/app.yaml
 
 ## 架构
 
-```
+```text
 URL 输入 ──→ CookieHandler (Selenium)
                 ↓ 手动登录(首次) / 自动复用(后续)
                 ↓ Performance 日志抓 m3u8
@@ -129,19 +130,19 @@ URL 输入 ──→ CookieHandler (Selenium)
 
 **核心模块**（`src/dingtalk_downloader/`）：
 
-| 模块 | 职责 |
-|---|---|
-| `core/downloader.py` | 外观类，组合各组件 |
-| `core/download_orchestrator.py` | 单次下载状态机（拉 m3u8 → 启动子进程 → 监控 → 失败刷新 → 续传） |
-| `core/download_session.py` | context manager；`with` 出自动关浏览器 + 清理 `temp/*.m3u8` |
-| `core/m3u8dl_process.py` | 包装 N_m3u8DL-RE 子进程 + 失败分类（9 种 `DownloadFailureKind`） |
-| `core/retry_policy.py` | 纯函数重试决策（auth_key 子上限 50，指数退避 2-15s 区间） |
-| `core/cookie_handler.py` | Selenium 上下文管理器（首次需 `input()` 等登录） |
-| `core/dependency_factory.py` | 工厂 + 单例缓存（cookie_handler_{browser} 等 key） |
-| `browser/{edge,chrome,firefox}_driver.py` | 各浏览器实现；Firefox 走 `performance.getEntries()` JS 接口 |
-| `binary/n_m3u8dl_re.py` | 命令构建（`--save-name/--save-dir/--base-url/--tmp-dir/--log-file-path`） |
-| `config/yaml_config.py` | YamlConfig 单例（双检锁 + schema 校验） |
-| `utils/{file_reader,validator,path_selector,...}.py` | CSV/Excel 读取、URL/输入校验、tkinter 路径选择 |
+| 模块                                                 | 职责                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------- |
+| `core/downloader.py`                                 | 外观类，组合各组件                                                        |
+| `core/download_orchestrator.py`                      | 单次下载状态机（拉 m3u8 → 启动子进程 → 监控 → 失败刷新 → 续传）           |
+| `core/download_session.py`                           | context manager；`with` 出自动关浏览器 + 清理 `temp/*.m3u8`               |
+| `core/m3u8dl_process.py`                             | 包装 N_m3u8DL-RE 子进程 + 失败分类（9 种 `DownloadFailureKind`）          |
+| `core/retry_policy.py`                               | 纯函数重试决策（auth_key 子上限 50，指数退避 2-15s 区间）                 |
+| `core/cookie_handler.py`                             | Selenium 上下文管理器（首次需 `input()` 等登录）                          |
+| `core/dependency_factory.py`                         | 工厂 + 单例缓存（cookie*handler*{browser} 等 key）                        |
+| `browser/{edge,chrome,firefox}_driver.py`            | 各浏览器实现；Firefox 走 `performance.getEntries()` JS 接口               |
+| `binary/n_m3u8dl_re.py`                              | 命令构建（`--save-name/--save-dir/--base-url/--tmp-dir/--log-file-path`） |
+| `config/yaml_config.py`                              | YamlConfig 单例（双检锁 + schema 校验）                                   |
+| `utils/{file_reader,validator,path_selector,...}.py` | CSV/Excel 读取、URL/输入校验、tkinter 路径选择                            |
 
 ## 开发
 
@@ -157,6 +158,7 @@ uv run pytest -v
 ```
 
 测试结构：
+
 - `tests/unit/`：9 文件 100 测试（覆盖 retry_policy / failure_classifier / m3u8dl_process / models 等）
 - `tests/integration/`：空目录（占位，需真实环境才会跑）
 - `tests/conftest.py`：`sys.path.insert(0, "src")` 让 `from dingtalk_downloader.xxx import yyy` 工作
@@ -173,7 +175,7 @@ uv run pytest -v
 
 ## 目录结构
 
-```
+```text
 DingTalk-Live-Playback-Download-Tool/
 ├── src/dingtalk_downloader/   # 源码（main / core / browser / binary / config / utils）
 ├── tests/{unit,integration}  # 单元 + 集成测试
