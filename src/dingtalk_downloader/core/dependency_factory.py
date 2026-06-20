@@ -14,7 +14,8 @@ import logging
 from typing import Dict
 from .cookie_handler import CookieHandler
 from .m3u8_parser import M3u8Parser
-from .m3u8_download_service import M3u8DownloadService
+from .m3u8_download_service import M3u8RefreshService
+from ..browser.browser_driver import BrowserDriver
 from ..utils.path_selector import PathSelector
 from ..binary.n_m3u8dl_re import NM3u8DLRE
 
@@ -97,20 +98,20 @@ class DependencyFactory:
             logger.debug("创建NM3u8DLRE实例")
         return self._instances[key]
 
-    def get_m3u8_download_service(self, m3u8_parser: M3u8Parser) -> M3u8DownloadService:
+    def get_m3u8_refresh_service(self, browser: BrowserDriver) -> M3u8RefreshService:
         """
-        获取m3u8下载服务实例。
+        获取 m3u8 刷新服务实例。
 
         Args:
-            m3u8_parser: m3u8解析器实例
+            browser: 浏览器驱动实例
 
         Returns:
-            M3u8DownloadService: m3u8下载服务实例
+            M3u8RefreshService: m3u8 刷新服务实例
         """
-        key = f"m3u8_download_service_{id(m3u8_parser)}"
+        key = f"m3u8_refresh_service_{id(browser)}"
         if key not in self._instances:
-            self._instances[key] = M3u8DownloadService(m3u8_parser)
-            logger.debug(f"创建m3u8下载服务实例 - 解析器ID: {id(m3u8_parser)}")
+            self._instances[key] = M3u8RefreshService(browser)
+            logger.debug(f"创建 m3u8 刷新服务实例 - 浏览器驱动ID: {id(browser)}")
         return self._instances[key]
 
     def clear_instances(self) -> None:

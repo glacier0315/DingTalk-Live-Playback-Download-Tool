@@ -1,98 +1,105 @@
-"""
-钉钉直播回放下载工具 - m3u8下载服务模块
+"""M3u8RefreshService —— 拉取一个最新 m3u8（含新 auth_key）并落盘。
 
-本模块负责m3u8文件的下载逻辑。
-
-作者：项目团队
-依赖：logging
-创建日期：2026-01-26
-修改历史：
-    - 2026-01-26: 初始版本，从Downloader类中提取m3u8下载逻辑
+类名 M3u8RefreshService（重命名自 M3u8DownloadService），但文件路径保留
+m3u8_download_service.py 以保持向后兼容（spec 3.3 + pre-flight 决定）。
 """
 
-import os
 import logging
-from .m3u8_parser import M3u8Parser
-from ..utils.models import M3u8Link
-from .exceptions import DownloadError
+import os
+import re
+import uuid
+from typing import Optional
+from urllib.parse import parse_qs, urlparse
+
+from ..browser.browser_driver import BrowserDriver
 from ..utils.m3u8_file_manager import M3u8FileManager
+from ..utils.models import M3u8Link
+from .exceptions import M3u8RefreshError
 
 logger = logging.getLogger(__name__)
 
 
-class M3u8DownloadService:
-    """
-    m3u8下载服务类。
+class M3u8RefreshService:
+    """每次调用 fetch() 都生成一个独立的本地 m3u8 文件。
 
-    负责获取和下载m3u8文件。
-
-    Attributes:
-        m3u8_parser: m3u8解析器
-        m3u8_file_manager: m3u8文件管理器
+    直接接受 BrowserDriver，自己驱动刷新+解析（不再依赖 M3u8Parser）。
     """
 
-    def __init__(self, m3u8_parser: M3u8Parser):
-        """
-        初始化m3u8下载服务。
-
-        Args:
-            m3u8_parser: m3u8解析器实例
-        """
-        self.m3u8_parser = m3u8_parser
-        self.m3u8_file_manager = M3u8FileManager()
-        logger.debug("m3u8下载服务初始化完成")
-
-    def fetch_and_download_m3u8(
+    def __init__(
         self,
-        url: str,
-    ) -> M3u8Link:
-        """
-        获取并下载m3u8文件。
-        下载完成后自动清理临时文件。
+        browser: BrowserDriver,
+        file_manager: Optional[M3u8FileManager] = None,
+        max_attempts: int = 5,
+    ):
+        self.browser = browser
+        self.file_manager = file_manager or M3u8FileManager()
+        self.max_attempts = max_attempts
 
-        Args:
-            url: 钉钉直播回放分享链接
+    def fetch(self, share_url: str) -> M3u8Link:
+        """拉取最新 m3u8 并下载到 temp/ 下的新 UUID 文件。"""
+        live_uuid = self._extract_live_uuid(share_url)
+        if not live_uuid:
+            raise M3u8RefreshError(f"无法从 URL 提取 liveUuid: {share_url}")
 
-        Returns:
-            M3u8Link: m3u8链接对象，包含URL和本地文件路径
+        m3u8_url: Optional[str] = None
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                self._refresh_page()
+                logs = self.browser.get_log("performance")
+                links = self.browser.extract_m3u8_links_from_logs(logs, live_uuid)
+                if links:
+                    m3u8_url = links[-1]
+                    logger.info(f"第 {attempt} 次尝试获取到 m3u8: {m3u8_url}")
+                    break
+                logger.warning(f"第 {attempt} 次未获取到 m3u8 链接")
+            except Exception as e:
+                logger.error(f"第 {attempt} 次刷新失败: {e}", exc_info=True)
 
-        Raises:
-            DownloadError: 获取或下载失败时
-        """
-        m3u8_link = self.m3u8_parser.fetch_m3u8_link(url)
-        logger.info(f"获取到 m3u8 链接: {m3u8_link}")
+        if not m3u8_url:
+            raise M3u8RefreshError(
+                f"经过 {self.max_attempts} 次刷新后仍未获取到 m3u8"
+            )
 
-        m3u8_file = self.m3u8_file_manager.get_temp_file_path()
-        logger.debug(f"准备下载 m3u8 文件到: {m3u8_file}")
+        local_path = self._download_m3u8(m3u8_url)
+        prefix = self._extract_prefix(m3u8_url)
+        return M3u8Link(url=m3u8_url, prefix=prefix, local_file_path=local_path)
 
+    def _extract_live_uuid(self, share_url: str) -> Optional[str]:
+        parsed = urlparse(share_url)
+        params = parse_qs(parsed.query)
+        return params.get("liveUuid", [None])[0]
+
+    def _refresh_page(self) -> None:
         try:
-            m3u8_file = self.m3u8_parser.download_m3u8_file(m3u8_link, m3u8_file)
-
-            if not m3u8_file or not os.path.exists(m3u8_file):
-                raise DownloadError(f"m3u8 文件下载失败或文件不存在: {m3u8_file}")
-
-            file_size = os.path.getsize(m3u8_file)
-            logger.debug(f"m3u8 文件大小: {file_size} bytes")
-
+            self.browser.driver.execute_script("location.reload();")
         except Exception as e:
-            logger.error(f"下载 m3u8 文件时发生错误: {e}", exc_info=True)
-            raise DownloadError(f"下载 m3u8 文件失败: {e}") from e
+            logger.warning(f"刷新页面失败: {e}")
 
-        prefix = self.m3u8_parser.extract_prefix(m3u8_link)
-        logger.info(f"提取到基础 URL: {prefix}")
+    def _download_m3u8(self, m3u8_url: str) -> str:
+        """通过浏览器 fetch 下载 m3u8 内容到新 UUID 文件。"""
+        uuid_str = str(uuid.uuid4())
+        # Brief specifies unique UUID-suffixed path per call. M3u8FileManager
+        # 不接受 suffix kwarg，所以这里直接拼出文件名再用 temp_dir。
+        filename = f"_{uuid_str}.m3u8"
+        local_path = os.path.join(self.file_manager.temp_dir, filename)
 
-        return M3u8Link(url=m3u8_link, prefix=prefix, local_file_path=m3u8_file)
+        script = (
+            "return fetch(arguments[0], { method: 'GET' })"
+            ".then(response => response.text())"
+        )
+        content = self.browser.driver.execute_script(script, m3u8_url)
+        os.makedirs(os.path.dirname(local_path) or ".", exist_ok=True)
+        with open(local_path, "w", encoding="utf-8") as f:
+            f.write(content or "")
+        logger.info(f"m3u8 下载成功: {local_path}")
+        return local_path
 
-    def cleanup_temp_file(self, file_path: str) -> None:
-        """
-        清理临时m3u8文件。
+    def _extract_prefix(self, m3u8_url: str) -> str:
+        pattern = re.compile(r"(https?://[^/]+/live_hp/[0-9a-f-]+)")
+        match = pattern.search(m3u8_url)
+        return match.group(1) if match else m3u8_url
 
-        Args:
-            file_path: 临时文件路径
-        """
-        try:
-            if file_path and os.path.exists(file_path):
-                os.remove(file_path)
-                logger.debug(f"已清理临时文件: {file_path}")
-        except Exception as e:
-            logger.warning(f"清理临时文件失败: {file_path}, 错误: {e}")
+
+# 向后兼容别名：旧代码（如 video_download_manager）仍按旧名导入。
+# 待 T11 重写下游后再移除。
+M3u8DownloadService = M3u8RefreshService
