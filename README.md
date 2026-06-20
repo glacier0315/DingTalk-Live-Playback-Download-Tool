@@ -10,13 +10,35 @@
 
 ## 安装
 
+需要 [uv](https://docs.astral.sh/uv/) 0.5+（一个超快的 Python 包管理器）。
+
 ```bash
+# 推荐：用 uv 自动创建 .venv 并安装全部依赖（含 dev）
+uv sync --group dev
+
+# 验证安装
+uv run python -c "import dingtalk_downloader; print(dingtalk_downloader.__version__)"
+```
+
+如果偏好传统 pip：
+
+```bash
+# 运行时依赖
 pip install -r requirements.txt
+# 测试依赖
+pip install pytest
 ```
 
 ## 运行
 
 ```bash
+# 方式一：uv 激活虚拟环境后用控制台脚本
+uv run dingtalk-downloader
+
+# 方式二：uv + 模块入口（推荐用于开发）
+uv run python -m src.dingtalk_downloader.main
+
+# 方式三：传统方式（已激活 .venv 时）
 python -m src.dingtalk_downloader.main
 ```
 
@@ -45,6 +67,9 @@ DingTalk-Live-Playback-Download-Tool/
 ## 测试
 
 ```bash
-pip install pytest
-pytest tests/unit/ -v
+# 跑单元测试（默认跳过 integration）
+uv run pytest tests/unit/ -v
+
+# 跑全部测试（含 integration 标记，需真实浏览器 + N_m3u8DL-RE.exe）
+uv run pytest -v
 ```
