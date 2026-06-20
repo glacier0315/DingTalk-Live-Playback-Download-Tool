@@ -39,6 +39,24 @@ pip install -r requirements.txt
 pip install pytest
 ```
 
+## 依赖管理
+
+本项目以 `pyproject.toml` 为源真值；`uv.lock` 是锁定的依赖图，`requirements.txt` / `requirements-dev.txt` 仅作 `pip` 兼容的 fallback，由 uv 从 `pyproject.toml` 重新生成。
+
+### 从 pyproject.toml 重新生成 requirements 文件
+
+```bash
+# 运行时依赖
+uv pip compile pyproject.toml -o requirements.txt
+
+# 开发/测试依赖（PEP 735 dependency-group）
+uv pip compile --group dev -o requirements-dev.txt
+```
+
+修改 `pyproject.toml`（`[project] dependencies` 或 `[dependency-groups] dev`）后跑一次上述命令，把 `pyproject.toml`、`uv.lock`、`requirements.txt`、`requirements-dev.txt` 四个文件一起提交即可保持一致。
+
+> CI / 容器环境若没有 uv，可直接用 `pip install -r requirements.txt -r requirements-dev.txt` 装好所有依赖。
+
 ## 快速开始
 
 ```bash
@@ -146,22 +164,51 @@ URL 输入 ──→ CookieHandler (Selenium)
 
 ## 开发
 
+### 单元测试
+
 ```bash
-# 跑全部单元测试（100 个，< 1s）
-uv run pytest tests/unit/ -v
+# 跑全部单元测试（15 个 test_*.py，自动覆盖率）
+uv run pytest -v
 
 # 仅收集（不执行）
-uv run pytest tests/unit/ --collect-only
-
-# 跑 integration（需真实 Edge + N_m3u8DL-RE.exe，CI 默认跳过）
-uv run pytest -v
+uv run pytest --collect-only
 ```
 
-测试结构：
+默认走 `pyproject.toml` 的 `testpaths = ["tests/unit"]`，自动启用分支覆盖率（`--cov-branch`、`--cov-report=term-missing`、`--cov-report=xml:coverage.xml`）。
 
-- `tests/unit/`：9 文件 100 测试（覆盖 retry_policy / failure_classifier / m3u8dl_process / models 等）
-- `tests/integration/`：空目录（占位，需真实环境才会跑）
+### 集成测试
+
+集成测试需要真实 Edge / Chrome 浏览器 + `assets/bin/N_m3u8DL-RE.exe`，CI 默认跳过。
+
+```bash
+# 集成测试（需真实环境）
+uv run pytest tests/integration/ -v -m integration
+```
+
+### 覆盖率报告
+
+`pyproject.toml` 已预置 coverage 配置，常用命令：
+
+```bash
+# 控制台 + 缺失行号（默认）
+uv run pytest
+
+# HTML 报告（输出到 htmlcov/index.html）
+uv run pytest --cov-report=html
+
+# XML 报告（CI 集成用，coverage.xml）
+uv run pytest --cov-report=xml
+
+# 阈值闸门（示例：80%）
+uv run pytest --cov-fail-under=80
+```
+
+### 测试结构
+
+- `tests/unit/`：15 个 `test_*.py`，覆盖 retry_policy / failure_classifier / m3u8dl_process / models / yaml_config / n_m3u8dl_re / download_session / download_orchestrator / file_validator / validator / dependency_factory / video_download_manager / m3u8_refresh_service / exceptions / fake_proc 等核心模块
+- `tests/integration/`：3 个端到端测试 + `conftest.py`，需要 `N_m3u8DL-RE.exe` 与真实浏览器环境
 - `tests/conftest.py`：`sys.path.insert(0, "src")` 让 `from dingtalk_downloader.xxx import yyy` 工作
+- `tests/fixtures/`：共享 fake（`fake_browser` / `fake_proc`）
 
 > 本项目未内置 `ruff` / `mypy` 配置。贡献者本地可在 IDE 启用两者，缓存目录 `.ruff_cache/` / `.mypy_cache/` 已在 `.gitignore`。
 
