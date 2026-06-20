@@ -13,7 +13,6 @@
 import logging
 from typing import Dict
 from .cookie_handler import CookieHandler
-from .m3u8_parser import M3u8Parser
 from .m3u8_download_service import M3u8RefreshService
 from ..browser.browser_driver import BrowserDriver
 from ..utils.path_selector import PathSelector
@@ -51,22 +50,6 @@ class DependencyFactory:
         if key not in self._instances:
             self._instances[key] = CookieHandler(browser_type)
             logger.debug(f"创建Cookie处理器实例 - 浏览器类型: {browser_type}")
-        return self._instances[key]
-
-    def get_m3u8_parser(self, browser_driver) -> M3u8Parser:
-        """
-        获取m3u8解析器实例。
-
-        Args:
-            browser_driver: 浏览器驱动实例
-
-        Returns:
-            M3u8Parser: m3u8解析器实例
-        """
-        key = f"m3u8_parser_{id(browser_driver)}"
-        if key not in self._instances:
-            self._instances[key] = M3u8Parser(browser_driver)
-            logger.debug(f"创建m3u8解析器实例 - 浏览器驱动ID: {id(browser_driver)}")
         return self._instances[key]
 
     def get_path_selector(self, save_mode: str) -> PathSelector:

@@ -5,6 +5,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Tuple
 
+from ..config.constants import (
+    BACKOFF_AUTH_KEY_EXPIRED,
+    BACKOFF_NONZERO_EXIT,
+    BACKOFF_PROCESS_SPAWN,
+    BACKOFF_SOFT_FAIL,
+    BACKOFF_NETWORK_TRANSIENT,
+)
 from .exceptions import (
     AuthKeyExpiredError,
     DownloadFatalError,
@@ -39,11 +46,11 @@ class RetryPolicy:
         max_attempts: int = 20,
         auth_key_max_attempts: int = 50,
         run_timeout_seconds: float = 1800.0,
-        auth_key_backoff: Tuple[float, float] = (3.0, 8.0),
-        network_backoff: Tuple[float, float] = (2.0, 5.0),
-        spawn_backoff: Tuple[float, float] = (10.0, 15.0),
-        soft_fail_backoff: Tuple[float, float] = (3.0, 6.0),
-        nonzero_backoff: Tuple[float, float] = (5.0, 10.0),
+        auth_key_backoff: Tuple[float, float] = BACKOFF_AUTH_KEY_EXPIRED,
+        network_backoff: Tuple[float, float] = BACKOFF_NETWORK_TRANSIENT,
+        spawn_backoff: Tuple[float, float] = BACKOFF_PROCESS_SPAWN,
+        soft_fail_backoff: Tuple[float, float] = BACKOFF_SOFT_FAIL,
+        nonzero_backoff: Tuple[float, float] = BACKOFF_NONZERO_EXIT,
         fatal_max: int = 0,
     ):
         self.max_attempts = max_attempts
