@@ -24,10 +24,14 @@ __pycache__/
 
 # 环境文件
 venv/
+.venv/
 env/
 ENV/
 .env
 .env.local
+
+# uv
+uv.lock.json  # 仅当 uv 输出 JSON 格式时存在
 
 # 日志与临时文件
 *.log

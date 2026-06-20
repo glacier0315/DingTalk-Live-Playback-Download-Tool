@@ -1,5 +1,9 @@
+# 本项目已迁移至 uv 管理依赖，请改用：
+#   uv sync --group dev
+#
+# 此文件保留仅为向后兼容。运行时依赖定义在 pyproject.toml 的 [project] dependencies。
+# 测试依赖在 pyproject.toml 的 [dependency-groups] dev。
 selenium>=4.6.0
 pandas>=2.0.0
 openpyxl>=3.0.0
-xlrd>=2.0.0
 PyYAML>=6.0
