@@ -24,7 +24,7 @@ class CookieError(Exception):
     pass
 
 
-class M3u8ParseError(Exception):
+class M3u8ParseError(DownloadError):
     """m3u8解析异常"""
 
     pass
@@ -54,7 +54,7 @@ class BrowserError(Exception):
     pass
 
 
-class NetworkError(Exception):
+class NetworkError(DownloadError):
     """网络请求异常"""
 
     pass
@@ -62,5 +62,44 @@ class NetworkError(Exception):
 
 class ValidationError(Exception):
     """输入验证异常"""
+
+    pass
+
+
+# --- New: retry pipeline exception hierarchy (2026-06-20 spec) ---
+
+
+class RecoverableDownloadError(DownloadError):
+    """可重试的下载错误基类。"""
+
+    pass
+
+
+class AuthKeyExpiredError(RecoverableDownloadError):
+    """m3u8 auth_key 过期（403/Forbidden/401）。"""
+
+    pass
+
+
+class NetworkTransientError(RecoverableDownloadError):
+    """瞬时网络问题（连接重置、DNS、5xx）。"""
+
+    pass
+
+
+class ProcessSpawnError(RecoverableDownloadError):
+    """N_m3u8DL-RE 启动失败（资源占用、路径错）。"""
+
+    pass
+
+
+class M3u8RefreshError(RecoverableDownloadError):
+    """拉取新 m3u8 失败（页面未加载、liveUuid 提取失败）。"""
+
+    pass
+
+
+class DownloadFatalError(DownloadError):
+    """不可恢复：磁盘满、权限拒绝、保存路径无效。"""
 
     pass
