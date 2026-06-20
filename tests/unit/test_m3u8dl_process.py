@@ -1,8 +1,15 @@
 """Tests for M3u8DLProcess subprocess wrapper."""
 
+import os
+import tempfile
+
 import pytest
 
-from dingtalk_downloader.core.exceptions import AuthKeyExpiredError, DownloadFatalError
+from dingtalk_downloader.core.exceptions import (
+    AuthKeyExpiredError,
+    DownloadFatalError,
+    RecoverableDownloadError,
+)
 from dingtalk_downloader.core.m3u8dl_process import (
     DownloadFailureKind,
     M3u8DLProcess,
@@ -25,11 +32,11 @@ class _FakeN_m3u8dl_re:
         ]
 
 
-def _make_process(popen: FakePopen) -> M3u8DLProcess:
+def _make_process(popen: FakePopen, log_path: str = "/tmp/fake-{ts}.log") -> M3u8DLProcess:
     """Construct M3u8DLProcess with a popen_factory that returns the given FakePopen."""
     return M3u8DLProcess(
         n_m3u8dl_re=_FakeN_m3u8dl_re(),  # type: ignore[arg-type]
-        log_path="/tmp/fake-{ts}.log",
+        log_path=log_path,
         popen_factory=lambda *a, **kw: popen,
     )
 
@@ -116,3 +123,89 @@ def test_terminate_before_start_is_safe():
     proc = _make_process(popen)
     proc.terminate(grace_seconds=0.01)  # should not raise
     assert popen.terminate_calls == 0  # nothing to terminate
+
+
+# ----------------------------------------------------------------------------
+# --log-file-path 行为：N_m3u8DL-RE 把 403/分片校验失败等关键诊断写到日志文件，
+# stdout/stderr 几乎为空。下面 3 个用例验证 wait() 现在能正确读这个文件。
+# ----------------------------------------------------------------------------
+
+
+def test_wait_detects_403_in_log_file_when_stdout_clean():
+    """回归用例：复现 2026-06-20 误判"下载成功"的 bug。
+
+    子进程 stdout/stderr 为空、returncode=0，但 N_m3u8DL-RE 在 log 文件里写了
+    大量 403 Forbidden 与"分片数量校验不通过"。修复后应识别为 AUTH_KEY_EXPIRED。
+    """
+    log_text = (
+        "20:03:41.522 INFO : [0x101]: Audio, aac ([15][0][0][0])\n"
+        "20:03:41.651 EXTRA: Ah oh!\n"
+        "RetryCount => 3\n"
+        "Exception  => Response status code does not indicate success: 403 (Forbidden).\n"
+        "Url        => https://dtliving-bj-dingpan.dingtalk.com/live/abc/16.ts\n"
+        "20:03:41.651 EXTRA: Ah oh!\n"
+        "RetryCount => 3\n"
+        "Exception  => Response status code does not indicate success: 403 (Forbidden).\n"
+        "Url        => https://dtliving-bj-dingpan.dingtalk.com/live/abc/33.ts\n"
+        "20:04:01.515 EXTRA: The retry attempts have been exhausted and the download of this segment has failed.\n"
+        "20:04:01.644 ERROR: 分片数量校验不通过, 共189个,已下载20.\n"
+        "20:04:01.645 ERROR: Failed\n"
+    )
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".log", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(log_text)
+        log_path = f.name
+    try:
+        popen = FakePopen(returncode=0, stdout="", stderr="")
+        proc = _make_process(popen, log_path=log_path)
+        proc.start("a.m3u8", "v", "/s", "https://x/", {}, {})
+        result = proc.wait()
+
+        assert result.returncode == 0
+        assert result.log_tail == log_text  # 完整 log 已注入 RunResult
+        # 优先命中 AUTH_KEY_EXPIRED（\b403\b 模式先于 SOFT_FAIL 的 \berror\b）
+        assert result.failure_kind is DownloadFailureKind.AUTH_KEY_EXPIRED
+        assert isinstance(result.error, AuthKeyExpiredError)
+    finally:
+        os.unlink(log_path)
+
+
+def test_wait_detects_segment_validation_error_in_log_file():
+    """当 log 含 ERROR: Failed 但没有 403 关键字时，应归类 SOFT_FAIL。"""
+    log_text = (
+        "20:03:41.522 INFO : [0x101]: Audio, aac ([15][0][0][0])\n"
+        "20:04:01.644 ERROR: 分片数量校验不通过, 共189个,已下载20.\n"
+        "20:04:01.645 ERROR: Failed\n"
+    )
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".log", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(log_text)
+        log_path = f.name
+    try:
+        popen = FakePopen(returncode=0, stdout="", stderr="")
+        proc = _make_process(popen, log_path=log_path)
+        proc.start("a.m3u8", "v", "/s", "https://x/", {}, {})
+        result = proc.wait()
+
+        assert result.failure_kind is DownloadFailureKind.SOFT_FAIL
+        assert isinstance(result.error, RecoverableDownloadError)
+    finally:
+        os.unlink(log_path)
+
+
+def test_wait_handles_missing_log_file_gracefully():
+    """log 文件不存在 → 不崩，且 stdout/stderr 仍能正常判定。
+
+    即使 log_path 指向不存在的路径，wait() 也不应抛异常；clean exit 时仍判 None。
+    """
+    popen = FakePopen(returncode=0, stdout="downloaded", stderr="")
+    proc = _make_process(popen, log_path="/nonexistent/path/to/fake.log")
+    proc.start("a.m3u8", "v", "/s", "https://x/", {}, {})
+    result = proc.wait()
+
+    assert result.returncode == 0
+    assert result.log_tail == ""
+    assert result.failure_kind is None
+    assert result.error is None

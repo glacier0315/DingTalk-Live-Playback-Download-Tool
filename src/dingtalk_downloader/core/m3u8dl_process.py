@@ -7,6 +7,7 @@
 
 import logging
 import re
+import subprocess
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Tuple
@@ -68,8 +69,10 @@ _FAILURE_PATTERNS: Tuple[Tuple[DownloadFailureKind, str, type], ...] = (
     (DownloadFailureKind.AUTH_KEY_EXPIRED, r"unauthorized", AuthKeyExpiredError),
     (DownloadFailureKind.AUTH_KEY_EXPIRED, r"\b401\b", AuthKeyExpiredError),
     # SOFT_FAIL
-    (DownloadFailureKind.SOFT_FAIL, r"^error:", RecoverableDownloadError),
-    (DownloadFailureKind.SOFT_FAIL, r"^failed", RecoverableDownloadError),
+    # 不要求行首：N_m3u8DL-RE 的运行日志每行带 "HH:MM:SS.mmm " 前缀，
+    # 仅靠 ^ 会漏掉 "20:04:01.644 ERROR: Failed" 这种真实失败行。
+    (DownloadFailureKind.SOFT_FAIL, r"\berror\b\s*:", RecoverableDownloadError),
+    (DownloadFailureKind.SOFT_FAIL, r"\bfailed\b", RecoverableDownloadError),
     (DownloadFailureKind.SOFT_FAIL, r"\[errhttp\]", RecoverableDownloadError),
 )
 
@@ -109,6 +112,7 @@ class RunResult:
     returncode: int
     stdout_tail: str
     stderr_tail: str
+    log_tail: str
     failure_kind: Optional[DownloadFailureKind]
     error: Optional[Exception]
 
@@ -154,17 +158,26 @@ class M3u8DLProcess:
             idx = command.index("--log-file-path")
             if idx + 1 < len(command):
                 command[idx + 1] = self._log_path
-        self._proc = self._popen_factory(command, capture_output=True, text=True)
+        # 用 stdout=PIPE/stderr=PIPE 而非 capture_output=True 以兼容 Python <3.7
+        self._proc = self._popen_factory(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
 
     def wait(self, timeout: Optional[float] = None) -> RunResult:
         """等待子进程结束并返回 RunResult。
 
-        双保险判定失败：
-        1. returncode != 0 → 扫 stderr 关键字
-        2. returncode == 0 但 stderr 命中无结果 → 扫 stdout 关键字（处理 403
-           内嵌在输出里、但 stderr 却被静默的情况）
-        注意：returncode == 0 且 stderr 为空 → 不再扫 stdout，避免对正常
-        输出（如 "downloaded"）误判为 NONZERO_EXIT。
+        失败判定来源（按优先级）：
+        1. N_m3u8DL-RE 的运行日志文件（--log-file-path 指向，start() 已改写为
+           self._log_path）。这是最完整的诊断流：403、分片下载失败、
+           "ERROR: 分片数量校验不通过" 等关键字几乎只在这里出现。
+        2. 子进程 stderr。
+        3. returncode（兜底 NONZERO_EXIT）。
+
+        注意：returncode == 0 且上述所有诊断流都为空 → (None, None)，
+        避免对正常输出（如 "downloaded"）误判。
         """
         if self._proc is None:
             raise RuntimeError("M3u8DLProcess.start() must be called before wait()")
@@ -178,15 +191,18 @@ class M3u8DLProcess:
 
         stdout_tail = (stdout or "")[-2048:]
         stderr_tail = (stderr or "")[-2048:]
+        log_tail = self._read_log_tail(self._log_path)
 
-        # 双保险：先看 stderr，再看 stdout
-        failure_kind, error = classify_failure(stderr_tail, returncode)
-        # 只有在以下情况才回退扫描 stdout：
-        #   - returncode != 0（肯定出错了，找一下关键字定位原因）
-        #   - stderr 非空但 classify_failure 没匹配（可能 403 内嵌在 stdout）
-        # 避免对"downloaded"这类正常输出误判为失败
+        # 把 log_tail 注入诊断流（log_tail 信息最完整，优先级最高）
+        # 同时保留 stderr_tail 在 RunResult 里给上层做 warn 日志
+        combined_diag = log_tail or ""
+        if stderr_tail:
+            combined_diag = combined_diag + "\n" + stderr_tail if combined_diag else stderr_tail
+
+        # 先扫 log + stderr；只在前面没匹配时才回退到 stdout
+        failure_kind, error = classify_failure(combined_diag, returncode)
         if failure_kind is None and stdout_tail and (
-            returncode != 0 or stderr_tail.strip()
+            returncode != 0 or combined_diag.strip()
         ):
             failure_kind, error = classify_failure(stdout_tail, returncode)
 
@@ -198,9 +214,35 @@ class M3u8DLProcess:
             returncode=returncode,
             stdout_tail=stdout_tail,
             stderr_tail=stderr_tail,
+            log_tail=log_tail,
             failure_kind=failure_kind,
             error=error,
         )
+
+    def _read_log_tail(self, path: Optional[str], max_bytes: int = 65536) -> str:
+        """读取 N_m3u8DL-RE 写入的运行日志尾部。
+
+        N_m3u8DL-RE 把 403、RetryCount、"ERROR: 分片数量校验不通过" 等关键诊断
+        信息写到 --log-file-path 指向的文件（而不是 stdout/stderr）。要正确
+        判定失败，必须读这个文件。
+
+        异常一律吞掉：文件不存在/被锁/权限不足都视作"无 log 内容"，让 classify
+        继续走 stderr/stdout 路径，不让日志读取本身把 wait() 拖崩。
+        """
+        if not path:
+            return ""
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as f:
+                f.seek(0, 2)
+                size = f.tell()
+                if size > max_bytes:
+                    f.seek(size - max_bytes)
+                else:
+                    f.seek(0)
+                return f.read()
+        except (OSError, IOError) as e:
+            logger.debug(f"_read_log_tail 读取失败 [{type(e).__name__}]: {e}")
+            return ""
 
     def terminate(self, grace_seconds: float = 5.0) -> None:
         """SIGTERM → 等 grace_seconds → 若仍存活则 SIGKILL。"""

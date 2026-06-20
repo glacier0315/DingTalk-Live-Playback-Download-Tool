@@ -104,9 +104,12 @@ class DownloadOrchestrator:
                 # 5. 失败 → 决策
                 last_error = result.error
                 last_kind = result.failure_kind
+                # N_m3u8DL-RE 把 403/分片失败/ERROR 等关键诊断写到 --log-file-path
+                # 指向的文件，stdout/stderr 几乎为空；log_tail 比 stderr_tail 信息更全。
                 logger.warning(
                     f"[retry {attempt}] failure_kind={last_kind.value}, "
-                    f"stderr_tail={result.stderr_tail[-200:]!r}"
+                    f"stderr_tail={result.stderr_tail[-200:]!r}, "
+                    f"log_tail={result.log_tail[-200:]!r}"
                 )
 
                 decision = self._policy.next_action(last_error, attempt)
