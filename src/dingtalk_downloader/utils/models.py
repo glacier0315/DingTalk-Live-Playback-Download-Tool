@@ -10,7 +10,7 @@
     - 2026-01-26: 初始版本，创建值对象和数据类
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Optional
 
 
@@ -278,3 +278,34 @@ class VideoDownloadContext:
             如果保存目录已设置则返回True
         """
         return self.save_dir is not None
+
+
+@dataclass(frozen=True)
+class DownloadOutcome:
+    """单次视频下载的结果值对象。
+
+    Attributes:
+        success: 是否最终下载成功
+        attempts: 实际尝试次数（含失败的）
+        last_failure_kind: 最后一次失败的分类（成功时为 None）
+        last_error: 最后一次的异常对象（成功时为 None）
+        elapsed_seconds: 总耗时
+    """
+
+    success: bool
+    attempts: int
+    last_failure_kind: Optional["DownloadFailureKind"]
+    last_error: Optional[Exception]
+    elapsed_seconds: float
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.attempts, int) or isinstance(self.attempts, bool):
+            raise ValueError("attempts必须是整数")
+        if self.attempts < 0:
+            raise ValueError("attempts不能为负数")
+        if not isinstance(self.elapsed_seconds, (int, float)) or self.elapsed_seconds < 0:
+            raise ValueError("elapsed_seconds必须为非负数")
+        if not self.success and self.last_error is None:
+            raise ValueError("失败结果必须包含 last_error")
+        if self.success and self.last_failure_kind is not None:
+            raise ValueError("成功结果不应包含 last_failure_kind")
