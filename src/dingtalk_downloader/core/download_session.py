@@ -25,10 +25,12 @@ class DownloadSession:
         self,
         browser_type: str,
         save_mode: str,
+        url: Optional[str] = None,
         cookie_handler: Optional[CookieHandler] = None,
     ):
         self.browser_type = browser_type
         self.save_mode = save_mode
+        self._url = url
         self._cookie_handler = cookie_handler
         self._cookie_data: Optional[CookieData] = None
         self._headers_data: Optional[HeadersData] = None
@@ -39,7 +41,10 @@ class DownloadSession:
     def __enter__(self) -> "DownloadSession":
         if self._cookie_handler is None:
             self._cookie_handler = CookieHandler(self.browser_type)
-        cookie_data, headers_data, live_name = self._cookie_handler.get_cookie("placeholder")
+        # 关键修复：必须把真实分享 URL 传给 CookieHandler 让浏览器导航到该页，
+        # 否则后续 m3u8 刷新会去翻 "placeholder" 这种空页。
+        nav_url = self._url if self._url else "about:blank"
+        cookie_data, headers_data, live_name = self._cookie_handler.get_cookie(nav_url)
         self._cookie_data = cookie_data
         self._headers_data = headers_data
         self._live_name = live_name

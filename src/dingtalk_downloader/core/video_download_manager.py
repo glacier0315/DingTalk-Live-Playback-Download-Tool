@@ -36,6 +36,9 @@ class VideoDownloadManager:
     ):
         self.browser_type = browser_type
         self.save_mode = save_mode
+        # 保存 DependencyFactory 注入的 cookie_handler，让 DownloadSession 复用同一个
+        # 浏览器实例（避免每个视频都要用户重新登录）。
+        self._cookie_handler = cookie_handler
         # 旧参数保留但不再使用；保留以兼容旧调用方（如 Downloader + DependencyFactory）
         self._path_selector = path_selector or PathSelector(save_mode)
         self._n_m3u8dl_re = n_m3u8dl_re or NM3u8DLRE()
@@ -58,6 +61,8 @@ class VideoDownloadManager:
         with DownloadSession(
             browser_type=self.browser_type,
             save_mode=self.save_mode,
+            url=context.url,
+            cookie_handler=self._cookie_handler,
         ) as session:
             orchestrator = DownloadOrchestrator(
                 session=session,

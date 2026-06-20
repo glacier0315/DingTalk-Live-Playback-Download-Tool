@@ -132,3 +132,73 @@ def test_session_propagates_exceptions():
         assert handler_ref[0].closed is True
     finally:
         mod.CookieHandler = original  # type: ignore[misc]
+
+
+def test_session_passes_real_url_to_cookie_handler():
+    """Bug 1 regression: DownloadSession must forward the real share URL
+    to CookieHandler.get_cookie(url), not the literal "placeholder" string.
+    """
+    captured_urls = []
+
+    class _StubCookieHandler:
+        def __init__(self, browser_type):
+            self.browser_type = browser_type
+            self.browser = FakeBrowser(m3u8_links=[])
+
+        def get_cookie(self, url):
+            captured_urls.append(url)
+            from dingtalk_downloader.utils.models import CookieData, HeadersData
+            return (
+                CookieData(cookies={"session": "abc"}),
+                HeadersData(headers={"User-Agent": "test"}),
+                "live_name_test",
+            )
+
+        def close(self):
+            self.browser.quit()
+
+    import dingtalk_downloader.core.download_session as mod
+    original = mod.CookieHandler
+    mod.CookieHandler = _StubCookieHandler  # type: ignore[misc]
+    try:
+        real_url = "https://n.dingtalk.com/live/abc?liveUuid=01234567-89ab-cdef-0123-456789abcdef"
+        with DownloadSession(
+            browser_type="edge", save_mode="1", url=real_url
+        ) as session:
+            assert session.live_name() == "live_name_test"
+        assert captured_urls == [real_url], (
+            f"expected get_cookie to receive the real URL, got {captured_urls!r}"
+        )
+        assert "placeholder" not in captured_urls[0]
+    finally:
+        mod.CookieHandler = original  # type: ignore[misc]
+
+
+def test_session_uses_injected_cookie_handler():
+    """Bug 2 regression: DownloadSession must use the supplied cookie_handler
+    instance instead of constructing a new one.
+    """
+    from dingtalk_downloader.utils.models import CookieData, HeadersData
+
+    class _CustomHandler:
+        def __init__(self):
+            self.used = False
+            self.closed = False
+
+        def get_cookie(self, url):
+            self.used = True
+            return CookieData(cookies={"k": "v"}), HeadersData(headers={}), "name"
+
+        def close(self):
+            self.closed = True
+
+    custom = _CustomHandler()
+    with DownloadSession(
+        browser_type="edge",
+        save_mode="1",
+        cookie_handler=custom,
+        url="https://n.dingtalk.com/live/x?liveUuid=01234567-89ab-cdef-0123-456789abcdef",
+    ) as session:
+        assert session.cookie_data().get("k") == "v"
+    assert custom.used is True, "injected cookie_handler was not used"
+    assert custom.closed is True, "injected cookie_handler was not closed on exit"
