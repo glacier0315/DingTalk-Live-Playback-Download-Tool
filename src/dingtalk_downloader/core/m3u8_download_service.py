@@ -76,7 +76,11 @@ class M3u8RefreshService:
             logger.warning(f"刷新页面失败: {e}")
 
     def _download_m3u8(self, m3u8_url: str) -> str:
-        """通过浏览器 fetch 下载 m3u8 内容到新 UUID 文件。"""
+        """通过浏览器 fetch 下载 m3u8 内容到新 UUID 文件。
+
+        浏览器 fetch 失败时（execute_script 返回 None），抛 M3u8RefreshError
+        并清理可能残留的空文件，避免下游 N_m3u8DL-RE 拿到无效 m3u8。
+        """
         uuid_str = str(uuid.uuid4())
         # Brief specifies unique UUID-suffixed path per call. M3u8FileManager
         # 不接受 suffix kwarg，所以这里直接拼出文件名再用 temp_dir。
@@ -88,9 +92,19 @@ class M3u8RefreshService:
             ".then(response => response.text())"
         )
         content = self.browser.driver.execute_script(script, m3u8_url)
+        if not content:
+            # fetch 失败或返回 None/空串 — 防御性清理空文件
+            try:
+                if os.path.exists(local_path):
+                    os.remove(local_path)
+            except OSError:
+                pass
+            raise M3u8RefreshError(
+                f"浏览器 fetch 失败，未获取到 m3u8 内容: {m3u8_url}"
+            )
         os.makedirs(os.path.dirname(local_path) or ".", exist_ok=True)
         with open(local_path, "w", encoding="utf-8") as f:
-            f.write(content or "")
+            f.write(content)
         logger.info(f"m3u8 下载成功: {local_path}")
         return local_path
 
@@ -98,8 +112,3 @@ class M3u8RefreshService:
         pattern = re.compile(r"(https?://[^/]+/live_hp/[0-9a-f-]+)")
         match = pattern.search(m3u8_url)
         return match.group(1) if match else m3u8_url
-
-
-# 向后兼容别名：旧代码（如 video_download_manager）仍按旧名导入。
-# 待 T11 重写下游后再移除。
-M3u8DownloadService = M3u8RefreshService

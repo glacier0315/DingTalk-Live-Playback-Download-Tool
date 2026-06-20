@@ -43,3 +43,21 @@ def test_fetch_generates_unique_local_path_each_call():
     p1 = svc.fetch("https://n.dingtalk.com/live/abc?liveUuid=xyz").local_file_path
     p2 = svc.fetch("https://n.dingtalk.com/live/abc?liveUuid=xyz").local_file_path
     assert p1 != p2
+
+
+def test_fetch_raises_m3u8_refresh_error_on_none_content(monkeypatch, tmp_path):
+    """Minor 8 回归：浏览器 fetch 返回 None 时，必须抛 M3u8RefreshError。
+
+    之前的行为是写入空文件，让 N_m3u8DL-RE 拿到无效 m3u8 失败。
+    现在应该抛出明确的语义错误。
+    """
+    browser = FakeBrowser(m3u8_links=["https://x/v.m3u8?auth_key=Z"])
+    # 让 fetch 调用返回 None（模拟浏览器 fetch 失败）
+    browser.driver.execute_script = lambda script, *args: None
+
+    svc = M3u8RefreshService(browser=browser, file_manager=None)  # type: ignore[arg-type]
+    monkeypatch.setattr(svc, "_download_m3u8", svc._download_m3u8)
+    # 直接调用 _download_m3u8 验证 None-content 路径
+    with pytest.raises(M3u8RefreshError) as exc_info:
+        svc._download_m3u8("https://x/v.m3u8?auth_key=Z")
+    assert "浏览器 fetch 失败" in str(exc_info.value)

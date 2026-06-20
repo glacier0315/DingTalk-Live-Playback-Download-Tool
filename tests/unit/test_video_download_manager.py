@@ -2,8 +2,6 @@
 
 from unittest.mock import patch
 
-import pytest
-
 from dingtalk_downloader.core.video_download_manager import VideoDownloadManager
 from dingtalk_downloader.core.exceptions import AuthKeyExpiredError
 from dingtalk_downloader.core.m3u8dl_process import DownloadFailureKind
@@ -145,3 +143,49 @@ def test_initialize_download_with_url_returns_context():
     ctx = mgr.initialize_download(url)
     assert ctx.url == url
     assert ctx.save_mode == "1"
+
+
+def test_process_video_resolves_save_dir_at_most_once():
+    """Important 4 回归：process_video 必须只解析一次 save_dir。
+
+    即使 orchestrator 在重试循环里多次调用 resolver，也不能重新打开 tkinter
+    对话框。验证：get_save_dir() 在一次 process_video() 中只被调用一次。
+    """
+    mgr = VideoDownloadManager(browser_type="edge", save_mode="2")
+
+    call_counter = {"n": 0}
+
+    def fake_get_save_dir():
+        call_counter["n"] += 1
+        return "/resolved/once"
+
+    mgr._path_selector.get_save_dir = fake_get_save_dir  # type: ignore[method-assign]
+
+    ctx = VideoDownloadContext(
+        url="https://n.dingtalk.com/live/abc?liveUuid=xyz",
+        cookie_data=CookieData(cookies={}),
+        headers_data=HeadersData(headers={}),
+        live_name="live",
+        save_dir=None,  # 强制走 resolver
+        save_mode="2",
+    )
+    fake_outcome = DownloadOutcome(
+        success=True,
+        attempts=1,
+        last_failure_kind=None,
+        last_error=None,
+        elapsed_seconds=0.1,
+    )
+
+    with patch(
+        "dingtalk_downloader.core.video_download_manager.DownloadOrchestrator"
+    ) as MockOrch, patch(
+        "dingtalk_downloader.core.video_download_manager.DownloadSession"
+    ) as MockSession:
+        MockOrch.return_value.run.return_value = fake_outcome
+        mgr.process_video(ctx)
+
+    assert call_counter["n"] == 1, (
+        f"get_save_dir() 期望调用 1 次，实际调用 {call_counter['n']} 次 "
+        f"（应避免 SAVE_MODE_MANUAL 下每次重试都弹对话框）"
+    )

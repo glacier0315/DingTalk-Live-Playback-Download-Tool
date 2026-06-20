@@ -221,10 +221,16 @@ class M3u8DLProcess:
             if self.is_alive():
                 try:
                     self._proc.kill()
-                except Exception:
-                    logger.warning("M3u8DLProcess kill() 也失败，子进程可能仍存活")
+                except Exception as e:
+                    # 区分异常类型便于诊断（OSError/SubprocessError vs 其他）
+                    logger.warning(
+                        f"M3u8DLProcess kill() 异常 [{type(e).__name__}]: "
+                        f"{e} — 子进程可能仍存活"
+                    )
         except Exception as e:
-            logger.warning(f"M3u8DLProcess.terminate() 异常: {e}")
+            logger.warning(
+                f"M3u8DLProcess.terminate() 异常 [{type(e).__name__}]: {e}"
+            )
 
     def is_alive(self) -> bool:
         if self._proc is None:

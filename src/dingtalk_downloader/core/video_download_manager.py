@@ -56,8 +56,14 @@ class VideoDownloadManager:
         )
 
     def process_video(self, context: VideoDownloadContext) -> bool:
-        """委托给 DownloadOrchestrator。"""
-        save_dir_resolver = lambda: context.save_dir or self._path_selector.get_save_dir()
+        """委托给 DownloadOrchestrator。
+
+        注意：save_dir 在重试循环开始前一次性解析，避免 SAVE_MODE_MANUAL 下
+        每次重试都弹 tkinter 对话框。DownloadOrchestrator.run() 内部
+        也会调用一次 resolver，但那只是把已解析的值复用，不再触发弹窗。
+        """
+        resolved_save_dir = context.save_dir or self._path_selector.get_save_dir()
+        save_dir_resolver = lambda: resolved_save_dir
         with DownloadSession(
             browser_type=self.browser_type,
             save_mode=self.save_mode,
