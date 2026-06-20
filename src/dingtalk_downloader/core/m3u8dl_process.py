@@ -6,6 +6,7 @@
 """
 
 import logging
+import os
 import re
 import subprocess
 from dataclasses import dataclass
@@ -137,6 +138,11 @@ class M3u8DLProcess:
         self._proc = None
         self._waited = False
         self.last_command: list = []
+        # 缓存 save_dir/save_name 供 wait() 做"金标准"成功判定：
+        # save_dir 下若已存在 <save_name>.mp4 / <save_name>/<save_name>.mp4
+        # 则 N_m3u8DL-RE 一定成功合并过——直接覆盖任何 NONZERO_EXIT 兜底判定。
+        self._save_dir: Optional[str] = None
+        self._save_name: Optional[str] = None
 
     def start(
         self,
@@ -152,6 +158,8 @@ class M3u8DLProcess:
             m3u8_file, save_name, save_dir, prefix, cookies, headers
         )
         self.last_command = command
+        self._save_dir = save_dir
+        self._save_name = save_name
         logger.debug(f"执行命令: {' '.join(command)}")
         # 改写 --log-file-path 为本次 log_path
         if "--log-file-path" in command:
@@ -169,15 +177,17 @@ class M3u8DLProcess:
     def wait(self, timeout: Optional[float] = None) -> RunResult:
         """等待子进程结束并返回 RunResult。
 
-        失败判定来源（按优先级）：
-        1. N_m3u8DL-RE 的运行日志文件（--log-file-path 指向，start() 已改写为
-           self._log_path）。这是最完整的诊断流：403、分片下载失败、
-           "ERROR: 分片数量校验不通过" 等关键字几乎只在这里出现。
+        判定优先级（成功信号先于失败关键字）：
+        0. **强成功信号**（覆盖一切）：
+           a. 金标准：save_dir 下已存在最终 mp4（说明 N_m3u8DL-RE 已经合并完成）
+           b. 辅助：log 含 "INFO : Done" 且不含真实失败关键字
+        1. 失败关键字扫描：N_m3u8DL-RE 的运行日志文件（最完整诊断流）
         2. 子进程 stderr。
         3. returncode（兜底 NONZERO_EXIT）。
 
-        注意：returncode == 0 且上述所有诊断流都为空 → (None, None)，
-        避免对正常输出（如 "downloaded"）误判。
+        强成功信号是关键：ffmpeg 合并阶段常因 Non-monotonous DTS 等无害警告
+        让 returncode 非 0、走 NONZERO_EXIT 兜底，从而误判已经成功的下载，
+        触发 retry → refresh m3u8 → 旧分片因新 auth_key 失效被全部丢弃。
         """
         if self._proc is None:
             raise RuntimeError("M3u8DLProcess.start() must be called before wait()")
@@ -192,6 +202,17 @@ class M3u8DLProcess:
         stdout_tail = (stdout or "")[-2048:]
         stderr_tail = (stderr or "")[-2048:]
         log_tail = self._read_log_tail(self._log_path)
+
+        # 强成功信号：金标准（mp4 文件存在） + 辅助（log 含 INFO : Done 且无失败关键字）
+        if self._has_final_mp4() or self._is_done_success(log_tail):
+            return RunResult(
+                returncode=returncode,
+                stdout_tail=stdout_tail,
+                stderr_tail=stderr_tail,
+                log_tail=log_tail,
+                failure_kind=None,
+                error=None,
+            )
 
         # 把 log_tail 注入诊断流（log_tail 信息最完整，优先级最高）
         # 同时保留 stderr_tail 在 RunResult 里给上层做 warn 日志
@@ -218,6 +239,42 @@ class M3u8DLProcess:
             failure_kind=failure_kind,
             error=error,
         )
+
+    def _has_final_mp4(self) -> bool:
+        """金标准：save_dir 下存在最终 mp4 → N_m3u8DL-RE 已成功合并。
+
+        N_m3u8DL-RE 在 --save-dir 下输出 <save_name>.mp4（单流）或
+        <save_name>/<save_name>.mp4（多流/带子目录）。两个位置都检查。
+        """
+        if not self._save_dir or not self._save_name:
+            return False
+        candidates = [
+            os.path.join(self._save_dir, f"{self._save_name}.mp4"),
+            os.path.join(self._save_dir, self._save_name, f"{self._save_name}.mp4"),
+        ]
+        return any(os.path.isfile(p) for p in candidates)
+
+    @staticmethod
+    def _is_done_success(log_text: str) -> bool:
+        """辅助强成功信号：log 含 'INFO : Done' 且无真实失败关键字。
+
+        N_m3u8DL-RE 完成合并后必打 INFO : Done（唯一明确成功标志）。
+        若同时含 ERROR: Failed / 分片数量校验不通过 / 403 等真实失败关键字，
+        则视为失败，避免对"部分合并后才出错"的场景误判成功。
+        """
+        if not log_text:
+            return False
+        if not re.search(r"INFO\s*:\s*Done", log_text):
+            return False
+        failure_markers = (
+            r"分片数量校验不通过",
+            r"ERROR\s*:\s*Failed",
+            r"\b403\b",
+        )
+        for pattern in failure_markers:
+            if re.search(pattern, log_text):
+                return False
+        return True
 
     def _read_log_tail(self, path: Optional[str], max_bytes: int = 65536) -> str:
         """读取 N_m3u8DL-RE 写入的运行日志尾部。

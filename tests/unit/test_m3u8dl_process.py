@@ -209,3 +209,151 @@ def test_wait_handles_missing_log_file_gracefully():
     assert result.log_tail == ""
     assert result.failure_kind is None
     assert result.error is None
+
+
+# ----------------------------------------------------------------------------
+# 强成功信号：N_m3u8DL-RE 完成合并后打 "INFO : Done"。这之前只有 ffmpeg 的
+# Non-monotonous DTS 警告（无害），没有 403/Failed/分片校验不通过。
+# classify_failure 之前走 NONZERO_EXIT 兜底 → 触发 retry → refresh m3u8 →
+# 已下载分片全部因 auth_key 失效被丢弃 → 视频被重复下载。下面 4 个用例锁定
+# "INFO : Done + 无失败关键字 → 成功" 的判定。
+# ----------------------------------------------------------------------------
+
+
+def test_wait_done_signal_marks_success_when_no_failure_keyword():
+    """回归：复现 2026-06-20 attempt 10 的日志（INFO : Done + ffmpeg DTS 警告）。
+
+    log 末尾含 INFO : Done 但无 ERROR/Failed/分片校验不通过 → 必须判成功，
+    即便 stderr 含 ffmpeg 警告（这些警告无伤大雅）。
+    """
+    log_text = (
+        "20:29:33.611 INFO : [0x100]: Video, h264 ([27][0][0][0]), 1080x1920\n"
+        "20:29:33.612 INFO : [0x101]: Audio, aac ([15][0][0][0]), 66 kb/s\n"
+        "20:29:34.623 INFO : 调用ffmpeg合并中...\n"
+        "20:29:35.840 WARN : [mp4 @ 04096080] Non-monotonous DTS in output stream 0:0\n"
+        "20:29:37.025 INFO : Done\n"
+    )
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".log", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(log_text)
+        log_path = f.name
+    try:
+        popen = FakePopen(returncode=0, stdout="", stderr="ffmpeg: DTS warning")
+        proc = _make_process(popen, log_path=log_path)
+        proc.start("a.m3u8", "video1", "/save", "https://x/", {}, {})
+        result = proc.wait()
+
+        # 关键断言：含 INFO : Done + 无失败关键字 → 判成功
+        assert result.failure_kind is None
+        assert result.error is None
+    finally:
+        os.unlink(log_path)
+
+
+def test_wait_done_with_segment_validation_still_fails():
+    """log 同时含 Done 与 分片校验不通过 → 仍判失败（Done 不覆盖真实失败）。"""
+    log_text = (
+        "20:29:35.840 WARN : [mp4 @ 04096080] Non-monotonous DTS\n"
+        "20:29:37.025 INFO : Done\n"
+        "20:29:37.026 ERROR: 分片数量校验不通过, 共189个,已下载20.\n"
+        "20:29:37.027 ERROR: Failed\n"
+    )
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".log", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(log_text)
+        log_path = f.name
+    try:
+        popen = FakePopen(returncode=0, stdout="", stderr="")
+        proc = _make_process(popen, log_path=log_path)
+        proc.start("a.m3u8", "v", "/s", "https://x/", {}, {})
+        result = proc.wait()
+
+        assert result.failure_kind is DownloadFailureKind.SOFT_FAIL
+        assert isinstance(result.error, RecoverableDownloadError)
+    finally:
+        os.unlink(log_path)
+
+
+def test_wait_done_with_403_still_fails():
+    """log 同时含 Done 与 403 → 仍判 AUTH_KEY_EXPIRED。"""
+    log_text = (
+        "20:29:37.025 INFO : Done\n"
+        "20:29:37.026 WARN : Response status code does not indicate success: 403 (Forbidden).\n"
+        "20:29:37.027 ERROR: Failed\n"
+    )
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".log", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(log_text)
+        log_path = f.name
+    try:
+        popen = FakePopen(returncode=0, stdout="", stderr="")
+        proc = _make_process(popen, log_path=log_path)
+        proc.start("a.m3u8", "v", "/s", "https://x/", {}, {})
+        result = proc.wait()
+
+        assert result.failure_kind is DownloadFailureKind.AUTH_KEY_EXPIRED
+        assert isinstance(result.error, AuthKeyExpiredError)
+    finally:
+        os.unlink(log_path)
+
+
+def test_wait_existing_mp4_marks_success_even_without_done_signal():
+    """金标准：save_dir 下存在最终 mp4 → 强成功。
+
+    防止 N_m3u8DL-RE 改了日志格式（去掉 INFO : Done）或改名（如 .mkv）后
+    又回到误判失败的状况。
+    """
+    with tempfile.TemporaryDirectory() as save_dir:
+        # 模拟 N_m3u8DL-RE 已经合并好的 mp4
+        mp4_path = os.path.join(save_dir, "video1.mp4")
+        with open(mp4_path, "wb") as f:
+            f.write(b"fake mp4 content")
+
+        # log 没有任何成功/失败关键字（理论上不应该发生，但兜底）
+        log_text = "20:29:33.611 INFO : [0x100]: Video, h264\n"
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".log", delete=False, encoding="utf-8"
+        ) as f:
+            f.write(log_text)
+            log_path = f.name
+        try:
+            popen = FakePopen(returncode=0, stdout="", stderr="")
+            proc = _make_process(popen, log_path=log_path)
+            proc.start("a.m3u8", "video1", save_dir, "https://x/", {}, {})
+            result = proc.wait()
+
+            # mp4 存在 → 即使 log 没 Done 也判成功
+            assert result.failure_kind is None
+            assert result.error is None
+        finally:
+            os.unlink(log_path)
+
+
+def test_wait_existing_mp4_inside_save_name_dir_marks_success():
+    """N_m3u8DL-RE 也可能输出 <save_dir>/<save_name>/<save_name>.mp4（带子目录）。"""
+    with tempfile.TemporaryDirectory() as save_dir:
+        nested_dir = os.path.join(save_dir, "video1")
+        os.makedirs(nested_dir)
+        mp4_path = os.path.join(nested_dir, "video1.mp4")
+        with open(mp4_path, "wb") as f:
+            f.write(b"fake mp4 content")
+
+        log_text = "20:29:33.611 INFO : [0x100]: Video, h264\n"
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".log", delete=False, encoding="utf-8"
+        ) as f:
+            f.write(log_text)
+            log_path = f.name
+        try:
+            popen = FakePopen(returncode=0, stdout="", stderr="")
+            proc = _make_process(popen, log_path=log_path)
+            proc.start("a.m3u8", "video1", save_dir, "https://x/", {}, {})
+            result = proc.wait()
+
+            assert result.failure_kind is None
+            assert result.error is None
+        finally:
+            os.unlink(log_path)
