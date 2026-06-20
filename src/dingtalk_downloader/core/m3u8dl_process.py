@@ -161,7 +161,10 @@ class M3u8DLProcess:
 
         双保险判定失败：
         1. returncode != 0 → 扫 stderr 关键字
-        2. returncode == 0 → 仍扫 stdout/stderr 关键字（处理 403 内嵌在输出里的情况）
+        2. returncode == 0 但 stderr 命中无结果 → 扫 stdout 关键字（处理 403
+           内嵌在输出里、但 stderr 却被静默的情况）
+        注意：returncode == 0 且 stderr 为空 → 不再扫 stdout，避免对正常
+        输出（如 "downloaded"）误判为 NONZERO_EXIT。
         """
         if self._proc is None:
             raise RuntimeError("M3u8DLProcess.start() must be called before wait()")
