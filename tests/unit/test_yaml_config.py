@@ -129,6 +129,22 @@ class TestSingleton:
         assert first is second
         assert second.config_file == str(valid_yaml_path)
 
+    def test_singleton_logs_debug_when_ignoring_second_config_file(
+        self, valid_yaml_path, tmp_path, caplog
+    ):
+        """后续传入的 config_file 被忽略时，应输出 debug 日志便于诊断。"""
+        other = tmp_path / "other.yaml"
+        other.write_text("{}", encoding="utf-8")
+        with caplog.at_level("DEBUG"):
+            YamlConfig(str(valid_yaml_path))
+            YamlConfig(str(other))
+        # 至少一条 debug 提到"忽略"且引用了被忽略路径的文件名（路径分隔符在 Windows/POSIX 不同）
+        other_name = other.name
+        assert any(
+            "忽略" in rec.message and other_name in rec.message
+            for rec in caplog.records
+        ), f"未捕获到 debug 日志，实际记录: {[r.message for r in caplog.records]}"
+
     def test_reset_instance_clears_cache(self, valid_yaml_path):
         first = YamlConfig(str(valid_yaml_path))
         first._loaded = True

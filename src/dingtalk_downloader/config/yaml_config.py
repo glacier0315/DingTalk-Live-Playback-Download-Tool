@@ -184,6 +184,13 @@ class YamlConfig:
                     instance.load()
                     cls._instance = instance
                     logger.debug("YamlConfig单例实例创建成功")
+        elif config_file is not None and config_file != cls._instance.config_file:
+            # 单例已存在，后续传入的 config_file 被忽略（首次创建胜出）。
+            # 此处仅记 debug 日志，便于诊断环境变量/参数被覆盖的场景。
+            logger.debug(
+                f"YamlConfig 单例已存在，忽略后续 config_file={config_file!r} "
+                f"(当前使用: {cls._instance.config_file!r})"
+            )
         return cls._instance
 
     def _initialize(self, config_file: Optional[str] = None) -> None:

@@ -31,14 +31,14 @@ class M3u8FileManager:
         temp_dir (str): m3u8临时文件目录
     """
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self) -> None:
         """
         初始化M3U8文件管理器。
 
-        Args:
-            config_file: 配置文件路径，默认为None（使用默认路径）
+        使用 YamlConfig 单例；外部若需指定配置文件，请先调用
+        ``YamlConfig.reset_instance()`` 再 ``YamlConfig.get_instance(path)``。
         """
-        self.config = YamlConfig(config_file)
+        self.config = YamlConfig.get_instance()
         self.config.load()
         self.temp_dir = self._resolve_temp_dir()
 

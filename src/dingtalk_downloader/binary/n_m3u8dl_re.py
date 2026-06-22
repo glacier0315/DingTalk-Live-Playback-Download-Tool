@@ -9,6 +9,7 @@
 修改历史：
     - 2025-01-14: 初始版本
     - 2025-01-15: 添加日志记录
+    - 2026-06-22: 删除 download() 方法（被 M3u8DLProcess + DownloadOrchestrator 取代）
 """
 
 import subprocess
@@ -97,66 +98,6 @@ class NM3u8DLRE:
         log_file_name = f"n_m3u8dl_re_{timestamp}.log"
         log_file_path = os.path.join(self.log_dir, log_file_name)
         return log_file_path
-
-    def download(
-        self,
-        m3u8_file: str,
-        save_name: str,
-        save_dir: str,
-        prefix: str,
-        cookies_data: Optional[Dict[str, str]] = None,
-        headers: Optional[Dict[str, str]] = None,
-    ) -> bool:
-        """
-        下载 m3u8 视频。
-
-        构建下载命令并调用 N_m3u8DL-RE 工具。
-
-        Args:
-            m3u8_file: m3u8 文件路径
-            save_name: 保存文件名
-            save_dir: 保存目录
-            prefix: 基础 URL
-            cookies_data: Cookie 字典
-            headers: 请求头字典
-
-        Returns:
-            下载是否成功
-
-        Raises:
-            Exception: 下载失败时
-        """
-        logger.info(f"开始下载视频 - 文件名: {save_name}, 保存目录: {save_dir}")
-
-        try:
-            command = self.build_command(
-                m3u8_file, save_name, save_dir, prefix, cookies_data, headers
-            )
-            logger.debug(f"执行命令: {' '.join(command)}")
-            result = subprocess.run(command, capture_output=True, text=True)
-
-            if result.returncode != 0:
-                logger.error(f"视频下载失败 - 子进程退出码: {result.returncode}")
-                return False
-
-            output = result.stdout + result.stderr
-
-            if "ERROR:" in output or "Failed" in output:
-                error_lines = []
-                for line in output.split("\n"):
-                    if "ERROR:" in line or "Failed" in line:
-                        error_lines.append(line.strip())
-                error_info = "\n".join(error_lines)
-                logger.error("视频下载失败")
-                if error_info:
-                    logger.error(f"错误信息:\n{error_info}")
-                return False
-
-            logger.info(f"视频下载成功完成。文件保存路径: {save_dir}")
-            return True
-        except Exception as e:
-            logger.error(f"下载视频时发生错误: {e}", exc_info=True)
-            return False
 
     def build_command(
         self,

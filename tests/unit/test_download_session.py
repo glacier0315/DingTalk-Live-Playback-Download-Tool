@@ -202,3 +202,31 @@ def test_session_uses_injected_cookie_handler():
         assert session.cookie_data().get("k") == "v"
     assert custom.used is True, "injected cookie_handler was not used"
     assert custom.closed is True, "injected cookie_handler was not closed on exit"
+
+
+# ---------------------------------------------------------------------------
+# Accessors outside `with` block must raise RuntimeError
+# (assert 安全版：python -O 下 assert 被剥离，RuntimeError 守护运行时校验)
+# ---------------------------------------------------------------------------
+
+
+class TestAccessorsOutsideContext:
+    def test_cookie_data_raises_when_not_entered(self):
+        s = DownloadSession(browser_type="edge", save_mode="1")
+        with pytest.raises(RuntimeError, match="session not entered"):
+            s.cookie_data()
+
+    def test_headers_data_raises_when_not_entered(self):
+        s = DownloadSession(browser_type="edge", save_mode="1")
+        with pytest.raises(RuntimeError, match="session not entered"):
+            s.headers_data()
+
+    def test_live_name_raises_when_not_entered(self):
+        s = DownloadSession(browser_type="edge", save_mode="1")
+        with pytest.raises(RuntimeError, match="session not entered"):
+            s.live_name()
+
+    def test_refresh_service_raises_when_not_entered(self):
+        s = DownloadSession(browser_type="edge", save_mode="1")
+        with pytest.raises(RuntimeError, match="session not entered"):
+            s.refresh_service()

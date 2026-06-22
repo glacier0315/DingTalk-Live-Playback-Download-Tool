@@ -1,6 +1,7 @@
 """DownloadOrchestrator —— 单次下载的状态机。"""
 
 import logging
+import subprocess
 import time
 from typing import Callable, Optional
 
@@ -24,7 +25,7 @@ class DownloadOrchestrator:
         n_m3u8dl_re: NM3u8DLRE,
         retry_policy: RetryPolicy,
         save_dir_resolver: Callable[[], Optional[str]],
-        popen_factory=__import__("subprocess").Popen,
+        popen_factory=subprocess.Popen,
         log_path_factory: Optional[Callable[[], str]] = None,
     ):
         self._session = session

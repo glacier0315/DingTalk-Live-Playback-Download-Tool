@@ -214,81 +214,18 @@ class TestBuildCommand:
 
 
 class TestDownload:
-    def _fake_completed(self, returncode=0, stdout="ok", stderr=""):
-        return subprocess.CompletedProcess(
-            args=[], returncode=returncode, stdout=stdout, stderr=stderr
+    """守护契约：NM3u8DLRE.download() 已被删除（2026-06-20 spec 改用 M3u8DLProcess）。
+
+    历史上 ``download()`` 通过 ``subprocess.run`` 直接调 EXE，绕过失败分类与重试管线。
+    现在重试管线由 ``DownloadOrchestrator`` + ``M3u8DLProcess`` 承担；本类只剩一条
+    锁定删除的契约测试。
+    """
+
+    def test_n_m3u8dl_re_has_no_download_method(self):
+        assert not hasattr(NM3u8DLRE, "download"), (
+            "NM3u8DLRE.download is dead code (replaced by M3u8DLProcess). "
+            "Re-add only if you have wired a real caller that needs the old API."
         )
-
-    def test_download_returns_true_on_clean_exit(self, nm, monkeypatch):
-        monkeypatch.setattr(
-            "dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run",
-            lambda *a, **kw: self._fake_completed(0, "downloaded", ""),
-        )
-        assert nm.download("/a.m3u8", "v", "/s", "p", {}, {}) is True
-
-    def test_download_returns_false_on_nonzero_returncode(self, nm, monkeypatch):
-        monkeypatch.setattr(
-            "dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run",
-            lambda *a, **kw: self._fake_completed(1, "", ""),
-        )
-        assert nm.download("/a.m3u8", "v", "/s", "p", {}, {}) is False
-
-    def test_download_returns_false_when_stdout_contains_error_marker(
-        self, nm, monkeypatch
-    ):
-        monkeypatch.setattr(
-            "dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run",
-            lambda *a, **kw: self._fake_completed(0, "ERROR: something", ""),
-        )
-        assert nm.download("/a.m3u8", "v", "/s", "p", {}, {}) is False
-
-    def test_download_returns_false_when_stderr_contains_failed(
-        self, nm, monkeypatch
-    ):
-        monkeypatch.setattr(
-            "dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run",
-            lambda *a, **kw: self._fake_completed(0, "", "Download Failed"),
-        )
-        assert nm.download("/a.m3u8", "v", "/s", "p", {}, {}) is False
-
-    def test_download_returns_false_on_subprocess_exception(self, nm, monkeypatch):
-        def _raise(*a, **kw):
-            raise OSError("binary missing")
-
-        monkeypatch.setattr(
-            "dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run", _raise
-        )
-        assert nm.download("/a.m3u8", "v", "/s", "p", {}, {}) is False
-
-    def test_download_invokes_subprocess_with_build_command(self, nm, monkeypatch):
-        captured = {}
-
-        def _capture(*a, **kw):
-            captured["args"] = a
-            captured["kwargs"] = kw
-            return self._fake_completed(0, "ok", "")
-
-        monkeypatch.setattr(
-            "dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run", _capture
-        )
-        nm.download("/a.m3u8", "video1", "/save", "p", {}, {})
-        expected_cmd = nm.build_command("/a.m3u8", "video1", "/save", "p", {}, {})
-        # 第一个位置参数应当是命令列表
-        assert list(captured["args"][0]) == expected_cmd
-
-    def test_download_uses_text_capture(self, nm, monkeypatch):
-        captured = {}
-
-        def _capture(*a, **kw):
-            captured.update(kw)
-            return self._fake_completed(0, "ok", "")
-
-        monkeypatch.setattr(
-            "dingtalk_downloader.binary.n_m3u8dl_re.subprocess.run", _capture
-        )
-        nm.download("/a.m3u8", "v", "/s", "p", {}, {})
-        assert captured.get("capture_output") is True
-        assert captured.get("text") is True
 
 
 # ---------------------------------------------------------------------------

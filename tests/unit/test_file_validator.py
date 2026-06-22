@@ -104,6 +104,18 @@ class TestPathTraversal:
         with pytest.raises(ValueError, match="父目录引用|路径遍历"):
             FileValidator.validate_file_path(str(in_cwd / ".." / "data.csv"))
 
+    def test_rejects_sibling_directory_with_shared_prefix(self, in_cwd):
+        """兄弟目录共享前缀（如 /tmp/works_evil vs /tmp/works）必须被拒绝。
+
+        旧实现用 startswith 检查，会错误地放行兄弟目录。
+        修复后用 Path.relative_to 严格判定子路径关系。
+        """
+        # 构造一个与 in_cwd 同名前缀的兄弟路径，物理文件不需要存在：
+        # _check_path_traversal 在 absolute() 阶段就拒绝。
+        sibling = str(in_cwd) + "_evil" + os.sep + "data.csv"
+        with pytest.raises(ValueError, match="路径遍历"):
+            FileValidator.validate_file_path(sibling)
+
     def test_accepts_relative_path_inside_cwd(self, in_cwd):
         p = in_cwd / "data.csv"
         p.write_bytes(b"a,b\n")

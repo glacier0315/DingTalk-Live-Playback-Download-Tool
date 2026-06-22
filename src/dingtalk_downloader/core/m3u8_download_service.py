@@ -97,8 +97,11 @@ class M3u8RefreshService:
             try:
                 if os.path.exists(local_path):
                     os.remove(local_path)
-            except OSError:
-                pass
+            except OSError as e:
+                # 防御性清理：删除 fetch 失败后残留的空 m3u8 文件，失败仅记 debug
+                logger.debug(
+                    f"清理残留空 m3u8 文件失败 [{type(e).__name__}]: {e}"
+                )
             raise M3u8RefreshError(
                 f"浏览器 fetch 失败，未获取到 m3u8 内容: {m3u8_url}"
             )

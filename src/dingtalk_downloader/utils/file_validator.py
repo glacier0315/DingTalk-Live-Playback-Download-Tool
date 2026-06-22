@@ -115,11 +115,18 @@ class FileValidator:
             if real_path != abs_path:
                 logger.warning(f"检测到符号链接: {file_path} -> {real_path}")
 
-            if not str(abs_path).startswith(str(current_dir)):
+            # 严格子路径判定：避免 startswith 在共享前缀的兄弟目录（如
+            # /tmp/works vs /tmp/works_evil）上误判放行。
+            try:
+                abs_path.relative_to(current_dir)
+            except ValueError:
                 logger.error(f"检测到路径遍历攻击: {file_path}")
                 logger.error(f"当前工作目录: {current_dir}")
                 logger.error(f"文件绝对路径: {abs_path}")
-                raise ValueError(f"路径遍历攻击检测: 文件路径必须在当前工作目录内。" f"当前工作目录: {current_dir}")
+                raise ValueError(
+                    f"路径遍历攻击检测: 文件路径必须在当前工作目录内。"
+                    f"当前工作目录: {current_dir}"
+                ) from None
 
             if ".." in str(abs_path.relative_to(current_dir)):
                 logger.error(f"检测到路径遍历尝试: {file_path}")

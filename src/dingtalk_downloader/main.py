@@ -250,7 +250,6 @@ def _handle_config_error(error: Exception, error_type: str) -> None:
         error_type: 错误类型
     """
     logger.error(f"配置{error_type}失败: {error}")
-    print(f"错误: 配置文件{error_type}失败 - {error}")
     sys.exit(1)
 
 

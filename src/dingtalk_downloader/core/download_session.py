@@ -71,20 +71,26 @@ class DownloadSession:
     # --- accessors ---
 
     def cookie_data(self) -> CookieData:
-        assert self._cookie_data is not None, "session not entered"
+        if self._cookie_data is None:
+            raise RuntimeError("session not entered (call cookie_data inside `with` block)")
         return self._cookie_data
 
     def headers_data(self) -> HeadersData:
-        assert self._headers_data is not None, "session not entered"
+        if self._headers_data is None:
+            raise RuntimeError("session not entered (call headers_data inside `with` block)")
         return self._headers_data
 
     def live_name(self) -> str:
-        assert self._live_name is not None, "session not entered"
+        if self._live_name is None:
+            raise RuntimeError("session not entered (call live_name inside `with` block)")
         return self._live_name
 
     def refresh_service(self) -> M3u8RefreshService:
         if self._refresh_service is None:
-            assert self._cookie_handler is not None
+            if self._cookie_handler is None:
+                raise RuntimeError(
+                    "session not entered (call refresh_service inside `with` block)"
+                )
             self._refresh_service = M3u8RefreshService(
                 browser=self._cookie_handler.browser,
             )

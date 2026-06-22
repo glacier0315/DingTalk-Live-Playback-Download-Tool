@@ -357,3 +357,67 @@ def test_wait_existing_mp4_inside_save_name_dir_marks_success():
             assert result.error is None
         finally:
             os.unlink(log_path)
+
+
+# ---------------------------------------------------------------------------
+# wait() 超时守护（Phase B）：communicate 抛 TimeoutExpired → 调 terminate →
+# 返回 NONZERO_EXIT 的 RunResult（2026-06-20 spec 兜底语义）。
+# ---------------------------------------------------------------------------
+
+
+class _TimeoutPopen:
+    """FakePopen 变体：第一次 communicate 抛 TimeoutExpired，第二次返回空。"""
+
+    def __init__(self):
+        self.terminate_calls = 0
+        self.kill_calls = 0
+        self.communicate_calls = 0
+        # first_timeout 记录第一次 communicate 的 timeout（被 TimeoutExpired 覆盖之前）
+        self.first_timeout = None
+
+    def communicate(self, timeout=None):
+        self.communicate_calls += 1
+        if self.communicate_calls == 1:
+            self.first_timeout = timeout
+            import subprocess
+
+            raise subprocess.TimeoutExpired(cmd=["fake"], timeout=timeout)
+        return ("", "")
+
+    def poll(self):
+        return -1
+
+    def terminate(self):
+        self.terminate_calls += 1
+
+    def kill(self):
+        self.kill_calls += 1
+
+
+def test_wait_times_out_terminates_and_returns_nonzero():
+    """communicate 超时 → 调 terminate(grace) → 返回 NONZERO_EXIT RunResult。"""
+    popen = _TimeoutPopen()
+    proc = _make_process(popen)
+    proc.start("a.m3u8", "video1", "/save", "https://x/", {}, {})
+    result = proc.wait(timeout=0.01, on_timeout_grace_seconds=0.01)
+
+    assert popen.terminate_calls == 1
+    assert result.failure_kind is DownloadFailureKind.NONZERO_EXIT
+    assert isinstance(result.error, RecoverableDownloadError)
+    assert "timed out" in str(result.error)
+    # 第一次 communicate 收到的 timeout 应等于 effective_timeout
+    assert popen.first_timeout == 0.01
+
+
+def test_wait_default_timeout_uses_run_timeout_seconds():
+    """不显式传 timeout 时，effective_timeout 应使用 RUN_TIMEOUT_SECONDS（30 分钟）。"""
+    from dingtalk_downloader.config.constants import RUN_TIMEOUT_SECONDS
+
+    popen = _TimeoutPopen()
+    proc = _make_process(popen)
+    proc.start("a.m3u8", "video1", "/save", "https://x/", {}, {})
+    result = proc.wait()  # 不传 timeout
+
+    assert popen.terminate_calls == 1
+    assert popen.first_timeout == float(RUN_TIMEOUT_SECONDS)
+    assert result.failure_kind is DownloadFailureKind.NONZERO_EXIT

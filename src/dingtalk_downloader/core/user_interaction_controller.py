@@ -27,12 +27,6 @@ class UserInteractionController:
         logger: 日志记录器
     """
 
-    def __init__(self):
-        """
-        初始化用户交互控制器。
-        """
-        pass
-
     def get_user_input(
         self,
         prompt: str,

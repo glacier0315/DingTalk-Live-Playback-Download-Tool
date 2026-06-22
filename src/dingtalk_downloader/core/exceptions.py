@@ -36,18 +36,6 @@ class FileReaderError(Exception):
     pass
 
 
-class ConfigLoadError(Exception):
-    """配置文件加载异常"""
-
-    pass
-
-
-class ConfigValidationError(Exception):
-    """配置文件验证异常"""
-
-    pass
-
-
 class BrowserError(Exception):
     """浏览器操作异常"""
 

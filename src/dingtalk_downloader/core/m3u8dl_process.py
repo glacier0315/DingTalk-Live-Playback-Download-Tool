@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, Tuple
@@ -20,8 +21,15 @@ from .exceptions import (
     ProcessSpawnError,
     RecoverableDownloadError,
 )
+from ..config.constants import RUN_TIMEOUT_SECONDS
 
 logger = logging.getLogger(__name__)
+
+
+# 截取 stdout/stderr 尾部时保留的字节数（约 2 KiB），用于 RunResult 注入诊断信息
+LOG_TAIL_BYTES = 2048
+# 在日志中只展示尾部 N 字符用于 debug 摘要（与 DownloadOrchestrator 日志行尾 [-200:] 对齐）
+LOG_TAIL_PREVIEW = 200
 
 
 class DownloadFailureKind(Enum):
@@ -130,7 +138,7 @@ class M3u8DLProcess:
         self,
         n_m3u8dl_re,  # NM3u8DLRE — 避免循环导入，不做类型标注
         log_path: str,
-        popen_factory=__import__("subprocess").Popen,
+        popen_factory=subprocess.Popen,
     ):
         self._n_m3u8dl_re = n_m3u8dl_re
         self._log_path = log_path
@@ -174,7 +182,11 @@ class M3u8DLProcess:
             text=True,
         )
 
-    def wait(self, timeout: Optional[float] = None) -> RunResult:
+    def wait(
+        self,
+        timeout: Optional[float] = None,
+        on_timeout_grace_seconds: float = 5.0,
+    ) -> RunResult:
         """等待子进程结束并返回 RunResult。
 
         判定优先级（成功信号先于失败关键字）：
@@ -188,19 +200,52 @@ class M3u8DLProcess:
         强成功信号是关键：ffmpeg 合并阶段常因 Non-monotonous DTS 等无害警告
         让 returncode 非 0、走 NONZERO_EXIT 兜底，从而误判已经成功的下载，
         触发 retry → refresh m3u8 → 旧分片因新 auth_key 失效被全部丢弃。
+
+        Args:
+            timeout: 等待子进程结束的最长秒数；``None`` 时使用 ``RUN_TIMEOUT_SECONDS``
+                （30 分钟）。超时后调用 ``terminate(grace_seconds)`` 强杀子进程，
+                并返回 ``failure_kind=NONZERO_EXIT`` 的 RunResult。
+            on_timeout_grace_seconds: 超时后给子进程的优雅退出时间（秒）。
         """
         if self._proc is None:
             raise RuntimeError("M3u8DLProcess.start() must be called before wait()")
 
-        stdout, stderr = self._proc.communicate(timeout=timeout)
+        effective_timeout = (
+            timeout if timeout is not None else float(RUN_TIMEOUT_SECONDS)
+        )
+        try:
+            stdout, stderr = self._proc.communicate(timeout=effective_timeout)
+        except subprocess.TimeoutExpired:
+            logger.warning(
+                f"M3u8DLProcess.wait() 超时（>{effective_timeout:.1f}s），"
+                f"调用 terminate(grace={on_timeout_grace_seconds:.1f}s) 强杀子进程"
+            )
+            self.terminate(grace_seconds=on_timeout_grace_seconds)
+            # terminate 之后再读一次 stdout/stderr；可能为 None（子进程已死）
+            try:
+                stdout, stderr = self._proc.communicate(timeout=1.0)
+            except Exception:
+                stdout, stderr = "", ""
+            # 超时必然视为失败（沿用 NONZERO_EXIT 兜底语义）
+            return RunResult(
+                returncode=-1,
+                stdout_tail=(stdout or "")[-LOG_TAIL_BYTES:],
+                stderr_tail=(stderr or "")[-LOG_TAIL_BYTES:],
+                log_tail=self._read_log_tail(self._log_path),
+                failure_kind=DownloadFailureKind.NONZERO_EXIT,
+                error=RecoverableDownloadError(
+                    f"wait() timed out after {effective_timeout:.1f}s"
+                ),
+            )
+
         # 用 poll() 取 returncode：兼容真实 subprocess.Popen（communicate 后会设好）
         # 和 FakePopen（只有 poll() 暴露 _returncode）
         polled = self._proc.poll()
         returncode = polled if polled is not None else 0
         self._waited = True
 
-        stdout_tail = (stdout or "")[-2048:]
-        stderr_tail = (stderr or "")[-2048:]
+        stdout_tail = (stdout or "")[-LOG_TAIL_BYTES:]
+        stderr_tail = (stderr or "")[-LOG_TAIL_BYTES:]
         log_tail = self._read_log_tail(self._log_path)
 
         # 强成功信号：金标准（mp4 文件存在） + 辅助（log 含 INFO : Done 且无失败关键字）
@@ -309,8 +354,6 @@ class M3u8DLProcess:
             self._proc.terminate()
             # 等 grace_seconds；用 is_alive() 判断是否仍存活
             # （FakePopen 没有 wait(timeout)，poll() 在 alive 时也只返回 None）
-            import time
-
             deadline = time.monotonic() + grace_seconds
             while time.monotonic() < deadline:
                 if not self.is_alive():
