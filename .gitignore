@@ -72,3 +72,4 @@ config.toml
 # assets/template/: 模板文件(批量下载模板.xlsx等)
 # assets/ICO/: 图标资源文件(icon.ico, icon.png等)
 .gstack/
+.superpowers/
