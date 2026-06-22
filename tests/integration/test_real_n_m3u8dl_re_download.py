@@ -40,6 +40,7 @@ def test_real_download_invokes_exe_and_creates_log_file(
 
     # 用 monkeypatch.setenv 不需要 — YamlConfig 实例化时已绑定 config_file
     from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
+    from dingtalk_downloader.core.m3u8dl_process import M3u8DLProcess
 
     nm = NM3u8DLRE(executable_path=n_m3u8dl_re_path)
 
@@ -56,14 +57,17 @@ def test_real_download_invokes_exe_and_creates_log_file(
 
     # 注：N_m3u8DL-RE 会尝试访问 fake-host 上的 seg-001.ts，但 prefix 是 fake path
     # 整体应当失败（returncode != 0）但仍产生日志
-    result = nm.download(
+    log_path = os.path.join(nm.log_dir, "n_m3u8dl_re_test.log")
+    proc = M3u8DLProcess(n_m3u8dl_re=nm, log_path=log_path)
+    proc.start(
         m3u8_file=str(m3u8),
         save_name="video1",
         save_dir=str(save_dir),
         prefix="https://fake-host/live_hp/abc/",
-        cookies_data={},
+        cookies={},
         headers={},
     )
+    proc.wait(timeout=60)
     # 无论成功失败，log 文件应该被创建
     log_dir = Path(nm.log_dir)
     logs = list(log_dir.glob("n_m3u8dl_re_*.log"))
@@ -78,6 +82,7 @@ def test_real_download_with_cookies_and_custom_headers(
     _reset_and_load_config(cfg_path)
 
     from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
+    from dingtalk_downloader.core.m3u8dl_process import M3u8DLProcess
 
     nm = NM3u8DLRE(executable_path=n_m3u8dl_re_path)
 
@@ -90,14 +95,17 @@ def test_real_download_with_cookies_and_custom_headers(
     save_dir = tmp_path / "out"
     save_dir.mkdir()
 
-    nm.download(
+    log_path = os.path.join(nm.log_dir, "n_m3u8dl_re_test.log")
+    proc = M3u8DLProcess(n_m3u8dl_re=nm, log_path=log_path)
+    proc.start(
         m3u8_file=str(m3u8),
         save_name="video1",
         save_dir=str(save_dir),
         prefix="https://fake-host/live_hp/abc/",
-        cookies_data={"sessionid": "abc123", "uid": "u1"},
+        cookies={"sessionid": "abc123", "uid": "u1"},
         headers={"User-Agent": "CustomAgent/2.0"},
     )
+    proc.wait(timeout=60)
 
     # 验证日志文件有 cookie 关键字
     log_dir = Path(nm.log_dir)
@@ -124,24 +132,34 @@ def test_real_download_creates_temp_dir(
 def test_real_download_failure_returns_false(
     n_m3u8dl_re_path, tmp_config_yaml, tmp_path
 ):
-    """m3u8 指向不存在路径 → download 返回 False（不抛）。"""
+    """m3u8 指向不存在路径 → wait() 返回 NONZERO_EXIT 的 RunResult。"""
     cfg_path, _ = tmp_config_yaml
     _reset_and_load_config(cfg_path)
 
     from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
+    from dingtalk_downloader.core.m3u8dl_process import M3u8DLProcess
+    from dingtalk_downloader.core.m3u8dl_process import DownloadFailureKind
 
     nm = NM3u8DLRE(executable_path=n_m3u8dl_re_path)
     save_dir = tmp_path / "out"
     save_dir.mkdir()
-    result = nm.download(
+    log_path = os.path.join(nm.log_dir, "n_m3u8dl_re_test.log")
+    proc = M3u8DLProcess(n_m3u8dl_re=nm, log_path=log_path)
+    proc.start(
         m3u8_file="/nonexistent/path/missing.m3u8",
         save_name="video1",
         save_dir=str(save_dir),
         prefix="https://fake-host/",
-        cookies_data={},
+        cookies={},
         headers={},
     )
-    assert result is False
+    result = proc.wait(timeout=60)
+    # 不抛异常且失败标记为 NONZERO_EXIT / EXE_MISSING / INVALID_PATH
+    assert result.failure_kind in {
+        DownloadFailureKind.NONZERO_EXIT,
+        DownloadFailureKind.EXE_MISSING,
+        DownloadFailureKind.INVALID_PATH,
+    }
 
 
 def test_real_download_save_dir_with_spaces_and_chinese(
@@ -152,6 +170,7 @@ def test_real_download_save_dir_with_spaces_and_chinese(
     _reset_and_load_config(cfg_path)
 
     from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
+    from dingtalk_downloader.core.m3u8dl_process import M3u8DLProcess
 
     nm = NM3u8DLRE(executable_path=n_m3u8dl_re_path)
     save_dir = tmp_path / "dir with space" / "中文目录"
@@ -162,14 +181,17 @@ def test_real_download_save_dir_with_spaces_and_chinese(
         "#EXTINF:1.0,\nseg-001.ts\n#EXT-X-ENDLIST\n",
         encoding="utf-8",
     )
-    nm.download(
+    log_path = os.path.join(nm.log_dir, "n_m3u8dl_re_test.log")
+    proc = M3u8DLProcess(n_m3u8dl_re=nm, log_path=log_path)
+    proc.start(
         m3u8_file=str(m3u8),
         save_name="视频_1",
         save_dir=str(save_dir),
         prefix="https://fake-host/",
-        cookies_data={},
+        cookies={},
         headers={},
     )
+    proc.wait(timeout=60)
     # 不崩即为通过；具体结果由 N_m3u8DL-RE 决定
 
 
@@ -181,6 +203,7 @@ def test_real_download_log_file_naming_pattern(
     _reset_and_load_config(cfg_path)
 
     from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
+    from dingtalk_downloader.core.m3u8dl_process import M3u8DLProcess
 
     nm = NM3u8DLRE(executable_path=n_m3u8dl_re_path)
     save_dir = tmp_path / "out"
@@ -191,14 +214,17 @@ def test_real_download_log_file_naming_pattern(
         "#EXTINF:1.0,\nseg-001.ts\n#EXT-X-ENDLIST\n",
         encoding="utf-8",
     )
-    nm.download(
+    log_path = os.path.join(nm.log_dir, "n_m3u8dl_re_test.log")
+    proc = M3u8DLProcess(n_m3u8dl_re=nm, log_path=log_path)
+    proc.start(
         m3u8_file=str(m3u8),
         save_name="video1",
         save_dir=str(save_dir),
         prefix="https://fake-host/",
-        cookies_data={},
+        cookies={},
         headers={},
     )
+    proc.wait(timeout=60)
     log_dir = Path(nm.log_dir)
     log_files = list(log_dir.glob("n_m3u8dl_re_*.log"))
     assert log_files

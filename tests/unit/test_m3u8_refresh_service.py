@@ -61,3 +61,32 @@ def test_fetch_raises_m3u8_refresh_error_on_none_content(monkeypatch, tmp_path):
     with pytest.raises(M3u8RefreshError) as exc_info:
         svc._download_m3u8("https://x/v.m3u8?auth_key=Z")
     assert "浏览器 fetch 失败" in str(exc_info.value)
+
+
+def test_download_m3u8_logs_debug_when_cleanup_oserror(monkeypatch, tmp_path, caplog):
+    """None-content 防御性清理遇 OSError 必须记 debug 日志，不静默吞错。
+
+    之前 ``except OSError: pass`` 会无声吞掉；现在 ``logger.debug`` 留痕。
+    """
+    import os
+
+    from dingtalk_downloader.core import m3u8_download_service as mod
+
+    browser = FakeBrowser(m3u8_links=["https://x/v.m3u8?auth_key=Z"])
+    # 让 fetch 返回 None 触发防御性清理分支
+    browser.driver.execute_script = lambda script, *args: None
+    # 把 local_path 上的 os.remove 替换为抛 OSError
+    monkeypatch.setattr(
+        mod.os, "remove", lambda *a, **kw: (_ for _ in ()).throw(OSError("locked"))
+    )
+    # 让 os.path.exists 报告文件存在（让清理分支进入 remove 调用）
+    monkeypatch.setattr(mod.os.path, "exists", lambda *a, **kw: True)
+
+    svc = M3u8RefreshService(browser=browser, file_manager=None)  # type: ignore[arg-type]
+    with caplog.at_level("DEBUG", logger="dingtalk_downloader.core.m3u8_download_service"):
+        with pytest.raises(M3u8RefreshError):
+            svc._download_m3u8("https://x/v.m3u8?auth_key=Z")
+    assert any(
+        "清理残留空 m3u8 文件失败" in rec.message and "OSError" in rec.message
+        for rec in caplog.records
+    ), f"未捕获到 debug 日志，实际记录: {[r.message for r in caplog.records]}"

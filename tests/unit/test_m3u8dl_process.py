@@ -1,6 +1,7 @@
 """Tests for M3u8DLProcess subprocess wrapper."""
 
 import os
+import subprocess
 import tempfile
 
 import pytest
@@ -379,8 +380,6 @@ class _TimeoutPopen:
         self.communicate_calls += 1
         if self.communicate_calls == 1:
             self.first_timeout = timeout
-            import subprocess
-
             raise subprocess.TimeoutExpired(cmd=["fake"], timeout=timeout)
         return ("", "")
 

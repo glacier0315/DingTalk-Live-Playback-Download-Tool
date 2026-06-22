@@ -133,7 +133,9 @@ class FileValidator:
                 logger.error(f"相对路径包含父目录引用: {abs_path.relative_to(current_dir)}")
                 raise ValueError("路径遍历攻击检测: 路径包含父目录引用。")
 
-        except (OSError, ValueError) as e:
+        except OSError as e:
+            # 仅兜底 OSError（路径解析失败）。ValueError 由内层 raise 直接透传
+            # —— 内层已用 from None 抑制 cause chain，外层不应再包装。
             logger.error(f"路径验证失败: {e}")
             raise ValueError(f"路径验证失败: {e}") from e
 

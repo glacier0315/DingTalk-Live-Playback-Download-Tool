@@ -28,8 +28,6 @@ logger = logging.getLogger(__name__)
 
 # 截取 stdout/stderr 尾部时保留的字节数（约 2 KiB），用于 RunResult 注入诊断信息
 LOG_TAIL_BYTES = 2048
-# 在日志中只展示尾部 N 字符用于 debug 摘要（与 DownloadOrchestrator 日志行尾 [-200:] 对齐）
-LOG_TAIL_PREVIEW = 200
 
 
 class DownloadFailureKind(Enum):

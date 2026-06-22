@@ -40,7 +40,10 @@ def test_nm3u8dl_re_subprocess_integration(
     cfg_path, _ = tmp_config_yaml
     _reset_and_load_config(cfg_path)
 
+    import os
+
     from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
+    from dingtalk_downloader.core.m3u8dl_process import M3u8DLProcess
 
     nm = NM3u8DLRE(executable_path=n_m3u8dl_re_path)
 
@@ -59,17 +62,20 @@ def test_nm3u8dl_re_subprocess_integration(
     save_dir.mkdir()
 
     # 真实调用（必然失败，但日志会被写入）
-    result = nm.download(
+    log_path = os.path.join(nm.log_dir, "n_m3u8dl_re_integration_test.log")
+    proc = M3u8DLProcess(n_m3u8dl_re=nm, log_path=log_path)
+    proc.start(
         m3u8_file=str(m3u8),
         save_name="integration_test",
         save_dir=str(save_dir),
         prefix="https://fake-host/live_hp/abcdef01-2345-6789-abcd-ef0123456789/",
-        cookies_data={"sessionid": "itest123", "uid": "u-itest"},
+        cookies={"sessionid": "itest123", "uid": "u-itest"},
         headers={"X-Custom-Header": "IntegrationTest"},
     )
+    result = proc.wait(timeout=60)
 
-    # 1. 不抛异常（即使失败）
-    assert result is False or result is True  # 任意布尔值即可
+    # 1. 不抛异常（即使失败）— RunResult 总有 failure_kind 字段
+    assert result.failure_kind is not None or result.error is None
 
     # 2. 日志文件存在且符合命名规则
     log_dir = Path(nm.log_dir)
@@ -87,24 +93,36 @@ def test_nm3u8dl_re_subprocess_integration(
 def test_nm3u8dl_re_handles_invalid_executable_gracefully(
     tmp_config_yaml, tmp_path
 ):
-    """executable_path 指向不存在路径 → download 返回 False 而非崩溃。"""
+    """executable_path 指向不存在路径 → wait() 返回失败 RunResult 而非崩溃。"""
     cfg_path, _ = tmp_config_yaml
     _reset_and_load_config(cfg_path)
 
+    import os
+
     from dingtalk_downloader.binary.n_m3u8dl_re import NM3u8DLRE
+    from dingtalk_downloader.core.m3u8dl_process import M3u8DLProcess
+    from dingtalk_downloader.core.m3u8dl_process import DownloadFailureKind
 
     nm = NM3u8DLRE(executable_path="C:/nonexistent/fake-exe.exe")
     save_dir = tmp_path / "out"
     save_dir.mkdir()
-    result = nm.download(
+    log_path = os.path.join(nm.log_dir, "n_m3u8dl_re_integration_test.log")
+    proc = M3u8DLProcess(n_m3u8dl_re=nm, log_path=log_path)
+    proc.start(
         m3u8_file=str(tmp_path / "x.m3u8"),
         save_name="v",
         save_dir=str(save_dir),
         prefix="p",
-        cookies_data={},
+        cookies={},
         headers={},
     )
-    assert result is False
+    result = proc.wait(timeout=10)
+    # EXE_MISSING / NONZERO_EXIT / PROCESS_SPAWN 任意一种都表明失败被优雅捕获
+    assert result.failure_kind in {
+        DownloadFailureKind.EXE_MISSING,
+        DownloadFailureKind.NONZERO_EXIT,
+        DownloadFailureKind.PROCESS_SPAWN,
+    }
 
 
 def test_build_command_with_real_exe_includes_expected_flags(
